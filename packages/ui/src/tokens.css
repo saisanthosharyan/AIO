@@ -1,0 +1,70 @@
+:root {
+  /* =========================================
+     AIO COLOR SYSTEM
+     ========================================= */
+
+  --aio-bg: #f5f6f8;
+  --aio-surface: #ffffff;
+  --aio-surface-soft: #f0f1f4;
+  --aio-surface-hover: #e9eaf0;
+
+  --aio-text: #111318;
+  --aio-text-secondary: #686d78;
+  --aio-text-muted: #9a9faa;
+
+  --aio-border: #e5e6eb;
+
+  --aio-accent: #635bff;
+  --aio-accent-soft: #eeecff;
+
+  --aio-success: #278866;
+  --aio-warning: #c98520;
+  --aio-error: #d94b55;
+
+  /* =========================================
+     AIO SPACING
+     ========================================= */
+
+  --aio-space-1: 4px;
+  --aio-space-2: 8px;
+  --aio-space-3: 12px;
+  --aio-space-4: 16px;
+  --aio-space-5: 20px;
+  --aio-space-6: 24px;
+  --aio-space-7: 32px;
+  --aio-space-8: 40px;
+  --aio-space-9: 48px;
+  --aio-space-10: 64px;
+
+  /* =========================================
+     AIO RADIUS
+     ========================================= */
+
+  --aio-radius-sm: 8px;
+  --aio-radius-md: 12px;
+  --aio-radius-lg: 16px;
+  --aio-radius-xl: 20px;
+  --aio-radius-2xl: 24px;
+  --aio-radius-pill: 999px;
+
+  /* =========================================
+     AIO SHADOWS
+     ========================================= */
+
+  --aio-shadow-sm:
+    0 2px 8px rgba(18, 20, 28, 0.04);
+
+  --aio-shadow-md:
+    0 8px 24px rgba(18, 20, 28, 0.06);
+
+  --aio-shadow-lg:
+    0 16px 48px rgba(18, 20, 28, 0.08);
+
+  /* =========================================
+     AIO MOTION
+     ========================================= */
+
+  --aio-transition-fast: 120ms ease;
+  --aio-transition-normal: 180ms ease;
+  --aio-transition-slow: 280ms ease;
+}
