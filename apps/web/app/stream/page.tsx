@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-
 import CreatePanel from "../../components/stream/CreatePanel";
 import CreatePostModal from "../../components/stream/CreatePostModal";
 import PostCard from "../../components/stream/PostCard";
@@ -54,10 +53,21 @@ const initialPosts: StreamPost[] = [
 ];
 
 export default function StreamPage() {
-  const [posts, setPosts] = useState<StreamPost[]>(initialPosts);
-  const [createOpen, setCreateOpen] = useState(false);
+  const [posts, setPosts] =
+    useState<StreamPost[]>(initialPosts);
 
-  const handlePublish = (content: string) => {
+  const [createModalOpen, setCreateModalOpen] =
+    useState(false);
+
+  function handleOpenCreate() {
+    setCreateModalOpen(true);
+  }
+
+  function handleCloseCreate() {
+    setCreateModalOpen(false);
+  }
+
+  function handlePostCreated(content: string) {
     const newPost: StreamPost = {
       id: crypto.randomUUID(),
       name: "Santhosh",
@@ -73,54 +83,59 @@ export default function StreamPage() {
       newPost,
       ...currentPosts,
     ]);
-  };
+
+    setCreateModalOpen(false);
+  }
 
   return (
-    <>
-      <section className="stream-page">
-        <div className="page-intro">
-          <div>
-            <span className="eyebrow">YOUR WORLD</span>
-
-            <h1>Stream</h1>
-
-            <p>
-              Ideas, conversations, people and moments that matter
-              to you.
-            </p>
-          </div>
-        </div>
-
-        <CreatePanel
-          onOpenCreate={() => setCreateOpen(true)}
-        />
-
-        <div className="stream-label">
-          <span>LATEST FROM YOUR NETWORK</span>
-          <div />
-        </div>
-
+    <section className="stream-page">
+      <div className="page-intro">
         <div>
-          {posts.map((post) => (
-            <PostCard
-              key={post.id}
-              name={post.name}
-              username={post.username}
-              time={post.time}
-              initials={post.initials}
-              avatarClass={post.avatarClass}
-              content={post.content}
-              type={post.type}
-            />
-          ))}
+          <span className="eyebrow">
+            YOUR WORLD
+          </span>
+
+          <h1>Stream</h1>
+
+          <p>
+            Ideas, conversations, people and moments
+            that matter to you.
+          </p>
         </div>
-      </section>
+      </div>
+
+      <CreatePanel
+        onOpenCreate={handleOpenCreate}
+      />
+
+      <div className="stream-label">
+        <span>
+          LATEST FROM YOUR NETWORK
+        </span>
+
+        <div />
+      </div>
+
+      <div>
+        {posts.map((post) => (
+          <PostCard
+            key={post.id}
+            name={post.name}
+            username={post.username}
+            time={post.time}
+            initials={post.initials}
+            avatarClass={post.avatarClass}
+            content={post.content}
+            type={post.type}
+          />
+        ))}
+      </div>
 
       <CreatePostModal
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        onPublish={handlePublish}
+        open={createModalOpen}
+        onClose={handleCloseCreate}
+        onPublish={handlePostCreated}
       />
-    </>
+    </section>
   );
 }

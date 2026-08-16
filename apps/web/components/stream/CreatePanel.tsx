@@ -30,7 +30,9 @@ export default function CreatePanel({
 }: CreatePanelProps) {
   return (
     <section className="create-panel">
-      <div className="avatar avatar-purple">SA</div>
+      <div className="avatar avatar-purple">
+        SA
+      </div>
 
       <div className="create-input">
         <button
@@ -50,6 +52,7 @@ export default function CreatePanel({
                 key={action.label}
                 type="button"
                 onClick={onOpenCreate}
+                aria-label={`Create ${action.label}`}
               >
                 <Icon size={17} />
 

@@ -39,6 +39,16 @@ export default function PostCard({
     type === "thought" ? 124 : 87,
   );
 
+  function handleLike() {
+    if (liked) {
+      setLiked(false);
+      setLikes((count) => count - 1);
+    } else {
+      setLiked(true);
+      setLikes((count) => count + 1);
+    }
+  }
+
   async function handleShare() {
     try {
       if (navigator.share) {
@@ -58,16 +68,6 @@ export default function PostCard({
     } catch {
       // User cancelled the share dialog.
     }
-  }
-
-  function handleLike() {
-    setLiked((current) => {
-      setLikes((count) =>
-        current ? count - 1 : count + 1,
-      );
-
-      return !current;
-    });
   }
 
   return (
@@ -148,7 +148,9 @@ export default function PostCard({
           type="button"
           className={liked ? "liked" : ""}
           onClick={handleLike}
-          aria-label={liked ? "Unlike post" : "Like post"}
+          aria-label={
+            liked ? "Unlike post" : "Like post"
+          }
           aria-pressed={liked}
         >
           <Heart
@@ -188,9 +190,13 @@ export default function PostCard({
           className={`save-action ${
             saved ? "saved" : ""
           }`}
-          onClick={() => setSaved((current) => !current)}
+          onClick={() =>
+            setSaved((current) => !current)
+          }
           aria-label={
-            saved ? "Remove from saved" : "Save post"
+            saved
+              ? "Remove from saved"
+              : "Save post"
           }
           aria-pressed={saved}
         >
