@@ -9,9 +9,7 @@ interface AIOShellProps {
   children: ReactNode;
 }
 
-export default function AIOShell({
-  children,
-}: AIOShellProps) {
+export default function AIOShell({ children }: AIOShellProps) {
   return (
     <div className="aio-shell">
       <TopBar />
@@ -20,9 +18,7 @@ export default function AIOShell({
         <Sidebar />
 
         <main className="aio-workspace">
-          <div className="aio-workspace-inner">
-            {children}
-          </div>
+          <div className="aio-workspace-inner">{children}</div>
         </main>
       </div>
     </div>

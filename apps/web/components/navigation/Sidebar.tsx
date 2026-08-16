@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Activity,
   Bookmark,
@@ -44,7 +45,7 @@ const primaryNavigation = [
 const secondaryNavigation = [
   {
     label: "Saved",
-    href: "#",
+    href: "/saved",
     icon: Bookmark,
   },
   {
@@ -55,22 +56,34 @@ const secondaryNavigation = [
 ];
 
 export default function Sidebar() {
+  const pathname = usePathname();
+
+  const isActive = (href: string) => {
+    if (href === "/stream") {
+      return pathname === "/stream" || pathname === "/";
+    }
+
+    return pathname.startsWith(href);
+  };
+
   return (
     <aside className="aio-sidebar">
       <div className="sidebar-content">
+        {/* PRIMARY NAVIGATION */}
         <nav className="main-nav" aria-label="Primary navigation">
           {primaryNavigation.map((item) => {
             const Icon = item.icon;
+            const active = isActive(item.href);
 
             return (
               <Link
                 key={item.label}
                 href={item.href}
-                className={`nav-item ${
-                  item.label === "Stream" ? "active" : ""
-                }`}
+                className={`nav-item ${active ? "active" : ""}`}
+                aria-current={active ? "page" : undefined}
               >
                 <Icon size={19} strokeWidth={1.8} />
+
                 <span>{item.label}</span>
               </Link>
             );
@@ -79,20 +92,21 @@ export default function Sidebar() {
 
         <div className="sidebar-divider" />
 
-        <nav
-          className="secondary-nav"
-          aria-label="Secondary navigation"
-        >
+        {/* SECONDARY NAVIGATION */}
+        <nav className="secondary-nav" aria-label="Secondary navigation">
           {secondaryNavigation.map((item) => {
             const Icon = item.icon;
+            const active = isActive(item.href);
 
             return (
               <Link
                 key={item.label}
                 href={item.href}
-                className="nav-item"
+                className={`nav-item ${active ? "active" : ""}`}
+                aria-current={active ? "page" : undefined}
               >
                 <Icon size={19} strokeWidth={1.8} />
+
                 <span>{item.label}</span>
 
                 {item.label === "Activity" && (
@@ -108,16 +122,25 @@ export default function Sidebar() {
 
         <div className="sidebar-spacer" />
 
-        <Link href="#" className="nav-item settings-item">
+        {/* SETTINGS */}
+        <Link
+          href="/settings"
+          className={`nav-item settings-item ${
+            isActive("/settings") ? "active" : ""
+          }`}
+          aria-current={isActive("/settings") ? "page" : undefined}
+        >
           <Settings size={19} strokeWidth={1.8} />
+
           <span>Settings</span>
         </Link>
 
+        {/* PROFILE */}
         <div className="sidebar-bottom">
-          <button
-            type="button"
+          <Link
+            href="/profile"
             className="profile-mini"
-            aria-label="Open profile menu"
+            aria-label="Open profile"
           >
             <div className="avatar avatar-small">SA</div>
 
@@ -127,7 +150,7 @@ export default function Sidebar() {
             </div>
 
             <MoreHorizontal size={18} />
-          </button>
+          </Link>
         </div>
       </div>
     </aside>

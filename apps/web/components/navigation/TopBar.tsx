@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   Bell,
   Plus,
@@ -7,14 +8,13 @@ import {
   Sparkles,
 } from "lucide-react";
 
-import Link from "next/link";
-
 export default function TopBar() {
   return (
     <header className="aio-topbar">
+      {/* BRAND */}
       <div className="topbar-brand">
         <Link href="/stream" className="aio-wordmark">
-          <span className="aio-mark">
+          <span className="aio-mark" aria-hidden="true">
             <Sparkles size={15} strokeWidth={2} />
           </span>
 
@@ -22,6 +22,7 @@ export default function TopBar() {
         </Link>
       </div>
 
+      {/* SEARCH */}
       <div className="search-box">
         <Search size={18} strokeWidth={1.8} />
 
@@ -34,6 +35,7 @@ export default function TopBar() {
         <kbd>⌘ K</kbd>
       </div>
 
+      {/* ACTIONS */}
       <div className="top-actions">
         <button
           type="button"
@@ -42,20 +44,29 @@ export default function TopBar() {
         >
           <Bell size={20} strokeWidth={1.8} />
 
-          <span className="top-notification-dot" />
+          <span
+            className="top-notification-dot"
+            aria-hidden="true"
+          />
         </button>
 
         <button
           type="button"
           className="create-button"
+          aria-label="Create"
         >
           <Plus size={18} strokeWidth={2} />
+
           <span>Create</span>
         </button>
 
-        <div className="top-avatar">
+        <Link
+          href="/profile"
+          className="top-avatar"
+          aria-label="Open profile"
+        >
           SA
-        </div>
+        </Link>
       </div>
     </header>
   );
