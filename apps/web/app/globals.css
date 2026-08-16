@@ -2284,3 +2284,389 @@ button {
     min-height: 330px;
   }
 }
+/* =========================================
+   AIO STREAM COMPOSER
+   ========================================= */
+
+.create-placeholder {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--aio-text-muted);
+  text-align: left;
+  font: inherit;
+  font-size: 13px;
+  cursor: text;
+}
+
+.create-placeholder:hover {
+  color: var(--aio-text-secondary);
+}
+
+.composer {
+  width: 100%;
+}
+
+.composer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.composer-header strong {
+  font-size: 13px;
+}
+
+.composer-header button {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--aio-surface-soft);
+  color: var(--aio-text-secondary);
+}
+
+.composer textarea {
+  width: 100%;
+  min-height: 110px;
+  resize: vertical;
+
+  padding: 12px;
+
+  border: 1px solid var(--aio-border);
+  border-radius: 13px;
+
+  outline: none;
+
+  background: var(--aio-surface-soft);
+  color: var(--aio-text);
+
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.6;
+
+  transition:
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+.composer textarea:focus {
+  border-color: #c8cec8;
+  background: var(--aio-surface);
+}
+
+.composer textarea::placeholder {
+  color: var(--aio-text-muted);
+}
+
+.composer-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-top: 10px;
+}
+
+.composer-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  color: var(--aio-text-muted);
+  font-size: 10px;
+}
+
+.composer-tools button {
+  width: 32px;
+  height: 32px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 9px;
+
+  background: var(--aio-surface-soft);
+  color: var(--aio-text-secondary);
+}
+
+.composer-submit {
+  height: 36px;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+
+  padding: 0 13px;
+
+  border-radius: 10px;
+
+  background: var(--aio-text);
+  color: white;
+
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.composer-submit:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.post-action-active {
+  color: var(--aio-text) !important;
+}
+.composer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgb(0 0 0 / 55%);
+  backdrop-filter: blur(8px);
+}
+
+.composer-modal {
+  width: min(620px, 100%);
+  padding: 24px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 20px;
+  background: var(--surface-color, #ffffff);
+  box-shadow: 0 24px 80px rgb(0 0 0 / 20%);
+}
+
+.composer-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.composer-header h2 {
+  margin: 6px 0 0;
+  font-size: 22px;
+}
+
+.composer-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0 16px;
+}
+
+.composer-user > div:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.composer-user span {
+  font-size: 13px;
+  opacity: 0.6;
+}
+
+.composer-modal textarea {
+  width: 100%;
+  min-height: 160px;
+  resize: vertical;
+  padding: 16px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 14px;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  line-height: 1.6;
+}
+
+.composer-modal textarea:focus {
+  border-color: currentColor;
+}
+
+.composer-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+
+.composer-footer > span {
+  font-size: 13px;
+  opacity: 0.55;
+}
+
+.create-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.post-footer button.liked,
+.post-footer button.saved {
+  color: #ef4444;
+}
+
+.post-footer .save-action.saved {
+  color: currentColor;
+}
+/* Create Post Modal */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(10, 10, 15, 0.55);
+  backdrop-filter: blur(8px);
+}
+
+.create-post-modal {
+  width: min(620px, 100%);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  background: var(--surface-color);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 24px 24px 18px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h2 {
+  margin: 5px 0 0;
+  font-size: 24px;
+  letter-spacing: -0.03em;
+}
+
+.modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--muted-surface);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.modal-author {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 24px 0;
+}
+
+.modal-author div:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.modal-author span {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.create-post-modal textarea {
+  display: block;
+  width: calc(100% - 48px);
+  min-height: 180px;
+  margin: 18px 24px 0;
+  padding: 16px 0;
+  border: 0;
+  outline: none;
+  resize: vertical;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.create-post-modal textarea::placeholder {
+  color: var(--text-secondary);
+}
+
+.modal-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px 18px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.modal-tools {
+  display: flex;
+  gap: 8px;
+}
+
+.modal-tools button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--muted-surface);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border-color);
+}
+
+.cancel-button,
+.publish-button {
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 18px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cancel-button {
+  background: var(--muted-surface);
+  color: var(--text-primary);
+}
+
+.publish-button {
+  background: var(--text-primary);
+  color: var(--surface-color);
+}
+
+.publish-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.create-placeholder {
+  width: 100%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  text-align: left;
+  font: inherit;
+  cursor: text;
+}

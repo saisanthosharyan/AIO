@@ -6,6 +6,10 @@ import {
   Video,
 } from "lucide-react";
 
+interface CreatePanelProps {
+  onOpenCreate: () => void;
+}
+
 const actions = [
   {
     label: "Moment",
@@ -21,20 +25,32 @@ const actions = [
   },
 ];
 
-export default function CreatePanel() {
+export default function CreatePanel({
+  onOpenCreate,
+}: CreatePanelProps) {
   return (
     <section className="create-panel">
-      <div className="avatar">SA</div>
+      <div className="avatar avatar-purple">SA</div>
 
       <div className="create-input">
-        <span>Share something meaningful...</span>
+        <button
+          type="button"
+          className="create-placeholder"
+          onClick={onOpenCreate}
+        >
+          Share something meaningful...
+        </button>
 
         <div className="create-actions">
           {actions.map((action) => {
             const Icon = action.icon;
 
             return (
-              <button key={action.label}>
+              <button
+                key={action.label}
+                type="button"
+                onClick={onOpenCreate}
+              >
                 <Icon size={17} />
 
                 <span>{action.label}</span>
