@@ -1,16 +1,22 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Image from "next/image";
 import {
   Image as ImageIcon,
   Sparkles,
   X,
 } from "lucide-react";
 
+export interface CreatePostData {
+  content: string;
+  imageUrl?: string;
+}
+
 interface CreatePostModalProps {
   open: boolean;
   onClose: () => void;
-  onPublish: (content: string) => void;
+  onPublish: (post: CreatePostData) => void;
 }
 
 export default function CreatePostModal({
@@ -19,36 +25,58 @@ export default function CreatePostModal({
   onPublish,
 }: CreatePostModalProps) {
   const [content, setContent] = useState("");
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [selectedImage, setSelectedImage] =
+    useState<File | null>(null);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef =
+    useRef<HTMLInputElement>(null);
 
   if (!open) {
     return null;
   }
 
-  const handlePublish = () => {
-    const trimmedContent = content.trim();
-
-    if (!trimmedContent) {
-      return;
-    }
-
-    onPublish(trimmedContent);
-
+  function resetForm() {
     setContent("");
     setSelectedImage(null);
 
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+  }
 
+  function handleClose() {
+    resetForm();
     onClose();
-  };
+  }
 
-  const handleImageSelect = (
+  function handlePublish() {
+    const trimmedContent = content.trim();
+
+    if (!trimmedContent && !selectedImage) {
+      return;
+    }
+
+    /*
+     * For now, create a temporary browser URL for the
+     * selected image. Later this will be replaced by
+     * actual backend/cloud storage upload logic.
+     */
+    const imageUrl = selectedImage
+      ? URL.createObjectURL(selectedImage)
+      : undefined;
+
+    onPublish({
+      content: trimmedContent,
+      imageUrl,
+    });
+
+    resetForm();
+    onClose();
+  }
+
+  function handleImageSelect(
     event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  ) {
     const file = event.target.files?.[0];
 
     if (!file) {
@@ -60,15 +88,19 @@ export default function CreatePostModal({
     }
 
     setSelectedImage(file);
-  };
+  }
 
-  const handleRemoveImage = () => {
+  function handleRemoveImage() {
     setSelectedImage(null);
 
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
-  };
+  }
+
+  const imagePreviewUrl = selectedImage
+    ? URL.createObjectURL(selectedImage)
+    : null;
 
   return (
     <div
@@ -76,7 +108,7 @@ export default function CreatePostModal({
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) {
-          onClose();
+          handleClose();
         }
       }}
     >
@@ -98,7 +130,7 @@ export default function CreatePostModal({
           <button
             type="button"
             className="modal-close"
-            onClick={onClose}
+            onClick={handleClose}
             aria-label="Close create post"
           >
             <X size={20} />
@@ -118,24 +150,32 @@ export default function CreatePostModal({
 
         <textarea
           value={content}
-          onChange={(event) => setContent(event.target.value)}
+          onChange={(event) =>
+            setContent(event.target.value)
+          }
           placeholder="What is on your mind?"
           maxLength={500}
           autoFocus
         />
 
-        {selectedImage && (
-          <div className="selected-file">
-            <ImageIcon size={16} />
-
-            <span>{selectedImage.name}</span>
+        {imagePreviewUrl && (
+          <div className="image-preview-wrapper">
+            <Image
+              src={imagePreviewUrl}
+              alt="Selected image preview"
+              className="image-preview"
+              width={600}
+              height={400}
+              unoptimized
+            />
 
             <button
               type="button"
+              className="image-remove-button"
               onClick={handleRemoveImage}
               aria-label="Remove selected image"
             >
-              <X size={15} />
+              <X size={16} />
             </button>
           </div>
         )}
@@ -153,7 +193,9 @@ export default function CreatePostModal({
             <button
               type="button"
               aria-label="Add image"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() =>
+                fileInputRef.current?.click()
+              }
             >
               <ImageIcon size={18} />
             </button>
@@ -173,7 +215,7 @@ export default function CreatePostModal({
           <button
             type="button"
             className="cancel-button"
-            onClick={onClose}
+            onClick={handleClose}
           >
             Cancel
           </button>
@@ -182,7 +224,9 @@ export default function CreatePostModal({
             type="button"
             className="publish-button"
             onClick={handlePublish}
-            disabled={!content.trim()}
+            disabled={
+              !content.trim() && !selectedImage
+            }
           >
             Publish
           </button>

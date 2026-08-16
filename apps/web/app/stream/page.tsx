@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import CreatePanel from "../../components/stream/CreatePanel";
-import CreatePostModal from "../../components/stream/CreatePostModal";
+import CreatePostModal, {
+  CreatePostData,
+} from "../../components/stream/CreatePostModal";
 import PostCard from "../../components/stream/PostCard";
 
 interface StreamPost {
@@ -13,6 +15,7 @@ interface StreamPost {
   initials: string;
   avatarClass: string;
   content: string;
+  imageUrl?: string;
   type: "thought" | "space";
 }
 
@@ -67,7 +70,9 @@ export default function StreamPage() {
     setCreateModalOpen(false);
   }
 
-  function handlePostCreated(content: string) {
+  function handlePostCreated(
+    postData: CreatePostData,
+  ) {
     const newPost: StreamPost = {
       id: crypto.randomUUID(),
       name: "Santhosh",
@@ -75,7 +80,8 @@ export default function StreamPage() {
       time: "now",
       initials: "SA",
       avatarClass: "avatar-purple",
-      content,
+      content: postData.content,
+      imageUrl: postData.imageUrl,
       type: "thought",
     };
 
@@ -98,8 +104,8 @@ export default function StreamPage() {
           <h1>Stream</h1>
 
           <p>
-            Ideas, conversations, people and moments
-            that matter to you.
+            Ideas, conversations, people and
+            moments that matter to you.
           </p>
         </div>
       </div>
@@ -126,6 +132,7 @@ export default function StreamPage() {
             initials={post.initials}
             avatarClass={post.avatarClass}
             content={post.content}
+            imageUrl={post.imageUrl}
             type={post.type}
           />
         ))}

@@ -19,6 +19,7 @@ interface PostCardProps {
   initials: string;
   avatarClass: string;
   content: string;
+  imageUrl?: string;
   type?: "thought" | "space";
 }
 
@@ -29,6 +30,7 @@ export default function PostCard({
   initials,
   avatarClass,
   content,
+  imageUrl,
   type = "thought",
 }: PostCardProps) {
   const [liked, setLiked] = useState(false);
@@ -57,7 +59,9 @@ export default function PostCard({
           text: content,
         });
       } else {
-        await navigator.clipboard.writeText(content);
+        await navigator.clipboard.writeText(
+          content,
+        );
       }
 
       setShared(true);
@@ -74,7 +78,9 @@ export default function PostCard({
     <article className="post-card">
       <div className="post-header">
         <div className="post-user">
-          <div className={`avatar ${avatarClass}`}>
+          <div
+            className={`avatar ${avatarClass}`}
+          >
             {initials}
           </div>
 
@@ -97,25 +103,41 @@ export default function PostCard({
       </div>
 
       <div className="post-content">
-        <p className="post-text">
-          {content}
-        </p>
+        {content && (
+          <p className="post-text">
+            {content}
+          </p>
+        )}
 
-        {type === "thought" && (
-          <div className="idea-card">
-            <div className="idea-icon">
-              <Sparkles size={22} />
-            </div>
-
-            <div>
-              <span>THOUGHT OF THE DAY</span>
-
-              <h3>
-                Build for the feeling, not the feature.
-              </h3>
-            </div>
+        {imageUrl && (
+          <div className="post-image-wrapper">
+            <img
+              src={imageUrl}
+              alt={`Image shared by ${name}`}
+              className="post-image"
+            />
           </div>
         )}
+
+        {!imageUrl &&
+          type === "thought" && (
+            <div className="idea-card">
+              <div className="idea-icon">
+                <Sparkles size={22} />
+              </div>
+
+              <div>
+                <span>
+                  THOUGHT OF THE DAY
+                </span>
+
+                <h3>
+                  Build for the feeling, not the
+                  feature.
+                </h3>
+              </div>
+            </div>
+          )}
 
         {type === "space" && (
           <div className="space-preview">
@@ -129,7 +151,8 @@ export default function PostCard({
               <h3>AI Builders</h3>
 
               <p>
-                2.8K people exploring the future of AI
+                2.8K people exploring the future
+                of AI
               </p>
             </div>
 
@@ -146,16 +169,24 @@ export default function PostCard({
       <div className="post-footer">
         <button
           type="button"
-          className={liked ? "liked" : ""}
+          className={
+            liked ? "liked" : ""
+          }
           onClick={handleLike}
           aria-label={
-            liked ? "Unlike post" : "Like post"
+            liked
+              ? "Unlike post"
+              : "Like post"
           }
           aria-pressed={liked}
         >
           <Heart
             size={19}
-            fill={liked ? "currentColor" : "none"}
+            fill={
+              liked
+                ? "currentColor"
+                : "none"
+            }
           />
 
           <span>{likes}</span>
@@ -166,6 +197,7 @@ export default function PostCard({
           aria-label="View comments"
         >
           <MessageSquare size={19} />
+
           <span>18</span>
         </button>
 
@@ -181,7 +213,9 @@ export default function PostCard({
           )}
 
           <span>
-            {shared ? "Copied" : "Share"}
+            {shared
+              ? "Copied"
+              : "Share"}
           </span>
         </button>
 
@@ -191,7 +225,9 @@ export default function PostCard({
             saved ? "saved" : ""
           }`}
           onClick={() =>
-            setSaved((current) => !current)
+            setSaved(
+              (current) => !current,
+            )
           }
           aria-label={
             saved
@@ -202,7 +238,11 @@ export default function PostCard({
         >
           <Bookmark
             size={19}
-            fill={saved ? "currentColor" : "none"}
+            fill={
+              saved
+                ? "currentColor"
+                : "none"
+            }
           />
         </button>
       </div>
