@@ -3,6 +3,8 @@ import "dotenv/config";
 import cors from "cors";
 import express from "express";
 
+import authRoutes from "./routes/auth.routes.js";
+
 const app = express();
 
 const PORT = Number(process.env.PORT ?? 5000);
@@ -35,6 +37,8 @@ app.get("/health", (_request, response) => {
   });
 });
 
+app.use("/api/auth", authRoutes);
+
 async function startServer(): Promise<void> {
   app.listen(PORT, () => {
     console.log(
@@ -44,7 +48,7 @@ async function startServer(): Promise<void> {
 }
 
 startServer().catch((error) => {
-  console.error("❌ Failed to start AIO backend");
+  console.error("Failed to start AIO backend");
   console.error(error);
   process.exit(1);
 });
