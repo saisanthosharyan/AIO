@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import CreatePanel from "../../components/stream/CreatePanel";
+import CreatePanel from "@/components/stream/CreatePanel";
 import CreatePostModal, {
   CreatePostData,
-} from "../../components/stream/CreatePostModal";
-import PostCard from "../../components/stream/PostCard";
+} from "@/components/stream/CreatePostModal";
+import PostCard from "@/components/stream/PostCard";
 
 interface StreamPost {
-  id: string;
+  id: number;
   name: string;
   username: string;
   time: string;
@@ -16,42 +16,30 @@ interface StreamPost {
   avatarClass: string;
   content: string;
   imageUrl?: string;
-  type: "thought" | "space";
+  type?: "thought" | "space";
 }
 
 const initialPosts: StreamPost[] = [
   {
-    id: "1",
-    name: "Santhosh",
-    username: "@santhosh",
-    time: "2m",
-    initials: "SA",
-    avatarClass: "avatar-purple",
+    id: 1,
+    name: "Alex Morgan",
+    username: "@alexm",
+    time: "2h",
+    initials: "A",
+    avatarClass: "avatar-blue",
     content:
-      "Building AIO step by step. The goal is to create one social platform where conversations, communities, short-form content, and AI actually work together.",
+      "Building something new today. The future of social platforms should feel more connected, not more complicated.",
     type: "thought",
   },
   {
-    id: "2",
-    name: "Aarav",
-    username: "@aarav",
-    time: "18m",
-    initials: "AR",
-    avatarClass: "avatar-green",
+    id: 2,
+    name: "Sarah Kim",
+    username: "@sarahk",
+    time: "4h",
+    initials: "S",
+    avatarClass: "avatar-pink",
     content:
-      "AI products become much more interesting when AI is part of the experience instead of being just another chatbot.",
-    type: "space",
-  },
-  {
-    id: "3",
-    name: "Meera",
-    username: "@meera",
-    time: "42m",
-    initials: "MR",
-    avatarClass: "avatar-orange",
-    content:
-      "What are you building today? Share an idea, a project, or something you discovered.",
-    type: "thought",
+      "Just discovered an amazing new idea around AI, creativity and communities. What are you all working on?",
   },
 ];
 
@@ -59,70 +47,46 @@ export default function StreamPage() {
   const [posts, setPosts] =
     useState<StreamPost[]>(initialPosts);
 
-  const [createModalOpen, setCreateModalOpen] =
+  const [createOpen, setCreateOpen] =
     useState(false);
 
-  function handleOpenCreate() {
-    setCreateModalOpen(true);
-  }
-
-  function handleCloseCreate() {
-    setCreateModalOpen(false);
-  }
-
-  function handlePostCreated(
-    postData: CreatePostData,
-  ) {
+  function handlePublish(post: CreatePostData) {
     const newPost: StreamPost = {
-      id: crypto.randomUUID(),
+      id: Date.now(),
       name: "Santhosh",
       username: "@santhosh",
       time: "now",
       initials: "SA",
       avatarClass: "avatar-purple",
-      content: postData.content,
-      imageUrl: postData.imageUrl,
-      type: "thought",
+      content: post.content,
+      imageUrl: post.imageUrl,
     };
 
     setPosts((currentPosts) => [
       newPost,
       ...currentPosts,
     ]);
-
-    setCreateModalOpen(false);
   }
 
   return (
-    <section className="stream-page">
-      <div className="page-intro">
+    <>
+      <div className="aio-page-header">
         <div>
-          <span className="eyebrow">
-            YOUR WORLD
-          </span>
-
           <h1>Stream</h1>
 
           <p>
-            Ideas, conversations, people and
-            moments that matter to you.
+            What&apos;s happening in your world?
           </p>
         </div>
       </div>
 
-      <CreatePanel
-        onOpenCreate={handleOpenCreate}
-      />
+      <section className="aio-feed">
+        <CreatePanel
+          onOpenCreate={() =>
+            setCreateOpen(true)
+          }
+        />
 
-      <div className="stream-label">
-        <span>
-          LATEST FROM YOUR NETWORK
-        </span>
-
-        <div />
-      </div>
-
-      <div>
         {posts.map((post) => (
           <PostCard
             key={post.id}
@@ -136,13 +100,15 @@ export default function StreamPage() {
             type={post.type}
           />
         ))}
-      </div>
+      </section>
 
       <CreatePostModal
-        open={createModalOpen}
-        onClose={handleCloseCreate}
-        onPublish={handlePostCreated}
+        open={createOpen}
+        onClose={() =>
+          setCreateOpen(false)
+        }
+        onPublish={handlePublish}
       />
-    </section>
+    </>
   );
 }

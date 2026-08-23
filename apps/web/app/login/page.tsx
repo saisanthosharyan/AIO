@@ -1,11 +1,75 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Eye, EyeOff, Sparkles } from "lucide-react";
-import { useState } from "react";
+import {
+  ArrowRight,
+  Eye,
+  EyeOff,
+  Sparkles,
+} from "lucide-react";
+import { FormEvent, useState } from "react";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleLogin(
+    event: FormEvent<HTMLFormElement>,
+  ) {
+    event.preventDefault();
+
+    setError("");
+    setLoading(true);
+
+    try {
+      const response = await fetch(
+        "http://localhost:5000/api/auth/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: email.trim(),
+            password,
+          }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Login failed",
+        );
+      }
+
+      localStorage.setItem(
+        "aio_token",
+        data.token,
+      );
+
+      localStorage.setItem(
+        "aio_user",
+        JSON.stringify(data.user),
+      );
+
+      window.location.href = "/stream";
+    } catch (loginError) {
+      setError(
+        loginError instanceof Error
+          ? loginError.message
+          : "Something went wrong.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <main className="auth-page">
@@ -25,7 +89,9 @@ export default function LoginPage() {
         </div>
 
         <div className="auth-heading">
-          <span className="eyebrow">WELCOME BACK</span>
+          <span className="eyebrow">
+            WELCOME BACK
+          </span>
 
           <h1>
             Everything starts
@@ -39,7 +105,10 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <form className="auth-form">
+        <form
+          className="auth-form"
+          onSubmit={handleLogin}
+        >
           <div className="field">
             <label htmlFor="email">
               Email or username
@@ -50,6 +119,11 @@ export default function LoginPage() {
               type="text"
               placeholder="you@example.com"
               autoComplete="username"
+              value={email}
+              onChange={(event) =>
+                setEmail(event.target.value)
+              }
+              required
             />
           </div>
 
@@ -67,15 +141,26 @@ export default function LoginPage() {
             <div className="password-field">
               <input
                 id="password"
-                type={showPassword ? "text" : "password"}
+                type={
+                  showPassword
+                    ? "text"
+                    : "password"
+                }
                 placeholder="Enter your password"
                 autoComplete="current-password"
+                value={password}
+                onChange={(event) =>
+                  setPassword(event.target.value)
+                }
+                required
               />
 
               <button
                 type="button"
                 onClick={() =>
-                  setShowPassword((value) => !value)
+                  setShowPassword(
+                    (value) => !value,
+                  )
                 }
                 aria-label={
                   showPassword
@@ -92,8 +177,28 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <button type="submit" className="auth-submit">
-            <span>Enter AIO</span>
+          {error && (
+            <p
+              style={{
+                color: "var(--aio-danger)",
+                fontSize: "14px",
+                margin: "0",
+              }}
+            >
+              {error}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            className="auth-submit"
+            disabled={loading}
+          >
+            <span>
+              {loading
+                ? "Signing in..."
+                : "Enter AIO"}
+            </span>
 
             <ArrowRight size={18} />
           </button>

@@ -2,9 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "AIO — All Your World, One Place",
-  description:
-    "A calm, intelligent social platform for conversations, ideas, communities and creativity.",
+  title: "AIO",
+  description: "Everything social, in one place.",
 };
 
 export default function RootLayout({

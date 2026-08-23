@@ -8,7 +8,7 @@ import {
   EyeOff,
   Sparkles,
 } from "lucide-react";
-import { useState } from "react";
+import { FormEvent, useState } from "react";
 
 const benefits = [
   "One identity across every AIO device",
@@ -20,6 +20,86 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] =
     useState(false);
+
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] =
+    useState("");
+
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleSignup(
+    event: FormEvent<HTMLFormElement>,
+  ) {
+    event.preventDefault();
+
+    setError("");
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    if (password.length < 6) {
+      setError(
+        "Password must be at least 6 characters.",
+      );
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch(
+        "http://localhost:5000/api/auth/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            username: username.trim(),
+            email: email.trim(),
+            password,
+            displayName:
+              `${firstName.trim()} ${lastName.trim()}`.trim(),
+          }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Registration failed",
+        );
+      }
+
+      localStorage.setItem(
+        "aio_token",
+        data.token,
+      );
+
+      localStorage.setItem(
+        "aio_user",
+        JSON.stringify(data.user),
+      );
+
+      window.location.href = "/stream";
+    } catch (signupError) {
+      setError(
+        signupError instanceof Error
+          ? signupError.message
+          : "Something went wrong.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <main className="auth-page">
@@ -39,7 +119,9 @@ export default function SignupPage() {
         </div>
 
         <div className="auth-heading">
-          <span className="eyebrow">CREATE YOUR IDENTITY</span>
+          <span className="eyebrow">
+            CREATE YOUR IDENTITY
+          </span>
 
           <h1>
             Your world.
@@ -53,7 +135,10 @@ export default function SignupPage() {
           </p>
         </div>
 
-        <form className="auth-form">
+        <form
+          className="auth-form"
+          onSubmit={handleSignup}
+        >
           <div className="signup-name-row">
             <div className="field">
               <label htmlFor="firstName">
@@ -65,6 +150,11 @@ export default function SignupPage() {
                 type="text"
                 placeholder="Santhosh"
                 autoComplete="given-name"
+                value={firstName}
+                onChange={(event) =>
+                  setFirstName(event.target.value)
+                }
+                required
               />
             </div>
 
@@ -78,6 +168,10 @@ export default function SignupPage() {
                 type="text"
                 placeholder="Aryan"
                 autoComplete="family-name"
+                value={lastName}
+                onChange={(event) =>
+                  setLastName(event.target.value)
+                }
               />
             </div>
           </div>
@@ -95,6 +189,11 @@ export default function SignupPage() {
                 type="text"
                 placeholder="chooseyourname"
                 autoComplete="username"
+                value={username}
+                onChange={(event) =>
+                  setUsername(event.target.value)
+                }
+                required
               />
             </div>
           </div>
@@ -109,6 +208,11 @@ export default function SignupPage() {
               type="email"
               placeholder="you@example.com"
               autoComplete="email"
+              value={email}
+              onChange={(event) =>
+                setEmail(event.target.value)
+              }
+              required
             />
           </div>
 
@@ -120,15 +224,26 @@ export default function SignupPage() {
             <div className="password-field">
               <input
                 id="password"
-                type={showPassword ? "text" : "password"}
+                type={
+                  showPassword
+                    ? "text"
+                    : "password"
+                }
                 placeholder="Create a strong password"
                 autoComplete="new-password"
+                value={password}
+                onChange={(event) =>
+                  setPassword(event.target.value)
+                }
+                required
               />
 
               <button
                 type="button"
                 onClick={() =>
-                  setShowPassword((value) => !value)
+                  setShowPassword(
+                    (value) => !value,
+                  )
                 }
                 aria-label={
                   showPassword
@@ -160,6 +275,13 @@ export default function SignupPage() {
                 }
                 placeholder="Enter your password again"
                 autoComplete="new-password"
+                value={confirmPassword}
+                onChange={(event) =>
+                  setConfirmPassword(
+                    event.target.value,
+                  )
+                }
+                required
               />
 
               <button
@@ -184,11 +306,28 @@ export default function SignupPage() {
             </div>
           </div>
 
+          {error && (
+            <p
+              style={{
+                color: "var(--aio-danger)",
+                fontSize: "14px",
+                margin: "0",
+              }}
+            >
+              {error}
+            </p>
+          )}
+
           <button
             type="submit"
             className="auth-submit"
+            disabled={loading}
           >
-            <span>Create my AIO</span>
+            <span>
+              {loading
+                ? "Creating account..."
+                : "Create my AIO"}
+            </span>
 
             <ArrowRight size={18} />
           </button>
