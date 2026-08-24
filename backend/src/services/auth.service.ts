@@ -1,10 +1,7 @@
 import bcrypt from "bcryptjs";
-import { randomUUID } from "crypto";
 
-import type { User } from "../models/User.js";
+import { UserModel } from "../models/User.js";
 import { generateToken } from "../utils/jwt.js";
-
-const users: User[] = [];
 
 export interface RegisterInput {
   username: string;
@@ -21,59 +18,69 @@ export interface LoginInput {
 export async function registerUser(
   input: RegisterInput,
 ) {
-  const existingUser = users.find(
-    (user) =>
-      user.email.toLowerCase() ===
-      input.email.toLowerCase(),
-  );
+  const username = input.username.trim();
+  const email = input.email.trim().toLowerCase();
+  const password = input.password;
+  const displayName = input.displayName.trim();
 
-  if (existingUser) {
+  if (!username || !email || !password || !displayName) {
+    throw new Error("All fields are required");
+  }
+
+  const existingEmail = await UserModel.findOne({
+    email,
+  });
+
+  if (existingEmail) {
     throw new Error("Email already registered");
   }
 
-  const password = await bcrypt.hash(
-    input.password,
+  const existingUsername = await UserModel.findOne({
+    username,
+  });
+
+  if (existingUsername) {
+    throw new Error("Username already taken");
+  }
+
+  const hashedPassword = await bcrypt.hash(
+    password,
     10,
   );
 
-  const user: User = {
-    id: randomUUID(),
-    username: input.username,
-    email: input.email,
-    password,
-    displayName: input.displayName,
+  const user = await UserModel.create({
+    username,
+    email,
+    password: hashedPassword,
+    displayName,
     verified: false,
     followersCount: 0,
     followingCount: 0,
-    createdAt: new Date().toISOString(),
-  };
-
-  users.push(user);
+  });
 
   return {
     user: sanitizeUser(user),
-    token: generateToken(user.id),
+    token: generateToken(user._id.toString()),
   };
 }
 
 export async function loginUser(
   input: LoginInput,
 ) {
-  const user = users.find(
-    (item) =>
-      item.email.toLowerCase() ===
-      input.email.toLowerCase(),
-  );
+  const email = input.email.trim().toLowerCase();
+
+  const user = await UserModel.findOne({
+    email,
+  });
 
   if (!user) {
     throw new Error("Invalid email or password");
   }
 
-  const validPassword =
-    await bcrypt.compare(
-      input.password,
-      user.password,
-    );
+  const validPassword = await bcrypt.compare(
+    input.password,
+    user.password,
+  );
 
   if (!validPassword) {
     throw new Error("Invalid email or password");
@@ -81,21 +88,26 @@ export async function loginUser(
 
   return {
     user: sanitizeUser(user),
-    token: generateToken(user.id),
+    token: generateToken(user._id.toString()),
   };
 }
 
-export function findUserById(
+export async function findUserById(
   userId: string,
 ) {
-  return users.find(
-    (user) => user.id === userId,
-  );
+  return UserModel.findById(userId);
 }
 
-function sanitizeUser(user: User) {
-  const { password: _password, ...safeUser } =
-    user;
+function sanitizeUser(user: {
+  _id: unknown;
+  toObject: () => Record<string, unknown>;
+}) {
+  const userObject = user.toObject();
 
-  return safeUser;
+  delete userObject.password;
+
+  return {
+    ...userObject,
+    id: String(user._id),
+  };
 }

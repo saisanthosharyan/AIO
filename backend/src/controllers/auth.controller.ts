@@ -5,6 +5,7 @@ import {
   loginUser,
   registerUser,
 } from "../services/auth.service.js";
+
 import { verifyToken } from "../utils/jwt.js";
 
 export async function register(
@@ -74,8 +75,12 @@ export async function me(
     }
 
     const token = authorization.substring(7);
+
     const payload = verifyToken(token);
-    const user = findUserById(payload.userId);
+
+    const user = await findUserById(
+      payload.userId,
+    );
 
     if (!user) {
       response.status(404).json({
@@ -85,12 +90,19 @@ export async function me(
       return;
     }
 
-    const { password: _password, ...safeUser } =
-      user;
+    const userObject = user.toObject();
+
+    const {
+      password: _password,
+      ...safeUser
+    } = userObject;
 
     response.json({
       success: true,
-      user: safeUser,
+      user: {
+        ...safeUser,
+        id: user._id.toString(),
+      },
     });
   } catch {
     response.status(401).json({

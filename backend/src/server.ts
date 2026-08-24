@@ -3,7 +3,11 @@ import "dotenv/config";
 import cors from "cors";
 import express from "express";
 
+import { connectDatabase } from "./config/database.js";
 import authRoutes from "./routes/auth.routes.js";
+import postRoutes from "./routes/post.routes.js";
+import commentRoutes from "./routes/comment.routes.js";
+import bookmarkRoutes from "./routes/bookmark.routes.js";
 
 const app = express();
 
@@ -38,17 +42,24 @@ app.get("/health", (_request, response) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/posts", postRoutes);
+app.use("/api/posts/:id/comments", commentRoutes);
+app.use("/api/bookmarks", bookmarkRoutes);
 
 async function startServer(): Promise<void> {
-  app.listen(PORT, () => {
-    console.log(
-      `AIO backend running on http://localhost:${PORT}`,
-    );
-  });
+  try {
+    await connectDatabase();
+
+    app.listen(PORT, () => {
+      console.log(
+        `AIO backend running on http://localhost:${PORT}`,
+      );
+    });
+  } catch (error) {
+    console.error("Failed to start AIO backend");
+    console.error(error);
+    process.exit(1);
+  }
 }
 
-startServer().catch((error) => {
-  console.error("Failed to start AIO backend");
-  console.error(error);
-  process.exit(1);
-});
+startServer();

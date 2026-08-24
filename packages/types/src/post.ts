@@ -1,18 +1,27 @@
-export type PostVisibility =
-  | "private"
-  | "friends"
-  | "followers"
-  | "space"
-  | "public";
+export type PostType =
+  | "thought"
+  | "image"
+  | "space";
 
 export interface Post {
-  id: string;
+  _id: string;
   authorId: string;
   content: string;
-  mediaUrls: string[];
-  visibility: PostVisibility;
+  imageUrl?: string;
+  type: PostType;
   likesCount: number;
   commentsCount: number;
-  sharesCount: number;
+  bookmarksCount: number;
+  comments?: Comment[];
   createdAt: string;
+  updatedAt: string;
+}
+
+export interface Comment {
+  _id: string;
+  userId: string;
+  postId: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
 }

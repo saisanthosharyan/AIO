@@ -2,6 +2,13 @@
 
 import { useState } from "react";
 import {
+  bookmarkPost,
+  likePost,
+  unlikePost,
+  unbookmarkPost,
+} from "../../lib/api";
+
+import {
   Bookmark,
   Check,
   Heart,
@@ -13,6 +20,7 @@ import {
 } from "lucide-react";
 
 interface PostCardProps {
+  postId: string;
   name: string;
   username: string;
   time: string;
@@ -20,10 +28,14 @@ interface PostCardProps {
   avatarClass: string;
   content: string;
   imageUrl?: string;
-  type?: "thought" | "space";
+  type?: "thought" | "image" | "space";
+  likesCount?: number;
+  commentsCount?: number;
+  bookmarksCount?: number;
 }
 
 export default function PostCard({
+  postId,
   name,
   username,
   time,
@@ -32,22 +44,85 @@ export default function PostCard({
   content,
   imageUrl,
   type = "thought",
+  likesCount = 0,
+  commentsCount = 0,
+  bookmarksCount = 0,
 }: PostCardProps) {
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
   const [shared, setShared] = useState(false);
 
-  const [likes, setLikes] = useState(
-    type === "thought" ? 124 : 87,
-  );
+  const [likes, setLikes] = useState(likesCount);
+  const [comments] = useState(commentsCount);
+  const [bookmarks, setBookmarks] =
+    useState(bookmarksCount);
 
-  function handleLike() {
-    if (liked) {
-      setLiked(false);
-      setLikes((count) => count - 1);
-    } else {
-      setLiked(true);
-      setLikes((count) => count + 1);
+  const [likeLoading, setLikeLoading] =
+    useState(false);
+  const [bookmarkLoading, setBookmarkLoading] =
+    useState(false);
+
+  async function handleLike() {
+    if (likeLoading) {
+      return;
+    }
+
+    try {
+      setLikeLoading(true);
+
+      if (liked) {
+        const result = await unlikePost(postId);
+
+        setLiked(false);
+        setLikes(result.likesCount);
+      } else {
+        const result = await likePost(postId);
+
+        setLiked(true);
+        setLikes(result.likesCount);
+      }
+    } catch (error) {
+      console.error(
+        "Failed to update like:",
+        error,
+      );
+    } finally {
+      setLikeLoading(false);
+    }
+  }
+
+  async function handleBookmark() {
+    if (bookmarkLoading) {
+      return;
+    }
+
+    try {
+      setBookmarkLoading(true);
+
+      if (saved) {
+        const result =
+          await unbookmarkPost(postId);
+
+        setSaved(false);
+        setBookmarks(
+          result.bookmarksCount,
+        );
+      } else {
+        const result =
+          await bookmarkPost(postId);
+
+        setSaved(true);
+        setBookmarks(
+          result.bookmarksCount,
+        );
+      }
+    } catch (error) {
+      console.error(
+        "Failed to update bookmark:",
+        error,
+      );
+    } finally {
+      setBookmarkLoading(false);
     }
   }
 
@@ -173,6 +248,7 @@ export default function PostCard({
             liked ? "liked" : ""
           }
           onClick={handleLike}
+          disabled={likeLoading}
           aria-label={
             liked
               ? "Unlike post"
@@ -198,7 +274,7 @@ export default function PostCard({
         >
           <MessageSquare size={19} />
 
-          <span>18</span>
+          <span>{comments}</span>
         </button>
 
         <button
@@ -224,11 +300,8 @@ export default function PostCard({
           className={`save-action ${
             saved ? "saved" : ""
           }`}
-          onClick={() =>
-            setSaved(
-              (current) => !current,
-            )
-          }
+          onClick={handleBookmark}
+          disabled={bookmarkLoading}
           aria-label={
             saved
               ? "Remove from saved"
@@ -244,6 +317,10 @@ export default function PostCard({
                 : "none"
             }
           />
+
+          <span className="sr-only">
+            {bookmarks}
+          </span>
         </button>
       </div>
     </article>

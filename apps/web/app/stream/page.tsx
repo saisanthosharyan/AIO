@@ -8,7 +8,7 @@ import CreatePostModal, {
 import PostCard from "@/components/stream/PostCard";
 
 interface StreamPost {
-  id: number;
+  postId: string;
   name: string;
   username: string;
   time: string;
@@ -21,7 +21,7 @@ interface StreamPost {
 
 const initialPosts: StreamPost[] = [
   {
-    id: 1,
+    postId: "6a8be51095a9e0537dc2f6f7",
     name: "Alex Morgan",
     username: "@alexm",
     time: "2h",
@@ -32,7 +32,7 @@ const initialPosts: StreamPost[] = [
     type: "thought",
   },
   {
-    id: 2,
+    postId: "6a8be51095a9e0537dc2f6f8",
     name: "Sarah Kim",
     username: "@sarahk",
     time: "4h",
@@ -52,7 +52,7 @@ export default function StreamPage() {
 
   function handlePublish(post: CreatePostData) {
     const newPost: StreamPost = {
-      id: Date.now(),
+      postId: `local-${Date.now()}`,
       name: "Santhosh",
       username: "@santhosh",
       time: "now",
@@ -60,6 +60,7 @@ export default function StreamPage() {
       avatarClass: "avatar-purple",
       content: post.content,
       imageUrl: post.imageUrl,
+      type: "thought",
     };
 
     setPosts((currentPosts) => [
@@ -89,7 +90,8 @@ export default function StreamPage() {
 
         {posts.map((post) => (
           <PostCard
-            key={post.id}
+            key={post.postId}
+            postId={post.postId}
             name={post.name}
             username={post.username}
             time={post.time}
@@ -112,3 +114,4 @@ export default function StreamPage() {
     </>
   );
 }
+
