@@ -11,6 +11,8 @@ export async function createComment(
 ): Promise<void> {
   try {
     const userId = request.userId;
+    const { id } = request.params;
+    const { content } = request.body;
 
     if (!userId) {
       response.status(401).json({
@@ -20,10 +22,15 @@ export async function createComment(
       return;
     }
 
-    const { id } = request.params;
-    const { content } = request.body;
-
     if (typeof id !== "string") {
+      response.status(400).json({
+        success: false,
+        message: "Invalid post ID",
+      });
+      return;
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       response.status(400).json({
         success: false,
         message: "Invalid post ID",
@@ -42,18 +49,22 @@ export async function createComment(
       return;
     }
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      response.status(400).json({
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      response.status(401).json({
         success: false,
-        message: "Invalid post ID",
+        message: "Invalid authenticated user ID",
       });
       return;
     }
 
-    const postId = new mongoose.Types.ObjectId(id);
-    const userObjectId = new mongoose.Types.ObjectId(userId);
+    const postId =
+      new mongoose.Types.ObjectId(id);
 
-    const post = await PostModel.findById(postId);
+    const userObjectId =
+      new mongoose.Types.ObjectId(userId);
+
+    const post =
+      await PostModel.findById(postId);
 
     if (!post) {
       response.status(404).json({
@@ -63,22 +74,37 @@ export async function createComment(
       return;
     }
 
-    const comment = await CommentModel.create({
-      userId: userObjectId,
-      postId,
-      content: content.trim(),
-    });
+    const comment =
+      await CommentModel.create({
+        userId: userObjectId,
+        postId,
+        content: content.trim(),
+      });
 
     post.commentsCount += 1;
+
     await post.save();
 
     response.status(201).json({
       success: true,
       message: "Comment created successfully",
-      comment,
+      comment: {
+        _id: comment._id.toString(),
+        id: comment._id.toString(),
+        userId: comment.userId.toString(),
+        postId: comment.postId.toString(),
+        content: comment.content,
+        createdAt: comment.createdAt,
+        updatedAt: comment.updatedAt,
+      },
       commentsCount: post.commentsCount,
     });
   } catch (error) {
+    console.error(
+      "Create comment error:",
+      error,
+    );
+
     response.status(500).json({
       success: false,
       message:
@@ -112,9 +138,11 @@ export async function getComments(
       return;
     }
 
-    const postId = new mongoose.Types.ObjectId(id);
+    const postId =
+      new mongoose.Types.ObjectId(id);
 
-    const post = await PostModel.findById(postId);
+    const post =
+      await PostModel.findById(postId);
 
     if (!post) {
       response.status(404).json({
@@ -124,18 +152,37 @@ export async function getComments(
       return;
     }
 
-    const comments = await CommentModel.find({
-      postId,
-    })
-      .sort({ createdAt: -1 })
-      .lean();
+    const comments =
+      await CommentModel.find({
+        postId,
+      })
+        .sort({ createdAt: -1 })
+        .lean();
+
+    const normalizedComments =
+      comments.map((comment) => ({
+        _id: comment._id.toString(),
+        id: comment._id.toString(),
+        userId:
+          comment.userId.toString(),
+        postId:
+          comment.postId.toString(),
+        content: comment.content,
+        createdAt: comment.createdAt,
+        updatedAt: comment.updatedAt,
+      }));
 
     response.status(200).json({
       success: true,
-      count: comments.length,
-      comments,
+      count: normalizedComments.length,
+      comments: normalizedComments,
     });
   } catch (error) {
+    console.error(
+      "Get comments error:",
+      error,
+    );
+
     response.status(500).json({
       success: false,
       message:
@@ -152,6 +199,8 @@ export async function deleteComment(
 ): Promise<void> {
   try {
     const userId = request.userId;
+    const { id, commentId } =
+      request.params;
 
     if (!userId) {
       response.status(401).json({
@@ -160,8 +209,6 @@ export async function deleteComment(
       });
       return;
     }
-
-    const { id, commentId } = request.params;
 
     if (
       typeof id !== "string" ||
@@ -176,8 +223,9 @@ export async function deleteComment(
 
     if (
       !mongoose.Types.ObjectId.isValid(id) ||
-      !mongoose.Types.ObjectId.isValid(commentId) ||
-      !mongoose.Types.ObjectId.isValid(userId)
+      !mongoose.Types.ObjectId.isValid(
+        commentId,
+      )
     ) {
       response.status(400).json({
         success: false,
@@ -186,17 +234,31 @@ export async function deleteComment(
       return;
     }
 
-    const postId = new mongoose.Types.ObjectId(id);
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      response.status(401).json({
+        success: false,
+        message: "Invalid authenticated user ID",
+      });
+      return;
+    }
+
+    const postId =
+      new mongoose.Types.ObjectId(id);
+
     const commentObjectId =
-      new mongoose.Types.ObjectId(commentId);
+      new mongoose.Types.ObjectId(
+        commentId,
+      );
+
     const userObjectId =
       new mongoose.Types.ObjectId(userId);
 
-    const comment = await CommentModel.findOneAndDelete({
-      _id: commentObjectId,
-      postId,
-      userId: userObjectId,
-    });
+    const comment =
+      await CommentModel.findOneAndDelete({
+        _id: commentObjectId,
+        postId,
+        userId: userObjectId,
+      });
 
     if (!comment) {
       response.status(404).json({
@@ -207,24 +269,43 @@ export async function deleteComment(
       return;
     }
 
-    const post = await PostModel.findById(postId);
+    const post =
+      await PostModel.findById(postId);
 
     if (post) {
-      post.commentsCount = Math.max(
-        0,
-        post.commentsCount - 1,
-      );
+      post.commentsCount =
+        Math.max(
+          0,
+          post.commentsCount - 1,
+        );
 
       await post.save();
     }
 
     response.status(200).json({
       success: true,
-      message: "Comment deleted successfully",
-      comment,
-      commentsCount: post?.commentsCount ?? 0,
+      message:
+        "Comment deleted successfully",
+      comment: {
+        _id: comment._id.toString(),
+        id: comment._id.toString(),
+        userId:
+          comment.userId.toString(),
+        postId:
+          comment.postId.toString(),
+        content: comment.content,
+        createdAt: comment.createdAt,
+        updatedAt: comment.updatedAt,
+      },
+      commentsCount:
+        post?.commentsCount ?? 0,
     });
   } catch (error) {
+    console.error(
+      "Delete comment error:",
+      error,
+    );
+
     response.status(500).json({
       success: false,
       message:

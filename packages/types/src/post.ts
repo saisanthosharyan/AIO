@@ -4,7 +4,7 @@ export type PostType =
   | "space";
 
 export interface Post {
-  _id: string;
+  id: string;
   authorId: string;
   content: string;
   imageUrl?: string;
@@ -12,16 +12,15 @@ export interface Post {
   likesCount: number;
   commentsCount: number;
   bookmarksCount: number;
-  comments?: Comment[];
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
 export interface Comment {
-  _id: string;
+  id: string;
   userId: string;
   postId: string;
   content: string;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 }

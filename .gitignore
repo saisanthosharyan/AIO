@@ -30,3 +30,8 @@ Thumbs.db
 # Build
 dist/
 build/
+# Uploaded files
+backend/uploads/
+
+# Local test files
+test-image.png

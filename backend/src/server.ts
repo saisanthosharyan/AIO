@@ -2,12 +2,14 @@ import "dotenv/config";
 
 import cors from "cors";
 import express from "express";
+import path from "node:path";
 
 import { connectDatabase } from "./config/database.js";
 import authRoutes from "./routes/auth.routes.js";
 import postRoutes from "./routes/post.routes.js";
 import commentRoutes from "./routes/comment.routes.js";
 import bookmarkRoutes from "./routes/bookmark.routes.js";
+import uploadRoutes from "./routes/upload.routes.js";
 
 const app = express();
 
@@ -24,6 +26,16 @@ app.use(
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
+
+app.use(
+  "/uploads",
+  express.static(
+    path.resolve(
+      process.cwd(),
+      "uploads",
+    ),
+  ),
+);
 
 app.get("/", (_request, response) => {
   response.json({
@@ -45,6 +57,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/posts/:id/comments", commentRoutes);
 app.use("/api/bookmarks", bookmarkRoutes);
+app.use("/api/uploads", uploadRoutes);
 
 async function startServer(): Promise<void> {
   try {

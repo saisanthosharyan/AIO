@@ -1,5 +1,8 @@
-
-import mongoose, { Schema, type Model, type Document } from "mongoose";
+import mongoose, {
+  Schema,
+  type Document,
+  type Model,
+} from "mongoose";
 
 export interface IPost extends Document {
   authorId: string;
@@ -23,7 +26,7 @@ const postSchema = new Schema<IPost>(
 
     content: {
       type: String,
-      required: true,
+      default: "",
       maxlength: 5000,
     },
 

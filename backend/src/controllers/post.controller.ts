@@ -1,6 +1,13 @@
-import type { Request, Response } from "express";
+import type {
+  Request,
+  Response,
+} from "express";
+
 import { PostModel } from "../models/Post.js";
-import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
+
+import type {
+  AuthenticatedRequest,
+} from "../middleware/auth.middleware.js";
 
 export async function createPost(
   request: AuthenticatedRequest,
@@ -17,24 +24,82 @@ export async function createPost(
       return;
     }
 
-    const { content, imageUrl, type } = request.body;
+    const body = request.body ?? {};
 
-    if (
-      typeof content !== "string" ||
-      !content.trim()
-    ) {
+    const content =
+      typeof body.content === "string"
+        ? body.content.trim()
+        : "";
+
+    const imageUrl =
+      typeof body.imageUrl === "string"
+        ? body.imageUrl.trim()
+        : "";
+
+    const type = body.type;
+
+    /*
+     * A post must contain either text or an image.
+     */
+    if (!content && !imageUrl) {
       response.status(400).json({
         success: false,
-        message: "Content is required",
+        message:
+          "Post must contain text or an image",
       });
       return;
     }
 
+    /*
+     * Validate content length.
+     */
+    if (content.length > 5000) {
+      response.status(400).json({
+        success: false,
+        message:
+          "Post content cannot exceed 5000 characters",
+      });
+      return;
+    }
+
+    /*
+     * Validate post type.
+     */
+    if (
+      type !== undefined &&
+      type !== "thought" &&
+      type !== "image" &&
+      type !== "space"
+    ) {
+      response.status(400).json({
+        success: false,
+        message: "Invalid post type",
+      });
+      return;
+    }
+
+    /*
+     * Automatically determine the type when
+     * the frontend does not provide one.
+     */
+    const postType:
+      | "thought"
+      | "image"
+      | "space" =
+      type ??
+      (imageUrl ? "image" : "thought");
+
+    /*
+     * Create the post.
+     *
+     * content is allowed to be an empty string
+     * because image-only posts are supported.
+     */
     const post = await PostModel.create({
       authorId: userId,
-      content: content.trim(),
-      imageUrl,
-      type: type ?? "thought",
+      content,
+      imageUrl: imageUrl || undefined,
+      type: postType,
     });
 
     response.status(201).json({
@@ -43,6 +108,11 @@ export async function createPost(
       post,
     });
   } catch (error) {
+    console.error(
+      "Create post error:",
+      error,
+    );
+
     response.status(500).json({
       success: false,
       message:
@@ -59,7 +129,9 @@ export async function getPosts(
 ): Promise<void> {
   try {
     const posts = await PostModel.find()
-      .sort({ createdAt: -1 })
+      .sort({
+        createdAt: -1,
+      })
       .lean();
 
     response.status(200).json({
@@ -68,6 +140,11 @@ export async function getPosts(
       posts,
     });
   } catch (error) {
+    console.error(
+      "Get posts error:",
+      error,
+    );
+
     response.status(500).json({
       success: false,
       message:
@@ -85,7 +162,8 @@ export async function getPostById(
   try {
     const { id } = request.params;
 
-    const post = await PostModel.findById(id);
+    const post =
+      await PostModel.findById(id);
 
     if (!post) {
       response.status(404).json({
@@ -100,6 +178,11 @@ export async function getPostById(
       post,
     });
   } catch (error) {
+    console.error(
+      "Get post by id error:",
+      error,
+    );
+
     response.status(500).json({
       success: false,
       message:
@@ -126,9 +209,9 @@ export async function updatePost(
     }
 
     const { id } = request.params;
-    const { content, imageUrl, type } = request.body;
 
-    const post = await PostModel.findById(id);
+    const post =
+      await PostModel.findById(id);
 
     if (!post) {
       response.status(404).json({
@@ -141,62 +224,129 @@ export async function updatePost(
     if (post.authorId !== userId) {
       response.status(403).json({
         success: false,
-        message: "You are not allowed to update this post",
+        message:
+          "You are not allowed to update this post",
       });
       return;
     }
 
-    if (content !== undefined) {
+    const body = request.body ?? {};
+
+    if (
+      body.content !== undefined
+    ) {
       if (
-        typeof content !== "string" ||
-        !content.trim()
+        typeof body.content !==
+        "string"
       ) {
         response.status(400).json({
           success: false,
-          message: "Content cannot be empty",
+          message:
+            "Invalid post content",
         });
         return;
       }
 
-      post.content = content.trim();
-    }
+      const content =
+        body.content.trim();
 
-    if (imageUrl !== undefined) {
-      if (typeof imageUrl !== "string") {
+      if (content.length > 5000) {
         response.status(400).json({
           success: false,
-          message: "Invalid image URL",
+          message:
+            "Post content cannot exceed 5000 characters",
         });
         return;
       }
 
-      post.imageUrl = imageUrl;
+      post.content = content;
     }
 
-    if (type !== undefined) {
+    if (
+      body.imageUrl !== undefined
+    ) {
       if (
-        type !== "thought" &&
-        type !== "image" &&
-        type !== "space"
+        typeof body.imageUrl !==
+        "string"
       ) {
         response.status(400).json({
           success: false,
-          message: "Invalid post type",
+          message:
+            "Invalid image URL",
         });
         return;
       }
 
-      post.type = type;
+      post.imageUrl =
+        body.imageUrl.trim() ||
+        undefined;
+    }
+
+    if (body.type !== undefined) {
+      if (
+        body.type !== "thought" &&
+        body.type !== "image" &&
+        body.type !== "space"
+      ) {
+        response.status(400).json({
+          success: false,
+          message:
+            "Invalid post type",
+        });
+        return;
+      }
+
+      post.type = body.type;
+    }
+
+    /*
+     * Never allow an empty post.
+     */
+    const hasContent =
+      typeof post.content ===
+        "string" &&
+      post.content.trim().length > 0;
+
+    const hasImage =
+      typeof post.imageUrl ===
+        "string" &&
+      post.imageUrl.trim().length > 0;
+
+    if (!hasContent && !hasImage) {
+      response.status(400).json({
+        success: false,
+        message:
+          "Post must contain text or an image",
+      });
+      return;
+    }
+
+    /*
+     * Automatically change type when
+     * an image is added to a thought post.
+     */
+    if (
+      hasImage &&
+      !hasContent &&
+      post.type === "thought"
+    ) {
+      post.type = "image";
     }
 
     await post.save();
 
     response.status(200).json({
       success: true,
-      message: "Post updated successfully",
+      message:
+        "Post updated successfully",
       post,
     });
   } catch (error) {
+    console.error(
+      "Update post error:",
+      error,
+    );
+
     response.status(500).json({
       success: false,
       message:
@@ -224,7 +374,8 @@ export async function deletePost(
 
     const { id } = request.params;
 
-    const post = await PostModel.findById(id);
+    const post =
+      await PostModel.findById(id);
 
     if (!post) {
       response.status(404).json({
@@ -237,7 +388,8 @@ export async function deletePost(
     if (post.authorId !== userId) {
       response.status(403).json({
         success: false,
-        message: "You are not allowed to delete this post",
+        message:
+          "You are not allowed to delete this post",
       });
       return;
     }
@@ -246,10 +398,16 @@ export async function deletePost(
 
     response.status(200).json({
       success: true,
-      message: "Post deleted successfully",
+      message:
+        "Post deleted successfully",
       post,
     });
   } catch (error) {
+    console.error(
+      "Delete post error:",
+      error,
+    );
+
     response.status(500).json({
       success: false,
       message:
