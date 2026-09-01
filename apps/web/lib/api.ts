@@ -22,15 +22,10 @@ async function request<T>(
 ): Promise<T> {
   const token = getToken();
 
-  const headers = new Headers(
-    options.headers,
-  );
+  const headers = new Headers(options.headers);
 
   if (!headers.has("Content-Type")) {
-    headers.set(
-      "Content-Type",
-      "application/json",
-    );
+    headers.set("Content-Type", "application/json");
   }
 
   if (token) {
@@ -49,21 +44,16 @@ async function request<T>(
   );
 
   const contentType =
-    response.headers.get(
-      "content-type",
-    ) ?? "";
+    response.headers.get("content-type") ?? "";
 
   let data: unknown = null;
 
   if (
-    contentType.includes(
-      "application/json",
-    )
+    contentType.includes("application/json")
   ) {
     data = await response.json();
   } else {
-    const text =
-      await response.text();
+    const text = await response.text();
 
     data = text
       ? { message: text }
@@ -96,9 +86,14 @@ interface BackendPost {
   content?: string;
   imageUrl?: string;
   type?: PostType;
+
   likesCount?: number;
   commentsCount?: number;
   bookmarksCount?: number;
+
+  isLiked?: boolean;
+  isBookmarked?: boolean;
+
   createdAt?: string;
   updatedAt?: string;
 }
@@ -106,39 +101,26 @@ interface BackendPost {
 function normalizeImageUrl(
   imageUrl?: string,
 ): string | undefined {
-  if (
-    typeof imageUrl !== "string"
-  ) {
+  if (typeof imageUrl !== "string") {
     return undefined;
   }
 
-  const trimmedUrl =
-    imageUrl.trim();
+  const trimmedUrl = imageUrl.trim();
 
   if (!trimmedUrl) {
     return undefined;
   }
 
   if (
-    trimmedUrl.startsWith(
-      "http://",
-    ) ||
-    trimmedUrl.startsWith(
-      "https://",
-    ) ||
-    trimmedUrl.startsWith(
-      "data:",
-    ) ||
-    trimmedUrl.startsWith(
-      "blob:",
-    )
+    trimmedUrl.startsWith("http://") ||
+    trimmedUrl.startsWith("https://") ||
+    trimmedUrl.startsWith("data:") ||
+    trimmedUrl.startsWith("blob:")
   ) {
     return trimmedUrl;
   }
 
-  if (
-    trimmedUrl.startsWith("/")
-  ) {
+  if (trimmedUrl.startsWith("/")) {
     return `${API_URL}${trimmedUrl}`;
   }
 
@@ -169,10 +151,9 @@ function normalizePost(
         ? post.content
         : "",
 
-    imageUrl:
-      normalizeImageUrl(
-        post.imageUrl,
-      ),
+    imageUrl: normalizeImageUrl(
+      post.imageUrl,
+    ),
 
     type:
       post.type === "image" ||
@@ -195,6 +176,16 @@ function normalizePost(
       typeof post.bookmarksCount === "number"
         ? post.bookmarksCount
         : 0,
+
+    isLiked:
+      typeof post.isLiked === "boolean"
+        ? post.isLiked
+        : false,
+
+    isBookmarked:
+      typeof post.isBookmarked === "boolean"
+        ? post.isBookmarked
+        : false,
 
     createdAt:
       typeof post.createdAt === "string"

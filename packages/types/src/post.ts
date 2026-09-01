@@ -12,6 +12,8 @@ export interface Post {
   likesCount: number;
   commentsCount: number;
   bookmarksCount: number;
+  isLiked: boolean;
+  isBookmarked: boolean;
   createdAt: string;
   updatedAt?: string;
 }
