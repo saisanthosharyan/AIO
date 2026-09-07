@@ -8,7 +8,11 @@ import {
   EyeOff,
   Sparkles,
 } from "lucide-react";
-import { FormEvent, useState } from "react";
+import {
+  FormEvent,
+  useState,
+} from "react";
+import { useRouter } from "next/navigation";
 
 const benefits = [
   "One identity across every AIO device",
@@ -17,20 +21,37 @@ const benefits = [
 ];
 
 export default function SignupPage() {
-  const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
+
+  const [showPassword, setShowPassword] =
+    useState(false);
+
   const [showConfirmPassword, setShowConfirmPassword] =
     useState(false);
 
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [firstName, setFirstName] =
+    useState("");
+
+  const [lastName, setLastName] =
+    useState("");
+
+  const [username, setUsername] =
+    useState("");
+
+  const [email, setEmail] =
+    useState("");
+
+  const [password, setPassword] =
+    useState("");
+
   const [confirmPassword, setConfirmPassword] =
     useState("");
 
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [error, setError] =
+    useState("");
+
+  const [loading, setLoading] =
+    useState(false);
 
   async function handleSignup(
     event: FormEvent<HTMLFormElement>,
@@ -71,11 +92,13 @@ export default function SignupPage() {
         },
       );
 
-      const data = await response.json();
+      const data =
+        await response.json();
 
       if (!response.ok) {
         throw new Error(
-          data.message || "Registration failed",
+          data.message ||
+            "Registration failed",
         );
       }
 
@@ -89,7 +112,7 @@ export default function SignupPage() {
         JSON.stringify(data.user),
       );
 
-      window.location.href = "/stream";
+      router.push("/stream");
     } catch (signupError) {
       setError(
         signupError instanceof Error
@@ -130,8 +153,9 @@ export default function SignupPage() {
           </h1>
 
           <p>
-            Create your AIO identity and bring your
-            conversations, people and interests together.
+            Create your AIO identity and
+            bring your conversations,
+            people and interests together.
           </p>
         </div>
 
@@ -152,7 +176,9 @@ export default function SignupPage() {
                 autoComplete="given-name"
                 value={firstName}
                 onChange={(event) =>
-                  setFirstName(event.target.value)
+                  setFirstName(
+                    event.target.value,
+                  )
                 }
                 required
               />
@@ -170,7 +196,9 @@ export default function SignupPage() {
                 autoComplete="family-name"
                 value={lastName}
                 onChange={(event) =>
-                  setLastName(event.target.value)
+                  setLastName(
+                    event.target.value,
+                  )
                 }
               />
             </div>
@@ -191,7 +219,9 @@ export default function SignupPage() {
                 autoComplete="username"
                 value={username}
                 onChange={(event) =>
-                  setUsername(event.target.value)
+                  setUsername(
+                    event.target.value,
+                  )
                 }
                 required
               />
@@ -210,7 +240,9 @@ export default function SignupPage() {
               autoComplete="email"
               value={email}
               onChange={(event) =>
-                setEmail(event.target.value)
+                setEmail(
+                  event.target.value,
+                )
               }
               required
             />
@@ -233,7 +265,9 @@ export default function SignupPage() {
                 autoComplete="new-password"
                 value={password}
                 onChange={(event) =>
-                  setPassword(event.target.value)
+                  setPassword(
+                    event.target.value,
+                  )
                 }
                 required
               />
@@ -309,7 +343,8 @@ export default function SignupPage() {
           {error && (
             <p
               style={{
-                color: "var(--aio-danger)",
+                color:
+                  "var(--aio-danger)",
                 fontSize: "14px",
                 margin: "0",
               }}

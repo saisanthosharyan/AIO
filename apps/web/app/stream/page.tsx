@@ -1,6 +1,13 @@
+
 "use client";
 
 import AuthGuard from "@/components/auth/AuthGuard";
+import CreatePanel from "@/components/stream/CreatePanel";
+import CreatePostModal, {
+  type CreatePostData,
+} from "@/components/stream/CreatePostModal";
+import PostCard from "@/components/stream/PostCard";
+import { createPost, getPosts } from "@/lib/api";
 
 import {
   useCallback,
@@ -8,22 +15,30 @@ import {
   useState,
 } from "react";
 
-import CreatePanel from "@/components/stream/CreatePanel";
+interface PostAuthor {
+  id: string;
+  username: string;
+  displayName: string;
+  avatarUrl?: string;
+  verified: boolean;
+}
 
-import CreatePostModal, {
-  type CreatePostData,
-} from "@/components/stream/CreatePostModal";
-
-import PostCard from "@/components/stream/PostCard";
-
-import {
-  createPost,
-  getPosts,
-} from "@/lib/api";
-
-import type {
-  Post,
-} from "../../../../packages/types/src/post";
+interface ApiPost {
+  id?: string;
+  _id?: string;
+  authorId: string;
+  content: string;
+  imageUrl?: string;
+  type: "thought" | "image" | "space";
+  likesCount: number;
+  commentsCount: number;
+  bookmarksCount: number;
+  createdAt: string;
+  updatedAt: string;
+  author?: PostAuthor;
+  isLiked: boolean;
+  isBookmarked: boolean;
+}
 
 interface StreamPost {
   postId: string;
@@ -38,33 +53,30 @@ interface StreamPost {
   likesCount: number;
   commentsCount: number;
   bookmarksCount: number;
+  isLiked: boolean;
+  isBookmarked: boolean;
+  verified: boolean;
+  avatarUrl?: string;
 }
 
 function formatTime(
   createdAt: string,
 ): string {
-  const created =
-    new Date(createdAt);
+  const created = new Date(createdAt);
+  const createdTime = created.getTime();
 
-  const createdTime =
-    created.getTime();
-
-  if (
-    Number.isNaN(createdTime)
-  ) {
+  if (Number.isNaN(createdTime)) {
     return "now";
   }
 
-  const difference =
-    Math.max(
-      0,
-      Date.now() - createdTime,
-    );
+  const difference = Math.max(
+    0,
+    Date.now() - createdTime,
+  );
 
-  const minutes =
-    Math.floor(
-      difference / 60000,
-    );
+  const minutes = Math.floor(
+    difference / 60000,
+  );
 
   if (minutes < 1) {
     return "now";
@@ -74,19 +86,17 @@ function formatTime(
     return `${minutes}m`;
   }
 
-  const hours =
-    Math.floor(
-      minutes / 60,
-    );
+  const hours = Math.floor(
+    minutes / 60,
+  );
 
   if (hours < 24) {
     return `${hours}h`;
   }
 
-  const days =
-    Math.floor(
-      hours / 24,
-    );
+  const days = Math.floor(
+    hours / 24,
+  );
 
   if (days < 7) {
     return `${days}d`;
@@ -95,59 +105,97 @@ function formatTime(
   return created.toLocaleDateString();
 }
 
+function getInitials(
+  displayName: string,
+  username: string,
+): string {
+  const source =
+    displayName.trim() ||
+    username.trim();
+
+  if (!source) {
+    return "AI";
+  }
+
+  const words = source
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (words.length >= 2) {
+    return `${words[0][0]}${words[1][0]}`.toUpperCase();
+  }
+
+  return source
+    .slice(0, 2)
+    .toUpperCase();
+}
+
 function convertPost(
-  post: Post,
+  post: ApiPost,
 ): StreamPost {
-  const authorId =
-    typeof post.authorId === "string"
-      ? post.authorId
-      : "";
-
-  const mongoPost = post as Post & {
-    _id?: string;
-  };
-
   const postId =
     typeof post.id === "string" &&
     post.id.length > 0
       ? post.id
-      : typeof mongoPost._id === "string" &&
-          mongoPost._id.length > 0
-        ? mongoPost._id
+      : typeof post._id === "string" &&
+          post._id.length > 0
+        ? post._id
         : "";
 
-  const initials =
-    authorId
-      .slice(0, 2)
-      .toUpperCase() || "AI";
+  /*
+   * New backend posts contain the complete
+   * public author profile.
+   *
+   * Legacy posts may not have an author.
+   */
+  const author = post.author;
+
+  const displayName =
+    author?.displayName?.trim() ||
+    "AIO User";
+
+  const username =
+    author?.username?.trim() ||
+    "";
+
+  const initials = getInitials(
+    displayName,
+    username,
+  );
 
   return {
     postId,
 
-    name: "AIO User",
+    /*
+     * Real author display name.
+     */
+    name: displayName,
 
+    /*
+     * Real author username.
+     */
     username:
-      authorId.length > 0
-        ? `@${authorId.slice(0, 8)}`
+      username.length > 0
+        ? `@${username}`
         : "@aio-user",
 
-    time:
-      formatTime(
-        post.createdAt,
-      ),
+    time: formatTime(
+      post.createdAt,
+    ),
 
     initials,
 
-    avatarClass:
-      "avatar-purple",
+    /*
+     * Keep the current AIO avatar styling.
+     */
+    avatarClass: "avatar-purple",
 
     content:
       typeof post.content === "string"
         ? post.content
         : "",
 
-    imageUrl:
-      post.imageUrl,
+    imageUrl: post.imageUrl,
 
     type:
       post.type === "space"
@@ -165,81 +213,142 @@ function convertPost(
         : 0,
 
     bookmarksCount:
-      typeof post.bookmarksCount === "number"
+      typeof post.bookmarksCount ===
+      "number"
         ? post.bookmarksCount
         : 0,
+
+    /*
+     * These values come from the backend.
+     */
+    isLiked: post.isLiked === true,
+
+    isBookmarked:
+      post.isBookmarked === true,
+
+    verified:
+      author?.verified === true,
+
+    /*
+     * Only store avatarUrl when it actually
+     * exists.
+     */
+    ...(author?.avatarUrl
+      ? {
+          avatarUrl:
+            author.avatarUrl,
+        }
+      : {}),
   };
 }
 
 export default function StreamPage() {
-  const [
-    posts,
-    setPosts,
-  ] = useState<StreamPost[]>([]);
+  const [posts, setPosts] =
+    useState<StreamPost[]>([]);
 
-  const [
-    loading,
-    setLoading,
-  ] = useState(true);
+  const [loading, setLoading] =
+    useState(true);
 
-  const [
-    publishing,
-    setPublishing,
-  ] = useState(false);
+  const [publishing, setPublishing] =
+    useState(false);
 
-  const [
-    error,
-    setError,
-  ] = useState("");
+  const [error, setError] =
+    useState("");
 
-  const [
-    createOpen,
-    setCreateOpen,
-  ] = useState(false);
+  const [createOpen, setCreateOpen] =
+    useState(false);
 
-  const loadPosts =
-    useCallback(
-      async () => {
-        try {
-          setLoading(true);
-          setError("");
+  const loadPosts = useCallback(
+    async (): Promise<void> => {
+      try {
+        setLoading(true);
+        setError("");
 
-          const data =
-            await getPosts();
+        const data = await getPosts();
 
-          const convertedPosts =
-            data
-              .map(convertPost)
-              .filter(
-                (post) =>
-                  post.postId.length > 0,
-              );
+        /*
+         * The backend returns additional fields
+         * (author, isLiked, isBookmarked) that
+         * are not necessarily represented in the
+         * existing shared frontend type.
+         */
+        const apiPosts =
+          data as unknown as ApiPost[];
 
-          setPosts(
-            convertedPosts,
-          );
-        } catch (
-          loadError
-        ) {
-          setError(
-            loadError instanceof Error
-              ? loadError.message
-              : "Failed to load posts",
-          );
-        } finally {
-          setLoading(false);
-        }
-      },
-      [],
-    );
+        const convertedPosts =
+          apiPosts
+            .map(convertPost)
+            .filter(
+              (post) =>
+                post.postId.length > 0,
+            );
+
+        setPosts(convertedPosts);
+      } catch (loadError) {
+        setError(
+          loadError instanceof Error
+            ? loadError.message
+            : "Failed to load posts",
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
-    void loadPosts();
-  }, [loadPosts]);
+    let cancelled = false;
+
+    async function fetchInitialPosts(): Promise<void> {
+      try {
+        setError("");
+
+        const data = await getPosts();
+
+        if (cancelled) {
+          return;
+        }
+
+        const apiPosts =
+          data as unknown as ApiPost[];
+
+        const convertedPosts =
+          apiPosts
+            .map(convertPost)
+            .filter(
+              (post) =>
+                post.postId.length > 0,
+            );
+
+        setPosts(convertedPosts);
+      } catch (loadError) {
+        if (cancelled) {
+          return;
+        }
+
+        setError(
+          loadError instanceof Error
+            ? loadError.message
+            : "Failed to load posts",
+        );
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void fetchInitialPosts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function handlePublish(
     post: CreatePostData,
-  ) {
+  ): Promise<void> {
     if (publishing) {
       return;
     }
@@ -247,10 +356,7 @@ export default function StreamPage() {
     const content =
       post.content.trim();
 
-    if (
-      !content &&
-      !post.imageUrl
-    ) {
+    if (!content && !post.imageUrl) {
       return;
     }
 
@@ -280,14 +386,12 @@ export default function StreamPage() {
     }
   }
 
-
-
-  function handleOpenCreate() {
+  function handleOpenCreate(): void {
     setError("");
     setCreateOpen(true);
   }
 
-  function handleCloseCreate() {
+  function handleCloseCreate(): void {
     if (publishing) {
       return;
     }
@@ -300,9 +404,7 @@ export default function StreamPage() {
       <>
         <div className="aio-page-header">
           <div>
-            <h1>
-              Stream
-            </h1>
+            <h1>Stream</h1>
 
             <p>
               What&apos;s happening
@@ -326,23 +428,22 @@ export default function StreamPage() {
             </div>
           )}
 
-          {!loading &&
-            error && (
-              <div className="post-card">
-                <p className="post-text">
-                  {error}
-                </p>
+          {!loading && error && (
+            <div className="post-card">
+              <p className="post-text">
+                {error}
+              </p>
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    void loadPosts()
-                  }
-                >
-                  Try again
-                </button>
-              </div>
-            )}
+              <button
+                type="button"
+                onClick={() =>
+                  void loadPosts()
+                }
+              >
+                Try again
+              </button>
+            </div>
+          )}
 
           {!loading &&
             !error &&
@@ -363,18 +464,12 @@ export default function StreamPage() {
               (post, index) => (
                 <PostCard
                   key={`${post.postId}-${index}`}
-                  postId={
-                    post.postId
-                  }
-                  name={
-                    post.name
-                  }
+                  postId={post.postId}
+                  name={post.name}
                   username={
                     post.username
                   }
-                  time={
-                    post.time
-                  }
+                  time={post.time}
                   initials={
                     post.initials
                   }
@@ -387,9 +482,7 @@ export default function StreamPage() {
                   imageUrl={
                     post.imageUrl
                   }
-                  type={
-                    post.type
-                  }
+                  type={post.type}
                   likesCount={
                     post.likesCount
                   }
@@ -405,31 +498,21 @@ export default function StreamPage() {
         </section>
 
         <CreatePostModal
-          open={
-            createOpen
-          }
-          onClose={
-            handleCloseCreate
-          }
-          onPublish={
-            handlePublish
-          }
+          open={createOpen}
+          onClose={handleCloseCreate}
+          onPublish={handlePublish}
         />
 
         {publishing && (
           <div
             aria-live="polite"
             style={{
-              position:
-                "fixed",
-              bottom:
-                "24px",
-              left:
-                "50%",
+              position: "fixed",
+              bottom: "24px",
+              left: "50%",
               transform:
                 "translateX(-50%)",
-              zIndex:
-                1000,
+              zIndex: 1000,
             }}
           >
             Publishing...

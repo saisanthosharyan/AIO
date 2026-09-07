@@ -1,8 +1,7 @@
 "use client";
 
 import {
-  useEffect,
-  useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 
@@ -10,24 +9,32 @@ interface AuthGuardProps {
   children: ReactNode;
 }
 
+function subscribe(): () => void {
+  return () => {};
+}
+
+function getSnapshot(): boolean {
+  return Boolean(localStorage.getItem("aio_token"));
+}
+
+function getServerSnapshot(): boolean {
+  return true;
+}
+
 export default function AuthGuard({
   children,
 }: AuthGuardProps) {
-  const [checking, setChecking] = useState(true);
+  const authenticated = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+  );
 
-  useEffect(() => {
-    const token =
-      localStorage.getItem("aio_token");
-
-    if (!token) {
+  if (!authenticated) {
+    if (typeof window !== "undefined") {
       window.location.replace("/login");
-      return;
     }
 
-    setChecking(false);
-  }, []);
-
-  if (checking) {
     return (
       <main
         style={{
@@ -36,7 +43,7 @@ export default function AuthGuard({
           placeItems: "center",
         }}
       >
-        <p>Loading AIO...</p>
+        <p>Redirecting to login...</p>
       </main>
     );
   }

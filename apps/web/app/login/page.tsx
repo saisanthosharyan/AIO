@@ -7,16 +7,29 @@ import {
   EyeOff,
   Sparkles,
 } from "lucide-react";
-import { FormEvent, useState } from "react";
+import {
+  FormEvent,
+  useState,
+} from "react";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] =
+    useState(false);
 
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [email, setEmail] =
+    useState("");
+
+  const [password, setPassword] =
+    useState("");
+
+  const [error, setError] =
+    useState("");
+
+  const [loading, setLoading] =
+    useState(false);
 
   async function handleLogin(
     event: FormEvent<HTMLFormElement>,
@@ -41,7 +54,8 @@ export default function LoginPage() {
         },
       );
 
-      const data = await response.json();
+      const data =
+        await response.json();
 
       if (!response.ok) {
         throw new Error(
@@ -59,7 +73,7 @@ export default function LoginPage() {
         JSON.stringify(data.user),
       );
 
-      window.location.href = "/stream";
+      router.push("/stream");
     } catch (loginError) {
       setError(
         loginError instanceof Error
@@ -100,8 +114,9 @@ export default function LoginPage() {
           </h1>
 
           <p>
-            Connect, create, discover and communicate
-            in one intelligent space.
+            Connect, create, discover and
+            communicate in one intelligent
+            space.
           </p>
         </div>
 
@@ -121,7 +136,9 @@ export default function LoginPage() {
               autoComplete="username"
               value={email}
               onChange={(event) =>
-                setEmail(event.target.value)
+                setEmail(
+                  event.target.value,
+                )
               }
               required
             />
@@ -150,7 +167,9 @@ export default function LoginPage() {
                 autoComplete="current-password"
                 value={password}
                 onChange={(event) =>
-                  setPassword(event.target.value)
+                  setPassword(
+                    event.target.value,
+                  )
                 }
                 required
               />
@@ -180,7 +199,8 @@ export default function LoginPage() {
           {error && (
             <p
               style={{
-                color: "var(--aio-danger)",
+                color:
+                  "var(--aio-danger)",
                 fontSize: "14px",
                 margin: "0",
               }}
@@ -205,7 +225,9 @@ export default function LoginPage() {
         </form>
 
         <div className="auth-divider">
-          <span>or continue with</span>
+          <span>
+            or continue with
+          </span>
         </div>
 
         <div className="social-login">

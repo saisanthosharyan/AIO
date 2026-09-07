@@ -17,7 +17,7 @@ import { authenticate } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
-router.get("/", getPosts);
+router.get("/", authenticate, getPosts);
 
 router.get("/:id", getPostById);
 

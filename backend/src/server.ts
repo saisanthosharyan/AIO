@@ -10,6 +10,7 @@ import postRoutes from "./routes/post.routes.js";
 import commentRoutes from "./routes/comment.routes.js";
 import bookmarkRoutes from "./routes/bookmark.routes.js";
 import uploadRoutes from "./routes/upload.routes.js";
+import userRoutes from "./routes/user.routes.js";
 
 const app = express();
 
@@ -58,6 +59,7 @@ app.use("/api/posts", postRoutes);
 app.use("/api/posts/:id/comments", commentRoutes);
 app.use("/api/bookmarks", bookmarkRoutes);
 app.use("/api/uploads", uploadRoutes);
+app.use("/api/users", userRoutes);
 
 async function startServer(): Promise<void> {
   try {
