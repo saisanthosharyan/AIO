@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import {
+  BadgeCheck,
   Bookmark,
   Heart,
   Loader2,
@@ -9,7 +10,6 @@ import {
   MoreHorizontal,
   Send,
   Trash2,
-  BadgeCheck,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -49,7 +49,6 @@ export default function PostCard({
   avatarClass,
   content,
   imageUrl,
-  avatarUrl,
   verified = false,
   type = "thought",
   likesCount = 0,
@@ -57,25 +56,38 @@ export default function PostCard({
   bookmarksCount = 0,
   isLiked = false,
   isBookmarked = false,
+  avatarUrl,
 }: PostCardProps) {
-  const [liked, setLiked] = useState(isLiked);
-  const [saved, setSaved] = useState(isBookmarked);
+  const [liked, setLiked] =
+    useState(isLiked);
 
-  const [likes, setLikes] = useState(likesCount);
-  const [comments] = useState(commentsCount);
+  const [saved, setSaved] =
+    useState(isBookmarked);
+
+  const [likes, setLikes] =
+    useState(likesCount);
+
+  const [comments] =
+    useState(commentsCount);
+
   const [bookmarks, setBookmarks] =
     useState(bookmarksCount);
 
   const [likeLoading, setLikeLoading] =
     useState(false);
 
-  const [bookmarkLoading, setBookmarkLoading] =
-    useState(false);
+  const [
+    bookmarkLoading,
+    setBookmarkLoading,
+  ] = useState(false);
 
-  const [deleteLoading, setDeleteLoading] =
-    useState(false);
+  const [
+    deleteLoading,
+    setDeleteLoading,
+  ] = useState(false);
 
-  const [error, setError] = useState("");
+  const [error, setError] =
+    useState("");
 
   async function handleLike(): Promise<void> {
     if (likeLoading) {
@@ -103,7 +115,7 @@ export default function PostCard({
       setError(
         likeError instanceof Error
           ? likeError.message
-          : "Unable to update like",
+          : "Unable to update like.",
       );
     } finally {
       setLikeLoading(false);
@@ -140,7 +152,7 @@ export default function PostCard({
       setError(
         bookmarkError instanceof Error
           ? bookmarkError.message
-          : "Unable to update bookmark",
+          : "Unable to update bookmark.",
       );
     } finally {
       setBookmarkLoading(false);
@@ -152,9 +164,10 @@ export default function PostCard({
       return;
     }
 
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this post?",
-    );
+    const confirmed =
+      window.confirm(
+        "Are you sure you want to delete this post?",
+      );
 
     if (!confirmed) {
       return;
@@ -171,9 +184,9 @@ export default function PostCard({
       setError(
         deleteError instanceof Error
           ? deleteError.message
-          : "Unable to delete post",
+          : "Unable to delete post.",
       );
-    } finally {
+
       setDeleteLoading(false);
     }
   }
@@ -183,97 +196,162 @@ export default function PostCard({
       ? username.slice(1)
       : username;
 
+  const safeName =
+    name.trim() || "AIO User";
+
+  const safeUsername =
+    normalizedUsername.trim() ||
+    "aio-user";
+
+  const safeInitials =
+    initials.trim().slice(0, 2).toUpperCase() ||
+    "AI";
+
   return (
-    <article className="aio-post-card">
-      <div className="aio-post-header">
-        {avatarUrl ? (
-          <div className="aio-avatar aio-avatar-image">
-            <Image
-              src={avatarUrl}
-              alt={`${name}'s avatar`}
-              width={48}
-              height={48}
-              className="aio-avatar-image-content"
-              unoptimized
-            />
-          </div>
-        ) : (
-          <div
-            className={`aio-avatar ${avatarClass}`}
-          >
-            {initials}
-          </div>
-        )}
+    <article
+      className="post-card"
+      aria-label={`Post by ${safeName}`}
+    >
+      {/* ===================================================
+          HEADER
+         =================================================== */}
 
-        <div className="aio-post-author">
-          <div className="aio-post-author-row">
-            <strong>{name}</strong>
-
-            {verified && (
-              <BadgeCheck
-                size={17}
-                aria-label="Verified account"
+      <header className="post-header">
+        <div className="post-user">
+          {avatarUrl ? (
+            <div className="post-avatar">
+              <Image
+                src={avatarUrl}
+                alt={`${safeName}'s avatar`}
+                width={40}
+                height={40}
+                className="post-avatar-image"
+                unoptimized
               />
-            )}
+            </div>
+          ) : (
+            <div
+              className={`post-avatar ${avatarClass}`}
+              aria-hidden="true"
+            >
+              {safeInitials}
+            </div>
+          )}
 
-            <span>
-              @{normalizedUsername}
-            </span>
+          <div className="post-author-details">
+            <div className="post-author-line">
+              <strong>
+                {safeName}
+              </strong>
+
+              {verified && (
+                <span
+                  className="aio-verified"
+                  title="Verified account"
+                >
+                  <BadgeCheck
+                    size={16}
+                    strokeWidth={2.4}
+                    aria-label="Verified account"
+                  />
+                </span>
+              )}
+            </div>
+
+            <div className="post-meta-line">
+              <span>
+                @{safeUsername}
+              </span>
+
+              <span
+                className="post-meta-dot"
+                aria-hidden="true"
+              >
+                ·
+              </span>
+
+              <time>
+                {time}
+              </time>
+            </div>
           </div>
-
-          <span className="aio-post-time">
-            {time}
-          </span>
         </div>
 
         <button
           type="button"
-          className="aio-icon-button"
+          className="more-button"
           aria-label="Post options"
+          title="Post options"
         >
-          <MoreHorizontal size={20} />
+          <MoreHorizontal
+            size={20}
+          />
         </button>
-      </div>
+      </header>
 
-      <div className="aio-post-content">
+      {/* ===================================================
+          CONTENT
+         =================================================== */}
+
+      <div className="post-content">
         {content && (
-          <p className="aio-post-text">
+          <p className="post-text">
             {content}
           </p>
         )}
 
         {imageUrl && (
-          <div className="aio-post-image-wrapper">
+          <div className="post-media">
             <Image
               src={imageUrl}
               alt="Post attachment"
-              className="aio-post-image"
               width={1200}
               height={675}
-              sizes="(max-width: 768px) 100vw, 768px"
+              sizes="
+                (max-width: 760px) 100vw,
+                640px
+              "
+              className="post-media-image"
               unoptimized
             />
           </div>
         )}
 
         {type === "space" && (
-          <span className="aio-post-type">
+          <span className="aio-badge">
             Space
           </span>
         )}
       </div>
 
+      {/* ===================================================
+          ERROR
+         =================================================== */}
+
       {error && (
-        <p className="aio-post-error">
+        <div
+          className="aio-error"
+          role="alert"
+        >
           {error}
-        </p>
+        </div>
       )}
 
-      <div className="aio-post-actions">
+      {/* ===================================================
+          ACTIONS
+         =================================================== */}
+
+      <footer className="post-footer">
         <button
           type="button"
-          className={liked ? "liked" : ""}
-          onClick={() => void handleLike()}
+          className={
+            liked
+              ? "post-action liked"
+              : "post-action"
+          }
+          onClick={() =>
+            void handleLike()
+          }
           disabled={likeLoading}
           aria-label={
             liked
@@ -284,12 +362,12 @@ export default function PostCard({
         >
           {likeLoading ? (
             <Loader2
-              size={19}
+              size={18}
               className="aio-spin"
             />
           ) : (
             <Heart
-              size={19}
+              size={18}
               fill={
                 liked
                   ? "currentColor"
@@ -303,15 +381,23 @@ export default function PostCard({
 
         <button
           type="button"
-          aria-label="Comment on post"
+          className="post-action"
+          aria-label={`Comment on post. ${comments} comments`}
         >
-          <MessageCircle size={19} />
+          <MessageCircle
+            size={18}
+          />
+
           <span>{comments}</span>
         </button>
 
         <button
           type="button"
-          className={saved ? "liked" : ""}
+          className={
+            saved
+              ? "post-action saved"
+              : "post-action"
+          }
           onClick={() =>
             void handleBookmark()
           }
@@ -325,12 +411,12 @@ export default function PostCard({
         >
           {bookmarkLoading ? (
             <Loader2
-              size={19}
+              size={18}
               className="aio-spin"
             />
           ) : (
             <Bookmark
-              size={19}
+              size={18}
               fill={
                 saved
                   ? "currentColor"
@@ -344,14 +430,15 @@ export default function PostCard({
 
         <button
           type="button"
+          className="post-action"
           aria-label="Share post"
         >
-          <Send size={19} />
+          <Send size={18} />
         </button>
 
         <button
           type="button"
-          className="aio-delete-button"
+          className="post-action post-delete-action"
           onClick={() =>
             void handleDelete()
           }
@@ -360,14 +447,14 @@ export default function PostCard({
         >
           {deleteLoading ? (
             <Loader2
-              size={19}
+              size={18}
               className="aio-spin"
             />
           ) : (
-            <Trash2 size={19} />
+            <Trash2 size={18} />
           )}
         </button>
-      </div>
+      </footer>
     </article>
   );
 }

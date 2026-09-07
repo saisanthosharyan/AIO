@@ -1,4 +1,3 @@
-
 "use client";
 
 import AuthGuard from "@/components/auth/AuthGuard";
@@ -8,7 +7,6 @@ import CreatePostModal, {
 } from "@/components/stream/CreatePostModal";
 import PostCard from "@/components/stream/PostCard";
 import { createPost, getPosts } from "@/lib/api";
-
 import {
   useCallback,
   useEffect,
@@ -59,9 +57,11 @@ interface StreamPost {
   avatarUrl?: string;
 }
 
-function formatTime(
-  createdAt: string,
-): string {
+/* =========================================================
+   HELPERS
+   ========================================================= */
+
+function formatTime(createdAt: string): string {
   const created = new Date(createdAt);
   const createdTime = created.getTime();
 
@@ -130,6 +130,10 @@ function getInitials(
     .toUpperCase();
 }
 
+/* =========================================================
+   API POST → UI POST
+   ========================================================= */
+
 function convertPost(
   post: ApiPost,
 ): StreamPost {
@@ -143,8 +147,8 @@ function convertPost(
         : "";
 
   /*
-   * New backend posts contain the complete
-   * public author profile.
+   * New backend posts include the public
+   * author profile.
    *
    * Legacy posts may not have an author.
    */
@@ -166,14 +170,8 @@ function convertPost(
   return {
     postId,
 
-    /*
-     * Real author display name.
-     */
     name: displayName,
 
-    /*
-     * Real author username.
-     */
     username:
       username.length > 0
         ? `@${username}`
@@ -185,9 +183,6 @@ function convertPost(
 
     initials,
 
-    /*
-     * Keep the current AIO avatar styling.
-     */
     avatarClass: "avatar-purple",
 
     content:
@@ -213,15 +208,16 @@ function convertPost(
         : 0,
 
     bookmarksCount:
-      typeof post.bookmarksCount ===
-      "number"
+      typeof post.bookmarksCount === "number"
         ? post.bookmarksCount
         : 0,
 
     /*
-     * These values come from the backend.
+     * These values come directly from
+     * the backend.
      */
-    isLiked: post.isLiked === true,
+    isLiked:
+      post.isLiked === true,
 
     isBookmarked:
       post.isBookmarked === true,
@@ -230,8 +226,10 @@ function convertPost(
       author?.verified === true,
 
     /*
-     * Only store avatarUrl when it actually
-     * exists.
+     * Only include avatarUrl when it exists.
+     *
+     * This keeps exactOptionalPropertyTypes
+     * happy.
      */
     ...(author?.avatarUrl
       ? {
@@ -241,6 +239,10 @@ function convertPost(
       : {}),
   };
 }
+
+/* =========================================================
+   STREAM PAGE
+   ========================================================= */
 
 export default function StreamPage() {
   const [posts, setPosts] =
@@ -258,6 +260,10 @@ export default function StreamPage() {
   const [createOpen, setCreateOpen] =
     useState(false);
 
+  /* =======================================================
+     LOAD POSTS
+     ======================================================= */
+
   const loadPosts = useCallback(
     async (): Promise<void> => {
       try {
@@ -266,12 +272,6 @@ export default function StreamPage() {
 
         const data = await getPosts();
 
-        /*
-         * The backend returns additional fields
-         * (author, isLiked, isBookmarked) that
-         * are not necessarily represented in the
-         * existing shared frontend type.
-         */
         const apiPosts =
           data as unknown as ApiPost[];
 
@@ -297,13 +297,23 @@ export default function StreamPage() {
     [],
   );
 
+  /* =======================================================
+     INITIAL LOAD
+
+     We intentionally do not call loadPosts()
+     directly from this effect because the current
+     React ESLint rules flag synchronous state updates
+     caused through that callback.
+
+     Instead, the async function performs the initial
+     request itself.
+     ======================================================= */
+
   useEffect(() => {
     let cancelled = false;
 
-    async function fetchInitialPosts(): Promise<void> {
+    async function fetchPosts(): Promise<void> {
       try {
-        setError("");
-
         const data = await getPosts();
 
         if (cancelled) {
@@ -322,6 +332,7 @@ export default function StreamPage() {
             );
 
         setPosts(convertedPosts);
+        setError("");
       } catch (loadError) {
         if (cancelled) {
           return;
@@ -339,12 +350,16 @@ export default function StreamPage() {
       }
     }
 
-    void fetchInitialPosts();
+    void fetchPosts();
 
     return () => {
       cancelled = true;
     };
   }, []);
+
+  /* =======================================================
+     CREATE / PUBLISH
+     ======================================================= */
 
   async function handlePublish(
     post: CreatePostData,
@@ -399,6 +414,10 @@ export default function StreamPage() {
     setCreateOpen(false);
   }
 
+  /* =======================================================
+     RENDER
+     ======================================================= */
+
   return (
     <AuthGuard>
       <>
@@ -414,11 +433,19 @@ export default function StreamPage() {
         </div>
 
         <section className="aio-feed">
+          {/* =================================================
+              CREATE PANEL
+             ================================================= */}
+
           <CreatePanel
             onOpenCreate={
               handleOpenCreate
             }
           />
+
+          {/* =================================================
+              LOADING
+             ================================================= */}
 
           {loading && (
             <div className="post-card">
@@ -427,6 +454,10 @@ export default function StreamPage() {
               </p>
             </div>
           )}
+
+          {/* =================================================
+              ERROR
+             ================================================= */}
 
           {!loading && error && (
             <div className="post-card">
@@ -439,11 +470,16 @@ export default function StreamPage() {
                 onClick={() =>
                   void loadPosts()
                 }
+                className="aio-button aio-button-small aio-button-secondary"
               >
                 Try again
               </button>
             </div>
           )}
+
+          {/* =================================================
+              EMPTY STATE
+             ================================================= */}
 
           {!loading &&
             !error &&
@@ -458,17 +494,36 @@ export default function StreamPage() {
               </div>
             )}
 
+          {/* =================================================
+              POSTS
+             ================================================= */}
+
           {!loading &&
             !error &&
             posts.map(
-              (post, index) => (
+              (post) => (
                 <PostCard
-                  key={`${post.postId}-${index}`}
+                  key={post.postId}
                   postId={post.postId}
+
+                  /*
+                   * Real author information
+                   */
                   name={post.name}
                   username={
                     post.username
                   }
+
+                  /*
+                   * Real avatar + verification
+                   */
+                  avatarUrl={
+                    post.avatarUrl
+                  }
+                  verified={
+                    post.verified
+                  }
+
                   time={post.time}
                   initials={
                     post.initials
@@ -476,6 +531,10 @@ export default function StreamPage() {
                   avatarClass={
                     post.avatarClass
                   }
+
+                  /*
+                   * Post content
+                   */
                   content={
                     post.content
                   }
@@ -483,6 +542,10 @@ export default function StreamPage() {
                     post.imageUrl
                   }
                   type={post.type}
+
+                  /*
+                   * Backend counters
+                   */
                   likesCount={
                     post.likesCount
                   }
@@ -492,16 +555,38 @@ export default function StreamPage() {
                   bookmarksCount={
                     post.bookmarksCount
                   }
+
+                  /*
+                   * Backend interaction state
+                   */
+                  isLiked={
+                    post.isLiked
+                  }
+                  isBookmarked={
+                    post.isBookmarked
+                  }
                 />
               ),
             )}
         </section>
 
+        {/* ===================================================
+            CREATE POST MODAL
+           =================================================== */}
+
         <CreatePostModal
           open={createOpen}
-          onClose={handleCloseCreate}
-          onPublish={handlePublish}
+          onClose={
+            handleCloseCreate
+          }
+          onPublish={
+            handlePublish
+          }
         />
+
+        {/* ===================================================
+            PUBLISHING INDICATOR
+           =================================================== */}
 
         {publishing && (
           <div
