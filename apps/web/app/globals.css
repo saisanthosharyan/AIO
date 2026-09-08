@@ -2338,3 +2338,161 @@ p {
     transition-duration: 0.01ms !important;
   }
 }
+.profile-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 14px;
+}
+
+.profile-name-row .profile-name {
+  margin-top: 0;
+}
+
+.profile-verified {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-left: 7px;
+  border-radius: 50%;
+  background: var(--aio-primary);
+  color: #fff;
+  font-family: var(--aio-font-ui);
+  font-size: 11px;
+  font-weight: 800;
+  vertical-align: 3px;
+}
+
+.profile-joined {
+  margin-top: 10px;
+  color: var(--aio-text-muted);
+  font-size: 12px;
+}
+
+.profile-content {
+  min-height: 180px;
+}
+
+.profile-post-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-post {
+  padding: 20px 0;
+  border-bottom: 1px solid var(--aio-border);
+}
+
+.profile-post:first-child {
+  padding-top: 22px;
+}
+
+.profile-post p {
+  margin: 0;
+  color: var(--aio-text);
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.profile-post-image {
+  margin-top: 14px;
+  overflow: hidden;
+  border-radius: var(--aio-radius-md);
+  background: var(--aio-surface-elevated);
+}
+
+.profile-post-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 560px;
+  object-fit: cover;
+}
+
+.profile-post-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 13px;
+  color: var(--aio-text-muted);
+  font-size: 11px;
+}
+
+.profile-empty {
+  display: flex;
+  min-height: 220px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 30px 20px;
+  color: var(--aio-text-muted);
+  text-align: center;
+}
+
+.profile-empty strong {
+  color: var(--aio-text);
+  font-size: 15px;
+}
+
+.profile-empty span {
+  font-size: 13px;
+}
+
+.profile-media-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+  margin-top: 3px;
+}
+
+.profile-media-item {
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: var(--aio-surface-elevated);
+}
+
+.profile-media-item img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 180ms ease;
+}
+
+.profile-media-item:hover img {
+  transform: scale(1.03);
+}
+
+.profile-edit-modal {
+  width: min(100%, 520px);
+}
+
+.profile-edit-modal .aio-field small {
+  align-self: flex-end;
+  color: var(--aio-text-muted);
+  font-size: 11px;
+}
+
+@media (max-width: 600px) {
+  .profile-name-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .profile-name-row .aio-button {
+    width: 100%;
+  }
+
+  .profile-stats {
+    gap: 20px;
+  }
+
+  .profile-media-grid {
+    gap: 2px;
+  }
+}

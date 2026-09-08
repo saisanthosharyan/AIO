@@ -576,3 +576,160 @@ export async function deleteComment(
       response.commentsCount,
   };
 }
+export interface UserProfile {
+  id: string;
+  username: string;
+  email?: string;
+  displayName: string;
+  avatarUrl?: string;
+  bio?: string;
+  verified?: boolean;
+  followersCount: number;
+  followingCount: number;
+  createdAt?: string;
+  updatedAt?: string;
+  isFollowing?: boolean;
+}
+
+interface UserResponse {
+  success: boolean;
+  message?: string;
+  user: UserProfile;
+}
+
+interface UsersResponse {
+  success: boolean;
+  message?: string;
+  count: number;
+  followers?: UserProfile[];
+  following?: UserProfile[];
+}
+
+interface FollowResponse {
+  success: boolean;
+  message?: string;
+}
+
+export async function getCurrentUser(): Promise<UserProfile> {
+  const response = await request<UserResponse>("/api/users/me");
+
+  if (!response.success || !response.user) {
+    throw new Error(
+      response.message || "Failed to fetch current user.",
+    );
+  }
+
+  return response.user;
+}
+
+export async function getUserProfile(
+  username: string,
+): Promise<UserProfile> {
+  const response = await request<UserResponse>(
+    `/api/users/${encodeURIComponent(username)}`,
+  );
+
+  if (!response.success || !response.user) {
+    throw new Error(
+      response.message || "Failed to fetch user profile.",
+    );
+  }
+
+  return response.user;
+}
+
+export interface UpdateProfileData {
+  displayName?: string;
+  bio?: string;
+  avatarUrl?: string;
+}
+
+export async function updateProfile(
+  data: UpdateProfileData,
+): Promise<UserProfile> {
+  const response = await request<UserResponse>(
+    "/api/users/me",
+    {
+      method: "PUT",
+      body: JSON.stringify(data),
+    },
+  );
+
+  if (!response.success || !response.user) {
+    throw new Error(
+      response.message || "Failed to update profile.",
+    );
+  }
+
+  return response.user;
+}
+
+export async function followUser(
+  userId: string,
+): Promise<FollowResponse> {
+  const response = await request<FollowResponse>(
+    `/api/users/${encodeURIComponent(userId)}/follow`,
+    {
+      method: "POST",
+    },
+  );
+
+  if (!response.success) {
+    throw new Error(
+      response.message || "Failed to follow user.",
+    );
+  }
+
+  return response;
+}
+
+export async function unfollowUser(
+  userId: string,
+): Promise<FollowResponse> {
+  const response = await request<FollowResponse>(
+    `/api/users/${encodeURIComponent(userId)}/follow`,
+    {
+      method: "DELETE",
+    },
+  );
+
+  if (!response.success) {
+    throw new Error(
+      response.message || "Failed to unfollow user.",
+    );
+  }
+
+  return response;
+}
+
+export async function getFollowers(
+  userId: string,
+): Promise<UserProfile[]> {
+  const response = await request<UsersResponse>(
+    `/api/users/${encodeURIComponent(userId)}/followers`,
+  );
+
+  if (!response.success) {
+    throw new Error(
+      response.message || "Failed to fetch followers.",
+    );
+  }
+
+  return response.followers ?? [];
+}
+
+export async function getFollowing(
+  userId: string,
+): Promise<UserProfile[]> {
+  const response = await request<UsersResponse>(
+    `/api/users/${encodeURIComponent(userId)}/following`,
+  );
+
+  if (!response.success) {
+    throw new Error(
+      response.message || "Failed to fetch following.",
+    );
+  }
+
+  return response.following ?? [];
+}
