@@ -18,6 +18,14 @@ export interface Post {
   updatedAt?: string;
 }
 
+export interface CommentAuthor {
+  id: string;
+  username: string;
+  displayName: string;
+  avatarUrl?: string;
+  verified: boolean;
+}
+
 export interface Comment {
   id: string;
   userId: string;
@@ -25,4 +33,5 @@ export interface Comment {
   content: string;
   createdAt: string;
   updatedAt?: string;
+  author?: CommentAuthor | null;
 }

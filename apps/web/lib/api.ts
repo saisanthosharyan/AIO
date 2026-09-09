@@ -442,6 +442,14 @@ interface BackendComment {
   content?: string;
   createdAt?: string;
   updatedAt?: string;
+  author?: {
+    _id?: string;
+    id?: string;
+    username?: string;
+    displayName?: string;
+    avatarUrl?: string;
+    verified?: boolean;
+  } | null;
 }
 
 function normalizeComment(
@@ -453,6 +461,13 @@ function normalizeComment(
       ? comment.id
       : typeof comment._id === "string"
         ? comment._id
+        : "";
+
+  const authorId =
+    typeof comment.author?.id === "string"
+      ? comment.author.id
+      : typeof comment.author?._id === "string"
+        ? comment.author._id
         : "";
 
   return {
@@ -482,6 +497,30 @@ function normalizeComment(
       typeof comment.updatedAt === "string"
         ? comment.updatedAt
         : undefined,
+
+    author:
+      comment.author &&
+      typeof comment.author === "object"
+      ? {
+          id: authorId,
+          username:
+            typeof comment.author.username === "string"
+              ? comment.author.username
+              : "",
+          displayName:
+            typeof comment.author.displayName === "string"
+              ? comment.author.displayName
+              : "",
+          avatarUrl:
+            typeof comment.author.avatarUrl === "string"
+              ? comment.author.avatarUrl
+              : undefined,
+          verified:
+            typeof comment.author.verified === "boolean"
+              ? comment.author.verified
+              : false,
+        }
+      : null,
   };
 }
 
