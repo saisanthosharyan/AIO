@@ -83,17 +83,24 @@ interface BackendPost {
   _id?: string;
   id?: string;
   authorId?: string;
+
+  author?: {
+    _id?: string;
+    id?: string;
+    username?: string;
+    displayName?: string;
+    avatarUrl?: string;
+    verified?: boolean;
+  } | null;
+
   content?: string;
   imageUrl?: string;
   type?: PostType;
-
   likesCount?: number;
   commentsCount?: number;
   bookmarksCount?: number;
-
   isLiked?: boolean;
   isBookmarked?: boolean;
-
   createdAt?: string;
   updatedAt?: string;
 }
@@ -145,7 +152,34 @@ function normalizePost(
       typeof post.authorId === "string"
         ? post.authorId
         : "",
-
+    author:
+  post.author &&
+  typeof post.author === "object"
+    ? {
+        id:
+          typeof post.author.id === "string"
+            ? post.author.id
+            : typeof post.author._id === "string"
+              ? post.author._id
+              : "",
+        username:
+          typeof post.author.username === "string"
+            ? post.author.username
+            : "",
+        displayName:
+          typeof post.author.displayName === "string"
+            ? post.author.displayName
+            : "",
+        avatarUrl:
+          typeof post.author.avatarUrl === "string"
+            ? post.author.avatarUrl
+            : undefined,
+        verified:
+          typeof post.author.verified === "boolean"
+            ? post.author.verified
+            : false,
+      }
+    : null,
     content:
       typeof post.content === "string"
         ? post.content
@@ -236,6 +270,19 @@ export async function getPosts(): Promise<Post[]> {
   return response.posts.map(
     normalizePost,
   );
+}
+export async function getPost(
+  postId: string,
+): Promise<Post> {
+  const response =
+    await request<{
+      success: boolean;
+      post: BackendPost;
+    }>(
+      `/api/posts/${postId}`,
+    );
+
+  return normalizePost(response.post);
 }
 
 export async function createPost(
@@ -771,4 +818,66 @@ export async function getFollowing(
   }
 
   return response.following ?? [];
+}
+export interface SearchUsersResponse {
+  success: boolean;
+  count: number;
+  users: UserProfile[];
+}
+
+export async function searchUsers(
+  query: string,
+): Promise<UserProfile[]> {
+  const trimmedQuery = query.trim();
+
+  if (!trimmedQuery) {
+    return [];
+  }
+
+  const response =
+    await request<SearchUsersResponse>(
+      `/api/users/search?q=${encodeURIComponent(
+        trimmedQuery,
+      )}`,
+    );
+
+  if (!response.success) {
+    throw new Error(
+      "Failed to search users.",
+    );
+  }
+
+  return response.users ?? [];
+}
+export interface SearchPostsResponse {
+  success: boolean;
+  count: number;
+  posts: BackendPost[];
+}
+
+export async function searchPosts(
+  query: string,
+): Promise<Post[]> {
+  const trimmedQuery = query.trim();
+
+  if (!trimmedQuery) {
+    return [];
+  }
+
+  const response =
+    await request<SearchPostsResponse>(
+      `/api/posts/search?q=${encodeURIComponent(
+        trimmedQuery,
+      )}`,
+    );
+
+  if (!response.success) {
+    throw new Error(
+      "Failed to search posts.",
+    );
+  }
+
+  return response.posts.map(
+    normalizePost,
+  );
 }

@@ -6,6 +6,15 @@ export type PostType =
 export interface Post {
   id: string;
   authorId: string;
+
+  author?: {
+    id: string;
+    username: string;
+    displayName: string;
+    avatarUrl?: string;
+    verified: boolean;
+  } | null;
+
   content: string;
   imageUrl?: string;
   type: PostType;

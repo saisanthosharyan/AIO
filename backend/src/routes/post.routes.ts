@@ -5,7 +5,8 @@ import {
   getPosts,
   getPostById,
   updatePost,
-  deletePost,
+   deletePost,
+  searchPosts,
 } from "../controllers/post.controller.js";
 
 import {
@@ -18,6 +19,11 @@ import { authenticate } from "../middleware/auth.middleware.js";
 const router = Router();
 
 router.get("/", authenticate, getPosts);
+router.get(
+  "/search",
+  authenticate,
+  searchPosts,
+);
 
 router.get("/:id", getPostById);
 

@@ -675,3 +675,106 @@ export async function getFollowing(
     });
   }
 }
+/**
+ * Search public users.
+ */
+export async function searchUsers(
+  request: AuthenticatedRequest,
+  response: Response,
+): Promise<void> {
+  try {
+    const query =
+      typeof request.query.q === "string"
+        ? request.query.q.trim()
+        : "";
+
+    if (!query) {
+      response.status(200).json({
+        success: true,
+        count: 0,
+        users: [],
+      });
+      return;
+    }
+
+    if (query.length > 50) {
+      response.status(400).json({
+        success: false,
+        message:
+          "Search query cannot exceed 50 characters",
+      });
+      return;
+    }
+
+    const users = await UserModel.find({
+      $or: [
+        {
+          username: {
+            $regex: query,
+            $options: "i",
+          },
+        },
+        {
+          displayName: {
+            $regex: query,
+            $options: "i",
+          },
+        },
+      ],
+    })
+      .select("-password")
+      .sort({
+        displayName: 1,
+        username: 1,
+      })
+      .limit(20)
+      .lean();
+
+    const userIds = users.map((user) =>
+      user._id.toString(),
+    );
+
+    const followingIds = request.userId
+      ? await FollowModel.find({
+          followerId: String(request.userId),
+          followingId: {
+            $in: userIds,
+          },
+        })
+          .select("followingId")
+          .lean()
+      : [];
+
+    const followingSet = new Set(
+      followingIds.map(
+        (follow) =>
+          String(follow.followingId),
+      ),
+    );
+
+    response.status(200).json({
+      success: true,
+      count: users.length,
+      users: users.map((user) => ({
+        ...user,
+        id: user._id.toString(),
+        isFollowing: followingSet.has(
+          user._id.toString(),
+        ),
+      })),
+    });
+  } catch (error) {
+    console.error(
+      "Search users error:",
+      error,
+    );
+
+    response.status(500).json({
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to search users",
+    });
+  }
+}

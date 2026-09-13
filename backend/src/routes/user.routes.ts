@@ -8,33 +8,31 @@ import {
   unfollowUser,
   getFollowers,
   getFollowing,
+  searchUsers,
 } from "../controllers/user.controller.js";
 
 import { authenticate } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
-/*
- * Current user's profile
- */
 router.get(
   "/me",
   authenticate,
   getCurrentUser,
 );
 
-/*
- * Update current user's profile
- */
 router.put(
   "/me",
   authenticate,
   updateProfile,
 );
 
-/*
- * Follow / unfollow a user
- */
+router.get(
+  "/search",
+  authenticate,
+  searchUsers,
+);
+
 router.post(
   "/:userId/follow",
   authenticate,
@@ -47,9 +45,6 @@ router.delete(
   unfollowUser,
 );
 
-/*
- * Followers / following lists
- */
 router.get(
   "/:userId/followers",
   authenticate,
@@ -62,12 +57,6 @@ router.get(
   getFollowing,
 );
 
-/*
- * Public user profile.
- *
- * Keep this route LAST because it accepts
- * any single path segment.
- */
 router.get(
   "/:username",
   authenticate,

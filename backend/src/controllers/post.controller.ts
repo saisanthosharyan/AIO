@@ -800,3 +800,197 @@ export async function deletePost(
     });
   }
 }
+export async function searchPosts(
+  request: AuthenticatedRequest,
+  response: Response,
+): Promise<void> {
+  try {
+    const userId = request.userId;
+
+    if (!userId) {
+      response.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
+      return;
+    }
+
+    const query =
+      typeof request.query.q === "string"
+        ? request.query.q.trim()
+        : "";
+
+    if (!query) {
+      response.status(200).json({
+        success: true,
+        count: 0,
+        posts: [],
+      });
+      return;
+    }
+
+    if (query.length > 100) {
+      response.status(400).json({
+        success: false,
+        message:
+          "Search query cannot exceed 100 characters",
+      });
+      return;
+    }
+
+    const currentUserId = String(userId);
+
+    const posts = await PostModel.find({
+      content: {
+        $regex: query,
+        $options: "i",
+      },
+    })
+      .sort({
+        createdAt: -1,
+      })
+      .limit(30)
+      .lean();
+
+    if (posts.length === 0) {
+      response.status(200).json({
+        success: true,
+        count: 0,
+        posts: [],
+      });
+      return;
+    }
+
+    const postIds = posts.map(
+      (post) => post._id,
+    );
+
+    const [likes, bookmarks] =
+      await Promise.all([
+        LikeModel.find({
+          userId: currentUserId,
+          postId: {
+            $in: postIds,
+          },
+        })
+          .select("postId")
+          .lean(),
+
+        BookmarkModel.find({
+          userId: currentUserId,
+          postId: {
+            $in: postIds,
+          },
+        })
+          .select("postId")
+          .lean(),
+      ]);
+
+    const likedPostIds = new Set<string>(
+      likes.map((like) =>
+        String(like.postId),
+      ),
+    );
+
+    const bookmarkedPostIds =
+      new Set<string>(
+        bookmarks.map((bookmark) =>
+          String(bookmark.postId),
+        ),
+      );
+
+    const authorIds = [
+      ...new Set(
+        posts
+          .map((post) =>
+            String(post.authorId),
+          )
+          .filter((authorId) =>
+            mongoose.isValidObjectId(
+              authorId,
+            ),
+          ),
+      ),
+    ];
+
+    const authors =
+      authorIds.length > 0
+        ? await UserModel.find({
+            _id: {
+              $in: authorIds,
+            },
+          })
+            .select(
+              "_id username displayName avatarUrl verified",
+            )
+            .lean()
+        : [];
+
+    const authorMap = new Map<
+      string,
+      {
+        id: string;
+        username: string;
+        displayName: string;
+        verified: boolean;
+        avatarUrl?: string;
+      }
+    >();
+
+    for (const author of authors) {
+      authorMap.set(
+        String(author._id),
+        {
+          id: String(author._id),
+          username: author.username,
+          displayName: author.displayName,
+          verified: author.verified,
+          ...(author.avatarUrl
+            ? {
+                avatarUrl:
+                  author.avatarUrl,
+              }
+            : {}),
+        },
+      );
+    }
+
+    const normalizedPosts =
+      posts.map((post) => {
+        const postId =
+          String(post._id);
+
+        const authorId =
+          String(post.authorId);
+
+        return {
+          ...post,
+          author:
+            authorMap.get(authorId),
+          isLiked:
+            likedPostIds.has(postId),
+          isBookmarked:
+            bookmarkedPostIds.has(postId),
+        };
+      });
+
+    response.status(200).json({
+      success: true,
+      count: normalizedPosts.length,
+      posts: normalizedPosts,
+    });
+  } catch (error) {
+    console.error(
+      "Search posts error:",
+      error,
+    );
+
+    response.status(500).json({
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to search posts",
+    });
+  }
+}
