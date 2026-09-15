@@ -1,20 +1,33 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import {
+  ArrowLeft,
+  Users,
+  X,
+} from "lucide-react";
+
 import AuthGuard from "@/components/auth/AuthGuard";
 import {
   followUser,
+  getFollowers,
+  getFollowing,
   getPosts,
   getUserProfile,
   unfollowUser,
   type UserProfile,
 } from "@/lib/api";
-
 import type { Post } from "../../../../../packages/types/src/post";
 
 type ProfileTab = "posts" | "media";
+
+type RelationshipList =
+  | "followers"
+  | "following"
+  | null;
 
 function getInitials(user: UserProfile): string {
   const source =
@@ -50,6 +63,171 @@ function formatDate(value?: string): string {
   });
 }
 
+function formatPostDate(value: string): string {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function UserAvatar({
+  user,
+  size = 48,
+}: {
+  user: UserProfile;
+  size?: number;
+}) {
+  const initials = getInitials(user);
+
+  if (user.avatarUrl) {
+    return (
+      <Image
+        src={user.avatarUrl}
+        alt={`${user.displayName} profile`}
+        width={size}
+        height={size}
+        unoptimized
+      />
+    );
+  }
+
+  return (
+    <span
+      className="public-profile-avatar-fallback"
+      aria-hidden="true"
+    >
+      {initials}
+    </span>
+  );
+}
+
+function RelationshipModal({
+  type,
+  users,
+  loading,
+  error,
+  onClose,
+}: {
+  type: Exclude<RelationshipList, null>;
+  users: UserProfile[];
+  loading: boolean;
+  error: string;
+  onClose: () => void;
+}) {
+  const title =
+    type === "followers"
+      ? "Followers"
+      : "Following";
+
+  return (
+    <div
+      className="profile-relation-overlay"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <section
+        className="profile-relation-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="relationship-title"
+      >
+        <div className="profile-relation-header">
+          <div>
+            <span className="profile-relation-eyebrow">
+              AIO
+            </span>
+
+            <h2 id="relationship-title">
+              {title}
+            </h2>
+          </div>
+
+          <button
+            type="button"
+            className="profile-relation-close"
+            onClick={onClose}
+            aria-label={`Close ${title}`}
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="profile-relation-body">
+          {loading ? (
+            <div className="profile-relation-state">
+              Loading {title.toLowerCase()}...
+            </div>
+          ) : error ? (
+            <div
+              className="profile-relation-state"
+              role="alert"
+            >
+              <strong>
+                Unable to load {title.toLowerCase()}
+              </strong>
+
+              <span>{error}</span>
+            </div>
+          ) : users.length === 0 ? (
+            <div className="profile-relation-state">
+              <Users size={30} />
+
+              <strong>
+                No {title.toLowerCase()} yet
+              </strong>
+
+              <span>
+                This list is currently empty.
+              </span>
+            </div>
+          ) : (
+            <div className="profile-relation-list">
+              {users.map((relationUser) => (
+                <Link
+                  key={relationUser.id}
+                  href={`/profile/${encodeURIComponent(
+                    relationUser.username,
+                  )}`}
+                  className="profile-relation-user"
+                  onClick={onClose}
+                >
+                  <div className="profile-relation-avatar">
+                    <UserAvatar
+                      user={relationUser}
+                      size={46}
+                    />
+                  </div>
+
+                  <div className="profile-relation-info">
+                    <strong>
+                      {relationUser.displayName}
+                    </strong>
+
+                    <span>
+                      @{relationUser.username}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function PublicProfileContent() {
   const params = useParams();
   const router = useRouter();
@@ -67,6 +245,18 @@ function PublicProfileContent() {
 
   const [activeTab, setActiveTab] =
     useState<ProfileTab>("posts");
+
+  const [relationshipList, setRelationshipList] =
+    useState<RelationshipList>(null);
+
+  const [relationshipUsers, setRelationshipUsers] =
+    useState<UserProfile[]>([]);
+
+  const [relationshipLoading, setRelationshipLoading] =
+    useState(false);
+
+  const [relationshipError, setRelationshipError] =
+    useState("");
 
   const [loading, setLoading] =
     useState(true);
@@ -139,7 +329,12 @@ function PublicProfileContent() {
         }
 
         setPosts(allPosts);
-      } catch {
+      } catch (err) {
+        console.error(
+          "Public profile posts error:",
+          err,
+        );
+
         if (mounted) {
           setPosts([]);
         }
@@ -156,6 +351,63 @@ function PublicProfileContent() {
       mounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!relationshipList || !user?.id) {
+      return;
+    }
+
+    const profileUserId = user.id;
+    const relationshipType = relationshipList;
+
+    let mounted = true;
+
+    async function loadRelationshipUsers() {
+      try {
+        setRelationshipLoading(true);
+        setRelationshipError("");
+        setRelationshipUsers([]);
+
+        const result =
+          relationshipType === "followers"
+            ? await getFollowers(profileUserId)
+            : await getFollowing(profileUserId);
+
+        if (!mounted) {
+          return;
+        }
+
+        setRelationshipUsers(result);
+      } catch (err) {
+        console.error(
+          "Relationship list error:",
+          err,
+        );
+
+        if (!mounted) {
+          return;
+        }
+
+        setRelationshipUsers([]);
+
+        setRelationshipError(
+          err instanceof Error
+            ? err.message
+            : "Failed to load this list.",
+        );
+      } finally {
+        if (mounted) {
+          setRelationshipLoading(false);
+        }
+      }
+    }
+
+    void loadRelationshipUsers();
+
+    return () => {
+      mounted = false;
+    };
+  }, [relationshipList, user?.id]);
 
   const userPosts = useMemo(() => {
     if (!user) {
@@ -186,9 +438,9 @@ function PublicProfileContent() {
       setError("");
 
       if (user.isFollowing) {
-        await unfollowUser(user.username);
+        await unfollowUser(user.id);
       } else {
-        await followUser(user.username);
+        await followUser(user.id);
       }
 
       setUser((currentUser) => {
@@ -196,18 +448,17 @@ function PublicProfileContent() {
           return currentUser;
         }
 
-        const isFollowing =
+        const nextFollowing =
           !currentUser.isFollowing;
 
         return {
           ...currentUser,
-          isFollowing,
-          followersCount:
-            Math.max(
-              0,
-              currentUser.followersCount +
-                (isFollowing ? 1 : -1),
-            ),
+          isFollowing: nextFollowing,
+          followersCount: Math.max(
+            0,
+            currentUser.followersCount +
+              (nextFollowing ? 1 : -1),
+          ),
         };
       });
     } catch (err) {
@@ -221,9 +472,24 @@ function PublicProfileContent() {
     }
   }
 
+  function openRelationshipList(
+    type: Exclude<RelationshipList, null>,
+  ) {
+    setRelationshipError("");
+    setRelationshipUsers([]);
+    setRelationshipList(type);
+  }
+
+  function closeRelationshipList() {
+    setRelationshipList(null);
+    setRelationshipUsers([]);
+    setRelationshipError("");
+    setRelationshipLoading(false);
+  }
+
   if (loading) {
     return (
-      <main className="aio-page">
+      <main className="aio-page public-profile-page">
         <section className="profile-header">
           <div className="aio-loading">
             Loading profile...
@@ -235,13 +501,14 @@ function PublicProfileContent() {
 
   if (error || !user) {
     return (
-      <main className="aio-page">
+      <main className="aio-page public-profile-page">
         <section className="profile-header">
           <button
             type="button"
             className="aio-button aio-button-secondary"
             onClick={() => router.back()}
           >
+            <ArrowLeft size={16} />
             Back
           </button>
 
@@ -257,44 +524,37 @@ function PublicProfileContent() {
     );
   }
 
-  const initials = getInitials(user);
+  const profileUser = user;
+
   const joinedDate = formatDate(
-    user.createdAt,
+    profileUser.createdAt,
   );
 
   return (
-    <main className="aio-page">
+    <main className="aio-page public-profile-page">
       <section className="aio-profile-header profile-header">
         <button
           type="button"
-          className="aio-button aio-button-secondary"
+          className="aio-button aio-button-secondary profile-back-button"
           onClick={() => router.back()}
         >
+          <ArrowLeft size={16} />
           Back
         </button>
 
-        <div className="profile-avatar">
-          {user.avatarUrl ? (
-            <Image
-              src={user.avatarUrl}
-              alt={`${user.displayName} profile`}
-              width={88}
-              height={88}
-              unoptimized
-            />
-          ) : (
-            <span aria-hidden="true">
-              {initials}
-            </span>
-          )}
+        <div className="profile-avatar public-profile-avatar">
+          <UserAvatar
+            user={profileUser}
+            size={88}
+          />
         </div>
 
         <div className="profile-name-row">
           <div>
             <h1 className="profile-name">
-              {user.displayName}
+              {profileUser.displayName}
 
-              {user.verified && (
+              {profileUser.verified && (
                 <span
                   className="profile-verified"
                   title="Verified"
@@ -306,7 +566,7 @@ function PublicProfileContent() {
             </h1>
 
             <p className="profile-username">
-              @{user.username}
+              @{profileUser.username}
             </p>
           </div>
 
@@ -320,15 +580,15 @@ function PublicProfileContent() {
           >
             {followLoading
               ? "Updating..."
-              : user.isFollowing
+              : profileUser.isFollowing
                 ? "Following"
                 : "Follow"}
           </button>
         </div>
 
-        {user.bio && (
+        {profileUser.bio && (
           <p className="profile-bio">
-            {user.bio}
+            {profileUser.bio}
           </p>
         )}
 
@@ -343,22 +603,39 @@ function PublicProfileContent() {
             <strong>
               {userPosts.length}
             </strong>
+
             <span>Posts</span>
           </div>
 
-          <div className="profile-stat">
+          <button
+            type="button"
+            className="profile-stat profile-stat-button"
+            onClick={() =>
+              openRelationshipList("followers")
+            }
+            aria-label={`View ${profileUser.followersCount} followers`}
+          >
             <strong>
-              {user.followersCount}
+              {profileUser.followersCount}
             </strong>
-            <span>Followers</span>
-          </div>
 
-          <div className="profile-stat">
+            <span>Followers</span>
+          </button>
+
+          <button
+            type="button"
+            className="profile-stat profile-stat-button"
+            onClick={() =>
+              openRelationshipList("following")
+            }
+            aria-label={`View ${profileUser.followingCount} following`}
+          >
             <strong>
-              {user.followingCount}
+              {profileUser.followingCount}
             </strong>
+
             <span>Following</span>
-          </div>
+          </button>
         </div>
       </section>
 
@@ -423,10 +700,30 @@ function PublicProfileContent() {
           userPosts.length > 0 ? (
             <div className="profile-post-list">
               {userPosts.map((post) => (
-                <article
+                <Link
                   key={post.id}
+                  href={`/post/${post.id}`}
                   className="profile-post"
                 >
+                  <div className="profile-post-author">
+                    <div className="profile-post-author-avatar">
+                      <UserAvatar
+                        user={profileUser}
+                        size={38}
+                      />
+                    </div>
+
+                    <div>
+                      <strong>
+                        {profileUser.displayName}
+                      </strong>
+
+                      <span>
+                        @{profileUser.username}
+                      </span>
+                    </div>
+                  </div>
+
                   <p>
                     {post.content}
                   </p>
@@ -453,12 +750,12 @@ function PublicProfileContent() {
                     </span>
 
                     <span>
-                      {new Date(
+                      {formatPostDate(
                         post.createdAt,
-                      ).toLocaleDateString()}
+                      )}
                     </span>
                   </div>
-                </article>
+                </Link>
               ))}
             </div>
           ) : (
@@ -476,8 +773,9 @@ function PublicProfileContent() {
         ) : mediaPosts.length > 0 ? (
           <div className="profile-media-grid">
             {mediaPosts.map((post) => (
-              <article
+              <Link
                 key={post.id}
+                href={`/post/${post.id}`}
                 className="profile-media-item"
               >
                 {post.imageUrl && (
@@ -489,7 +787,7 @@ function PublicProfileContent() {
                     unoptimized
                   />
                 )}
-              </article>
+              </Link>
             ))}
           </div>
         ) : (
@@ -505,6 +803,16 @@ function PublicProfileContent() {
           </div>
         )}
       </section>
+
+      {relationshipList !== null && (
+        <RelationshipModal
+          type={relationshipList}
+          users={relationshipUsers}
+          loading={relationshipLoading}
+          error={relationshipError}
+          onClose={closeRelationshipList}
+        />
+      )}
     </main>
   );
 }

@@ -1,7 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Search, Users, FileText, Loader2 } from "lucide-react";
+import {
+  Search,
+  Users,
+  FileText,
+  Loader2,
+} from "lucide-react";
 import {
   followUser,
   searchPosts,
@@ -43,8 +49,15 @@ export default function DiscoverPage() {
         setUsers(userResults);
         setPosts(postResults);
       } catch (err) {
-        console.error("Discover search error:", err);
-        setError("Something went wrong while searching.");
+        console.error(
+          "Discover search error:",
+          err,
+        );
+
+        setError(
+          "Something went wrong while searching.",
+        );
+
         setUsers([]);
         setPosts([]);
       } finally {
@@ -62,9 +75,9 @@ export default function DiscoverPage() {
       setError("");
 
       if (user.isFollowing) {
-        await unfollowUser(user.username);
+        await unfollowUser(user.id);
       } else {
-        await followUser(user.username);
+        await followUser(user.id);
       }
 
       setUsers((currentUsers) =>
@@ -72,7 +85,8 @@ export default function DiscoverPage() {
           currentUser.id === user.id
             ? {
                 ...currentUser,
-                isFollowing: !user.isFollowing,
+                isFollowing:
+                  !user.isFollowing,
               }
             : currentUser,
         ),
@@ -82,6 +96,7 @@ export default function DiscoverPage() {
         "Follow toggle error:",
         err,
       );
+
       setError(
         "Failed to update follow status.",
       );
@@ -92,6 +107,7 @@ export default function DiscoverPage() {
     <main className="discover-page">
       <div className="discover-header">
         <h1>Discover</h1>
+
         <p>
           Find people and posts across AIO.
         </p>
@@ -144,6 +160,7 @@ export default function DiscoverPage() {
               <div className="discover-section-header">
                 <div>
                   <Users size={20} />
+
                   <h2>People</h2>
                 </div>
 
@@ -163,33 +180,44 @@ export default function DiscoverPage() {
                       className="discover-user-card"
                       key={user.id}
                     >
-                      <div className="discover-user-avatar">
-                        {user.avatarUrl ? (
-                          <img
-                            src={user.avatarUrl}
-                            alt={user.displayName}
-                          />
-                        ) : (
-                          user.displayName
-                            .charAt(0)
-                            .toUpperCase()
-                        )}
-                      </div>
+                      <Link
+                        href={`/profile/${encodeURIComponent(
+                          user.username,
+                        )}`}
+                        className="discover-user-main"
+                      >
+                        <div className="discover-user-avatar">
+                          {user.avatarUrl ? (
+                            <img
+                              src={user.avatarUrl}
+                              alt={
+                                user.displayName
+                              }
+                            />
+                          ) : (
+                            user.displayName
+                              .charAt(0)
+                              .toUpperCase()
+                          )}
+                        </div>
 
-                      <div className="discover-user-info">
-                        <strong>
-                          {user.displayName}
-                        </strong>
+                        <div className="discover-user-info">
+                          <strong>
+                            {user.displayName}
+                          </strong>
 
-                        <span>
-                          @{user.username}
-                        </span>
-                      </div>
+                          <span>
+                            @{user.username}
+                          </span>
+                        </div>
+                      </Link>
 
                       <button
                         type="button"
                         onClick={() =>
-                          handleFollowToggle(user)
+                          handleFollowToggle(
+                            user,
+                          )
                         }
                       >
                         {user.isFollowing
@@ -206,6 +234,7 @@ export default function DiscoverPage() {
               <div className="discover-section-header">
                 <div>
                   <FileText size={20} />
+
                   <h2>Posts</h2>
                 </div>
 
@@ -221,14 +250,15 @@ export default function DiscoverPage() {
               ) : (
                 <div className="discover-post-list">
                   {posts.map((post) => (
-                    <div
+                    <Link
                       key={post.id}
+                      href={`/post/${post.id}`}
                       className="discover-post-result"
                     >
                       <p>
                         {post.content}
                       </p>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               )}

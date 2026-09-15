@@ -18,16 +18,10 @@ export default function LoginPage() {
 
   const [showPassword, setShowPassword] =
     useState(false);
-
-  const [email, setEmail] =
-    useState("");
-
+  const [email, setEmail] = useState("");
   const [password, setPassword] =
     useState("");
-
-  const [error, setError] =
-    useState("");
-
+  const [error, setError] = useState("");
   const [loading, setLoading] =
     useState(false);
 
@@ -54,8 +48,7 @@ export default function LoginPage() {
         },
       );
 
-      const data =
-        await response.json();
+      const data = await response.json();
 
       if (!response.ok) {
         throw new Error(
@@ -87,23 +80,26 @@ export default function LoginPage() {
 
   return (
     <main className="auth-page">
-      <div className="auth-background">
-        <div className="auth-orbit auth-orbit-one" />
-        <div className="auth-orbit auth-orbit-two" />
-        <div className="auth-glow" />
+      <div className="auth-decoration">
+        <div className="auth-decoration-circle auth-decoration-circle-one" />
+        <div className="auth-decoration-circle auth-decoration-circle-two" />
       </div>
 
       <section className="auth-card">
-        <div className="auth-brand">
-          <div className="auth-brand-mark">
-            <Sparkles size={18} />
-          </div>
+        <Link
+          href="/"
+          className="auth-brand"
+          aria-label="AIO home"
+        >
+          <span className="auth-brand-mark">
+            <Sparkles size={17} />
+          </span>
 
           <span>AIO</span>
-        </div>
+        </Link>
 
         <div className="auth-heading">
-          <span className="eyebrow">
+          <span className="auth-eyebrow">
             WELCOME BACK
           </span>
 
@@ -124,7 +120,7 @@ export default function LoginPage() {
           className="auth-form"
           onSubmit={handleLogin}
         >
-          <div className="field">
+          <div className="auth-field">
             <label htmlFor="email">
               Email or username
             </label>
@@ -136,16 +132,14 @@ export default function LoginPage() {
               autoComplete="username"
               value={email}
               onChange={(event) =>
-                setEmail(
-                  event.target.value,
-                )
+                setEmail(event.target.value)
               }
               required
             />
           </div>
 
-          <div className="field">
-            <div className="field-label-row">
+          <div className="auth-field">
+            <div className="auth-field-label">
               <label htmlFor="password">
                 Password
               </label>
@@ -155,7 +149,7 @@ export default function LoginPage() {
               </Link>
             </div>
 
-            <div className="password-field">
+            <div className="auth-password">
               <input
                 id="password"
                 type={
@@ -197,16 +191,9 @@ export default function LoginPage() {
           </div>
 
           {error && (
-            <p
-              style={{
-                color:
-                  "var(--aio-danger)",
-                fontSize: "14px",
-                margin: "0",
-              }}
-            >
+            <div className="aio-error">
               {error}
-            </p>
+            </div>
           )}
 
           <button
@@ -225,12 +212,10 @@ export default function LoginPage() {
         </form>
 
         <div className="auth-divider">
-          <span>
-            or continue with
-          </span>
+          <span>or continue with</span>
         </div>
 
-        <div className="social-login">
+        <div className="auth-social">
           <button type="button">
             Google
           </button>
