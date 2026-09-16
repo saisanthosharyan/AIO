@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 
 import { UserModel } from "../models/User.js";
 import { FollowModel } from "../models/Follow.js";
+import { NotificationModel } from "../models/Notification.js";
 
 import type {
   AuthenticatedRequest,
@@ -242,17 +243,22 @@ export async function updateProfile(
 
     await user.save();
 
-    const userObject = user.toObject() as unknown as Record<string, unknown>;
+    const userObject =
+      user.toObject() as unknown as Record<
+        string,
+        unknown
+      >;
+
     delete userObject.password;
 
     response.status(200).json({
-    success: true,
-    message:
+      success: true,
+      message:
         "Profile updated successfully",
-    user: {
+      user: {
         ...userObject,
         id: user._id.toString(),
-    },
+      },
     });
   } catch (error) {
     console.error(
@@ -337,7 +343,8 @@ export async function followUser(
     if (existingFollow) {
       response.status(409).json({
         success: false,
-        message: "Already following this user",
+        message:
+          "Already following this user",
       });
       return;
     }
@@ -365,11 +372,18 @@ export async function followUser(
           },
         },
       ),
+
+      NotificationModel.create({
+        recipientId: targetUserId,
+        actorId: String(userId),
+        type: "follow",
+      }),
     ]);
 
     response.status(201).json({
       success: true,
-      message: "User followed successfully",
+      message:
+        "User followed successfully",
     });
   } catch (error) {
     console.error(
@@ -539,20 +553,20 @@ export async function getFollowers(
     );
 
     const orderedFollowers =
-    followerIds
+      followerIds
         .map((id) =>
-        followerMap.get(String(id)),
+          followerMap.get(String(id)),
         )
         .filter(
-        (
+          (
             follower,
-        ): follower is NonNullable<
+          ): follower is NonNullable<
             typeof follower
-        > => Boolean(follower),
+          > => Boolean(follower),
         )
         .map((follower) => ({
-        ...follower,
-        id: follower._id.toString(),
+          ...follower,
+          id: follower._id.toString(),
         }));
 
     response.status(200).json({
@@ -639,20 +653,20 @@ export async function getFollowing(
     );
 
     const orderedFollowing =
-    followingIds
+      followingIds
         .map((id) =>
-        followingMap.get(String(id)),
+          followingMap.get(String(id)),
         )
         .filter(
-        (
+          (
             followedUser,
-        ): followedUser is NonNullable<
+          ): followedUser is NonNullable<
             typeof followedUser
-        > => Boolean(followedUser),
+          > => Boolean(followedUser),
         )
         .map((followedUser) => ({
-        ...followedUser,
-        id: followedUser._id.toString(),
+          ...followedUser,
+          id: followedUser._id.toString(),
         }));
 
     response.status(200).json({
@@ -675,6 +689,7 @@ export async function getFollowing(
     });
   }
 }
+
 /**
  * Search public users.
  */

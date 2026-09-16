@@ -881,3 +881,122 @@ export async function searchPosts(
     normalizePost,
   );
 }
+export type NotificationType =
+  | "follow"
+  | "like"
+  | "comment";
+
+export interface NotificationActor {
+  id: string;
+  username: string;
+  displayName: string;
+  avatarUrl?: string;
+  verified: boolean;
+}
+
+export interface NotificationItem {
+  id: string;
+  recipientId: string;
+  actorId: string;
+  type: NotificationType;
+  postId?: string;
+  commentId?: string;
+  read: boolean;
+  createdAt: string;
+  updatedAt: string;
+  actor: NotificationActor | null;
+}
+
+export interface NotificationsResponse {
+  success: boolean;
+  count: number;
+  unreadCount: number;
+  notifications: NotificationItem[];
+}
+
+export interface UnreadNotificationCountResponse {
+  success: boolean;
+  unreadCount: number;
+}
+
+export async function getNotifications(): Promise<{
+  notifications: NotificationItem[];
+  unreadCount: number;
+}> {
+  const response =
+    await request<NotificationsResponse>(
+      "/api/notifications",
+    );
+
+  if (!response.success) {
+    throw new Error(
+      "Failed to fetch notifications.",
+    );
+  }
+
+  return {
+    notifications:
+      response.notifications ?? [],
+    unreadCount:
+      response.unreadCount ?? 0,
+  };
+}
+
+export async function getUnreadNotificationCount(): Promise<number> {
+  const response =
+    await request<UnreadNotificationCountResponse>(
+      "/api/notifications/unread-count",
+    );
+
+  if (!response.success) {
+    throw new Error(
+      "Failed to fetch unread notification count.",
+    );
+  }
+
+  return response.unreadCount ?? 0;
+}
+
+export async function markNotificationAsRead(
+  notificationId: string,
+): Promise<void> {
+  const response =
+    await request<{
+      success: boolean;
+      message?: string;
+    }>(
+      `/api/notifications/${encodeURIComponent(
+        notificationId,
+      )}/read`,
+      {
+        method: "PATCH",
+      },
+    );
+
+  if (!response.success) {
+    throw new Error(
+      response.message ||
+        "Failed to mark notification as read.",
+    );
+  }
+}
+
+export async function markAllNotificationsAsRead(): Promise<void> {
+  const response =
+    await request<{
+      success: boolean;
+      message?: string;
+    }>(
+      "/api/notifications/read-all",
+      {
+        method: "PATCH",
+      },
+    );
+
+  if (!response.success) {
+    throw new Error(
+      response.message ||
+        "Failed to mark all notifications as read.",
+    );
+  }
+}

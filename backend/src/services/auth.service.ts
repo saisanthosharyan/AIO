@@ -11,7 +11,7 @@ export interface RegisterInput {
 }
 
 export interface LoginInput {
-  email: string;
+  emailOrUsername: string;
   password: string;
 }
 
@@ -67,10 +67,19 @@ export async function registerUser(
 export async function loginUser(
   input: LoginInput,
 ) {
-  const email = input.email.trim().toLowerCase();
+  const emailOrUsername =
+    input.emailOrUsername.trim();
 
   const user = await UserModel.findOne({
-    email,
+    $or: [
+      {
+        email:
+          emailOrUsername.toLowerCase(),
+      },
+      {
+        username: emailOrUsername,
+      },
+    ],
   });
 
   if (!user) {
