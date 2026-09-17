@@ -12,6 +12,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import { useSearchParams } from "next/navigation";
 
 interface PostAuthor {
   id: string;
@@ -245,6 +246,8 @@ function convertPost(
    ========================================================= */
 
 export default function StreamPage() {
+  const searchParams = useSearchParams();
+
   const [posts, setPosts] =
     useState<StreamPost[]>([]);
 
@@ -260,6 +263,13 @@ export default function StreamPage() {
   const [createOpen, setCreateOpen] =
     useState(false);
 
+  useEffect(() => {
+    if (searchParams.get("create") === "1") {
+      setError("");
+      setCreateOpen(true);
+    }
+  }, [searchParams]);
+  
   /* =======================================================
      LOAD POSTS
      ======================================================= */
