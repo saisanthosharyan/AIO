@@ -476,6 +476,32 @@ export async function unbookmarkPost(
     },
   );
 }
+export interface BookmarksResponse {
+  success: boolean;
+  count: number;
+  bookmarks: {
+    postId: BackendPost;
+    createdAt?: string;
+  }[];
+}
+
+export async function getBookmarkedPosts(): Promise<Post[]> {
+  const response =
+    await request<BookmarksResponse>(
+      "/api/bookmarks",
+    );
+
+  if (!response.success) {
+    throw new Error(
+      "Failed to fetch bookmarked posts.",
+    );
+  }
+
+  return (response.bookmarks ?? [])
+    .map((bookmark) => bookmark.postId)
+    .filter(Boolean)
+    .map(normalizePost);
+}
 
 /* -------------------------------------------------------------------------- */
 /* Comments                                                                   */
