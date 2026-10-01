@@ -8,6 +8,7 @@ import {
   Film,
   Home,
   Layers3,
+  Mail,
   Plus,
   Sparkles,
   UserRound,
@@ -45,6 +46,11 @@ const navigation: NavigationItem[] = [
     label: "Spaces",
     href: "/spaces",
     icon: Layers3,
+  },
+  {
+    label: "Messages",
+    href: "/messages",
+    icon: Mail,
   },
   {
     label: "Notifications",

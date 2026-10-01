@@ -1026,3 +1026,183 @@ export async function markAllNotificationsAsRead(): Promise<void> {
     );
   }
 }
+/* -------------------------------------------------------------------------- */
+/* Direct Messages                                                            */
+/* -------------------------------------------------------------------------- */
+
+export interface MessageParticipant {
+  id: string;
+  _id?: string;
+  username: string;
+  displayName: string;
+  avatarUrl?: string;
+  verified: boolean;
+}
+
+export interface ConversationItem {
+  id: string;
+  _id?: string;
+  participantIds: string[];
+  participant: MessageParticipant | null;
+  lastMessageId?: string;
+  lastMessageText?: string;
+  lastMessageSenderId?: string;
+  lastMessageAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MessageItem {
+  id: string;
+  _id?: string;
+  conversationId: string;
+  senderId: string;
+  content: string;
+  imageUrl?: string;
+  readBy: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface ConversationsResponse {
+  success: boolean;
+  count: number;
+  conversations: ConversationItem[];
+}
+
+interface MessagesResponse {
+  success: boolean;
+  count: number;
+  messages: MessageItem[];
+}
+
+interface ConversationResponse {
+  success: boolean;
+  created?: boolean;
+  conversation: ConversationItem;
+}
+
+interface MessageResponse {
+  success: boolean;
+  message: MessageItem;
+}
+
+export async function getConversations(): Promise<
+  ConversationItem[]
+> {
+  const response =
+    await request<ConversationsResponse>(
+      "/api/messages/conversations",
+    );
+
+  if (!response.success) {
+    throw new Error(
+      "Failed to fetch conversations.",
+    );
+  }
+
+  return response.conversations ?? [];
+}
+
+export async function createConversation(
+  participantId: string,
+): Promise<ConversationItem> {
+  const response =
+    await request<ConversationResponse>(
+      "/api/messages/conversations",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          participantId,
+        }),
+      },
+    );
+
+  if (
+    !response.success ||
+    !response.conversation
+  ) {
+    throw new Error(
+      "Failed to create conversation.",
+    );
+  }
+
+  return response.conversation;
+}
+
+export async function getMessages(
+  conversationId: string,
+): Promise<MessageItem[]> {
+  const response =
+    await request<MessagesResponse>(
+      `/api/messages/conversations/${encodeURIComponent(
+        conversationId,
+      )}/messages`,
+    );
+
+  if (!response.success) {
+    throw new Error(
+      "Failed to fetch messages.",
+    );
+  }
+
+  return response.messages ?? [];
+}
+
+export async function sendMessage(
+  conversationId: string,
+  content: string,
+  imageUrl?: string,
+): Promise<MessageItem> {
+  const response =
+    await request<MessageResponse>(
+      `/api/messages/conversations/${encodeURIComponent(
+        conversationId,
+      )}/messages`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          content,
+          ...(imageUrl
+            ? { imageUrl }
+            : {}),
+        }),
+      },
+    );
+
+  if (
+    !response.success ||
+    !response.message
+  ) {
+    throw new Error(
+      "Failed to send message.",
+    );
+  }
+
+  return response.message;
+}
+
+export async function markConversationAsRead(
+  conversationId: string,
+): Promise<void> {
+  const response =
+    await request<{
+      success: boolean;
+      message?: string;
+      updatedCount?: number;
+    }>(
+      `/api/messages/conversations/${encodeURIComponent(
+        conversationId,
+      )}/read`,
+      {
+        method: "PATCH",
+      },
+    );
+
+  if (!response.success) {
+    throw new Error(
+      response.message ||
+        "Failed to mark conversation as read.",
+    );
+  }
+}

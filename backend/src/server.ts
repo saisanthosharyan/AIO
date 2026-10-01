@@ -12,6 +12,7 @@ import bookmarkRoutes from "./routes/bookmark.routes.js";
 import uploadRoutes from "./routes/upload.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
+import messageRoutes from "./routes/message.routes.js";
 
 const app = express();
 
@@ -105,6 +106,11 @@ app.use(
 app.use(
   "/api/notifications",
   notificationRoutes,
+);
+
+app.use(
+  "/api/messages",
+  messageRoutes,
 );
 
 async function startServer(): Promise<void> {
