@@ -3,33 +3,28 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Compass,
-  Film,
   Home,
+  Layers3,
+  Mail,
+  Plus,
   UserRound,
-  Workflow,
 } from "lucide-react";
 
 const navigation = [
   {
-    label: "Stream",
+    label: "Home",
     href: "/stream",
     icon: Home,
   },
   {
-    label: "Discover",
-    href: "/discover",
-    icon: Compass,
+    label: "Messages",
+    href: "/messages",
+    icon: Mail,
   },
   {
-    label: "Flow",
-    href: "/flow",
-    icon: Workflow,
-  },
-  {
-    label: "Clips",
-    href: "/clips",
-    icon: Film,
+    label: "Spaces",
+    href: "/spaces",
+    icon: Layers3,
   },
   {
     label: "Profile",
@@ -58,35 +53,100 @@ function isActivePath(
 export default function MobileNav() {
   const pathname = usePathname();
 
+  const leftItems =
+    navigation.slice(0, 2);
+
+  const rightItems =
+    navigation.slice(2);
+
   return (
     <nav
       className="aio-mobile-nav"
       aria-label="Mobile navigation"
     >
-      {navigation.map((item) => {
+      {leftItems.map((item) => {
         const Icon = item.icon;
-        const active = isActivePath(
-          pathname,
-          item.href,
-        );
+
+        const active =
+          isActivePath(
+            pathname,
+            item.href,
+          );
 
         return (
           <Link
             key={item.href}
             href={item.href}
             className={`aio-mobile-nav-item${
-              active ? " is-active" : ""
+              active
+                ? " is-active"
+                : ""
             }`}
             aria-current={
-              active ? "page" : undefined
+              active
+                ? "page"
+                : undefined
             }
           >
             <Icon
-              size={20}
-              strokeWidth={active ? 2.3 : 2}
+              size={21}
+              strokeWidth={
+                active ? 2.3 : 1.9
+              }
             />
 
-            <span>{item.label}</span>
+            <span>
+              {item.label}
+            </span>
+          </Link>
+        );
+      })}
+
+      <Link
+        href="/stream?create=1"
+        className="aio-mobile-create"
+        aria-label="Create"
+      >
+        <Plus
+          size={25}
+          strokeWidth={2}
+        />
+      </Link>
+
+      {rightItems.map((item) => {
+        const Icon = item.icon;
+
+        const active =
+          isActivePath(
+            pathname,
+            item.href,
+          );
+
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`aio-mobile-nav-item${
+              active
+                ? " is-active"
+                : ""
+            }`}
+            aria-current={
+              active
+                ? "page"
+                : undefined
+            }
+          >
+            <Icon
+              size={21}
+              strokeWidth={
+                active ? 2.3 : 1.9
+              }
+            />
+
+            <span>
+              {item.label}
+            </span>
           </Link>
         );
       })}

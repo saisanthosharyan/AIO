@@ -431,16 +431,61 @@ export default function StreamPage() {
   return (
     <AuthGuard>
       <>
-        <div className="aio-page-header">
-          <div>
-            <h1>Stream</h1>
+        <header className="aio-v2-stream-header">
+          <div className="aio-v2-stream-heading">
+            <div>
+              <span className="aio-v2-stream-eyebrow">
+                Your world
+              </span>
 
-            <p>
-              What&apos;s happening
-              in your world?
-            </p>
+              <h1>Stream</h1>
+
+              <p>
+                Discover what&apos;s happening across AIO.
+              </p>
+            </div>
           </div>
-        </div>
+
+          <nav
+            className="aio-v2-stream-tabs"
+            aria-label="Stream filters"
+          >
+            <button
+              type="button"
+              className="aio-v2-stream-tab is-active"
+            >
+              For You
+            </button>
+
+            <button
+              type="button"
+              className="aio-v2-stream-tab"
+            >
+              Following
+            </button>
+
+            <button
+              type="button"
+              className="aio-v2-stream-tab"
+            >
+              Spaces
+            </button>
+
+            <button
+              type="button"
+              className="aio-v2-stream-tab"
+            >
+              Local
+            </button>
+
+            <button
+              type="button"
+              className="aio-v2-stream-tab"
+            >
+              Global
+            </button>
+          </nav>
+        </header>
 
         <section className="aio-feed">
           {/* =================================================

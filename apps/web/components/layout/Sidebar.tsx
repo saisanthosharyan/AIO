@@ -23,7 +23,7 @@ interface NavigationItem {
 
 const navigation: NavigationItem[] = [
   {
-    label: "Stream",
+    label: "Home",
     href: "/stream",
     icon: Home,
   },
@@ -38,9 +38,9 @@ const navigation: NavigationItem[] = [
     icon: Workflow,
   },
   {
-    label: "Clips",
-    href: "/clips",
-    icon: Film,
+    label: "Messages",
+    href: "/messages",
+    icon: Mail,
   },
   {
     label: "Spaces",
@@ -48,9 +48,9 @@ const navigation: NavigationItem[] = [
     icon: Layers3,
   },
   {
-    label: "Messages",
-    href: "/messages",
-    icon: Mail,
+    label: "Clips",
+    href: "/clips",
+    icon: Film,
   },
   {
     label: "Notifications",
@@ -90,22 +90,24 @@ export default function Sidebar() {
       aria-label="AIO navigation"
     >
       <div className="aio-sidebar-inner">
-        <Link
-          href="/stream"
-          className="aio-wordmark"
-          aria-label="AIO home"
-        >
+        <div className="aio-sidebar-brand-row">
+          <Link
+            href="/stream"
+            className="aio-wordmark"
+            aria-label="AIO home"
+          >
+            <span className="aio-wordmark-text">
+              AIO
+            </span>
+          </Link>
+
           <span
-            className="aio-mark"
+            className="aio-sidebar-brand-spark"
             aria-hidden="true"
           >
-            <Sparkles size={18} />
+            <Sparkles size={20} />
           </span>
-
-          <span className="aio-wordmark-text">
-            AIO
-          </span>
-        </Link>
+        </div>
 
         <nav
           className="aio-sidebar-nav"
@@ -113,20 +115,26 @@ export default function Sidebar() {
         >
           {navigation.map((item) => {
             const Icon = item.icon;
-            const active = isActivePath(
-              pathname,
-              item.href,
-            );
+
+            const active =
+              isActivePath(
+                pathname,
+                item.href,
+              );
 
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 className={`aio-nav-item${
-                  active ? " is-active" : ""
+                  active
+                    ? " is-active"
+                    : ""
                 }`}
                 aria-current={
-                  active ? "page" : undefined
+                  active
+                    ? "page"
+                    : undefined
                 }
               >
                 <span
@@ -134,9 +142,11 @@ export default function Sidebar() {
                   aria-hidden="true"
                 >
                   <Icon
-                    size={20}
+                    size={21}
                     strokeWidth={
-                      active ? 2.3 : 2
+                      active
+                        ? 2.25
+                        : 1.9
                     }
                   />
                 </span>
@@ -155,9 +165,46 @@ export default function Sidebar() {
             className="aio-create-button"
           >
             <Plus size={19} />
-
             <span>Create</span>
           </Link>
+
+          <Link
+            href="/profile"
+            className="aio-sidebar-user"
+          >
+            <span
+              className="aio-sidebar-user-avatar"
+              aria-hidden="true"
+            >
+              <UserRound size={18} />
+            </span>
+
+            <span className="aio-sidebar-user-copy">
+              <strong>
+                Your profile
+              </strong>
+
+              <small>
+                View profile
+              </small>
+            </span>
+          </Link>
+
+          <div className="aio-premium-card">
+            <div className="aio-premium-icon">
+              <Sparkles size={16} />
+            </div>
+
+            <div>
+              <strong>
+                AIO Premium
+              </strong>
+
+              <span>
+                Explore premium benefits
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </aside>

@@ -2,8 +2,9 @@
 
 import {
   Image as ImageIcon,
-  Plus,
+  PenLine,
   Sparkles,
+  WandSparkles,
 } from "lucide-react";
 
 interface CreatePanelProps {
@@ -12,16 +13,20 @@ interface CreatePanelProps {
 
 const actions = [
   {
-    label: "Moment",
-    icon: Sparkles,
+    label: "Post",
+    icon: PenLine,
   },
   {
     label: "Image",
     icon: ImageIcon,
   },
   {
-    label: "Post",
-    icon: Plus,
+    label: "Moment",
+    icon: Sparkles,
+  },
+  {
+    label: "Ask AI",
+    icon: WandSparkles,
   },
 ];
 
@@ -30,53 +35,56 @@ export default function CreatePanel({
 }: CreatePanelProps) {
   return (
     <section
-      className="create-panel"
+      className="create-panel aio-v2-composer"
       aria-label="Create a post"
     >
-      <div className="create-panel-main">
-        <div
-          className="avatar avatar-purple"
-          aria-hidden="true"
+      <div className="aio-v2-composer-main">
+        <button
+          type="button"
+          className="aio-v2-composer-avatar"
+          onClick={onOpenCreate}
+          aria-label="Create post"
         >
           AI
-        </div>
+        </button>
 
         <button
           type="button"
-          className="create-placeholder"
+          className="aio-v2-composer-input"
           onClick={onOpenCreate}
         >
           <span>
-            Share something meaningful...
+            What&apos;s on your mind?
           </span>
         </button>
       </div>
 
-      <div className="create-actions">
-        {actions.map(
-          (action) => {
-            const Icon =
-              action.icon;
+      <div className="aio-v2-composer-divider" />
 
-            return (
-              <button
-                key={action.label}
-                type="button"
-                onClick={onOpenCreate}
-                aria-label={`Create ${action.label}`}
-              >
+      <div className="aio-v2-composer-actions">
+        {actions.map((action) => {
+          const Icon = action.icon;
+
+          return (
+            <button
+              key={action.label}
+              type="button"
+              onClick={onOpenCreate}
+              aria-label={`Create ${action.label}`}
+            >
+              <span className="aio-v2-composer-action-icon">
                 <Icon
-                  size={16}
+                  size={17}
                   strokeWidth={2}
                 />
+              </span>
 
-                <span>
-                  {action.label}
-                </span>
-              </button>
-            );
-          },
-        )}
+              <span>
+                {action.label}
+              </span>
+            </button>
+          );
+        })}
       </div>
     </section>
   );

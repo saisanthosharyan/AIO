@@ -1,9 +1,14 @@
 "use client";
 
 import {
+  Bell,
   Moon,
+  Palette,
+  Plus,
+  Search,
   Sun,
 } from "lucide-react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   useCallback,
@@ -12,6 +17,7 @@ import {
 } from "react";
 
 import MobileNav from "./MobileNav";
+import RightPanel from "./RightPanel";
 import Sidebar from "./Sidebar";
 
 interface AppShellProps {
@@ -29,9 +35,7 @@ type Theme = "light" | "dark";
 const THEME_STORAGE_KEY = "aio-theme";
 const THEME_EVENT = "aio-theme-change";
 
-function isAuthRoute(
-  pathname: string,
-): boolean {
+function isAuthRoute(pathname: string): boolean {
   return AUTH_ROUTES.some(
     (route) =>
       pathname === route ||
@@ -40,9 +44,7 @@ function isAuthRoute(
 }
 
 function getStoredTheme(): Theme | null {
-  if (
-    typeof window === "undefined"
-  ) {
+  if (typeof window === "undefined") {
     return null;
   }
 
@@ -62,9 +64,7 @@ function getStoredTheme(): Theme | null {
 }
 
 function getSystemTheme(): Theme {
-  if (
-    typeof window === "undefined"
-  ) {
+  if (typeof window === "undefined") {
     return "light";
   }
 
@@ -76,15 +76,12 @@ function getSystemTheme(): Theme {
 }
 
 function getCurrentTheme(): Theme {
-  if (
-    typeof document === "undefined"
-  ) {
+  if (typeof document === "undefined") {
     return "light";
   }
 
   const documentTheme =
-    document.documentElement
-      .dataset.theme;
+    document.documentElement.dataset.theme;
 
   if (
     documentTheme === "dark" ||
@@ -119,9 +116,7 @@ function subscribeToTheme(
   };
 }
 
-function applyTheme(
-  theme: Theme,
-) {
+function applyTheme(theme: Theme) {
   document.documentElement.dataset.theme =
     theme;
 
@@ -149,15 +144,13 @@ export default function AppShell({
   const darkMode = theme === "dark";
 
   useEffect(() => {
-    const storedTheme =
-      getStoredTheme();
+    const storedTheme = getStoredTheme();
 
     const initialTheme =
       storedTheme ??
       getSystemTheme();
 
     applyTheme(initialTheme);
-
     notifyThemeChange();
 
     function handleSystemThemeChange(
@@ -223,17 +216,78 @@ export default function AppShell({
       <Sidebar />
 
       <div className="aio-workspace">
-        <header className="aio-topbar">
-          <div className="aio-topbar-inner">
-            <div className="aio-topbar-title">
-              <span className="aio-topbar-mobile-logo">
-                AIO
-              </span>
-            </div>
+        {/* Mobile header */}
+        <header className="aio-mobile-topbar">
+          <Link
+            href="/stream"
+            className="aio-mobile-logo"
+          >
+            AIO
+          </Link>
+
+          <div className="aio-mobile-topbar-actions">
+            <Link
+              href="/discover"
+              aria-label="Search"
+            >
+              <Search size={20} />
+            </Link>
+
+            <Link
+              href="/notifications"
+              aria-label="Notifications"
+            >
+              <Bell size={20} />
+            </Link>
 
             <button
               type="button"
-              className="aio-theme-toggle"
+              onClick={toggleTheme}
+              aria-label={
+                darkMode
+                  ? "Switch to light mode"
+                  : "Switch to dark mode"
+              }
+            >
+              {darkMode ? (
+                <Sun size={20} />
+              ) : (
+                <Moon size={20} />
+              )}
+            </button>
+          </div>
+        </header>
+
+        {/* Desktop header */}
+        <header className="aio-topbar">
+          <div className="aio-topbar-inner">
+            <Link
+              href="/discover"
+              className="aio-global-search"
+            >
+              <Search
+                size={19}
+                aria-hidden="true"
+              />
+
+              <span>
+                Search people, spaces,
+                posts...
+              </span>
+            </Link>
+
+            <Link
+              href="/stream?create=1"
+              className="aio-topbar-action"
+              aria-label="Create"
+              title="Create"
+            >
+              <Plus size={21} />
+            </Link>
+
+            <button
+              type="button"
+              className="aio-topbar-action"
               onClick={toggleTheme}
               aria-label={
                 darkMode
@@ -247,17 +301,41 @@ export default function AppShell({
               }
             >
               {darkMode ? (
-                <Sun size={18} />
+                <Sun size={19} />
               ) : (
-                <Moon size={18} />
+                <Palette size={19} />
               )}
             </button>
+
+            <Link
+              href="/notifications"
+              className="aio-topbar-action aio-topbar-notifications"
+              aria-label="Notifications"
+              title="Notifications"
+            >
+              <Bell size={19} />
+            </Link>
+
+            <Link
+              href="/profile"
+              className="aio-topbar-avatar"
+              aria-label="Profile"
+            >
+              <span>
+                <span className="aio-topbar-avatar-dot" />
+              </span>
+            </Link>
           </div>
         </header>
 
+        {/* Main workspace */}
         <main className="aio-workspace-main">
           <div className="aio-workspace-inner">
-            {children}
+            <div className="aio-workspace-content">
+              {children}
+            </div>
+
+            <RightPanel />
           </div>
         </main>
       </div>
