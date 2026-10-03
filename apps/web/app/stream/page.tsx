@@ -58,6 +58,10 @@ interface StreamPost {
   avatarUrl?: string;
 }
 
+type StreamFeed =
+  | "for-you"
+  | "following";
+
 /* =========================================================
    HELPERS
    ========================================================= */
@@ -132,7 +136,7 @@ function getInitials(
 }
 
 /* =========================================================
-   API POST → UI POST
+   API POST -> UI POST
    ========================================================= */
 
 function convertPost(
@@ -147,12 +151,6 @@ function convertPost(
         ? post._id
         : "";
 
-  /*
-   * New backend posts include the public
-   * author profile.
-   *
-   * Legacy posts may not have an author.
-   */
   const author = post.author;
 
   const displayName =
@@ -213,10 +211,6 @@ function convertPost(
         ? post.bookmarksCount
         : 0,
 
-    /*
-     * These values come directly from
-     * the backend.
-     */
     isLiked:
       post.isLiked === true,
 
@@ -226,12 +220,6 @@ function convertPost(
     verified:
       author?.verified === true,
 
-    /*
-     * Only include avatarUrl when it exists.
-     *
-     * This keeps exactOptionalPropertyTypes
-     * happy.
-     */
     ...(author?.avatarUrl
       ? {
           avatarUrl:
@@ -247,6 +235,11 @@ function convertPost(
 
 export default function StreamPage() {
   const searchParams = useSearchParams();
+
+  const [activeFeed, setActiveFeed] =
+    useState<StreamFeed>(
+      "for-you",
+    );
 
   const [posts, setPosts] =
     useState<StreamPost[]>([]);
@@ -269,7 +262,7 @@ export default function StreamPage() {
       setCreateOpen(true);
     }
   }, [searchParams]);
-  
+
   /* =======================================================
      LOAD POSTS
      ======================================================= */
@@ -280,7 +273,8 @@ export default function StreamPage() {
         setLoading(true);
         setError("");
 
-        const data = await getPosts();
+        const data =
+          await getPosts(activeFeed);
 
         const apiPosts =
           data as unknown as ApiPost[];
@@ -304,19 +298,14 @@ export default function StreamPage() {
         setLoading(false);
       }
     },
-    [],
+    [activeFeed],
   );
 
   /* =======================================================
-     INITIAL LOAD
+     FEED LOAD
 
-     We intentionally do not call loadPosts()
-     directly from this effect because the current
-     React ESLint rules flag synchronous state updates
-     caused through that callback.
-
-     Instead, the async function performs the initial
-     request itself.
+     Runs initially and whenever the user changes
+     between For You and Following.
      ======================================================= */
 
   useEffect(() => {
@@ -324,7 +313,8 @@ export default function StreamPage() {
 
     async function fetchPosts(): Promise<void> {
       try {
-        const data = await getPosts();
+        const data =
+          await getPosts(activeFeed);
 
         if (cancelled) {
           return;
@@ -365,7 +355,7 @@ export default function StreamPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [activeFeed]);
 
   /* =======================================================
      CREATE / PUBLISH
@@ -425,6 +415,23 @@ export default function StreamPage() {
   }
 
   /* =======================================================
+     FEED CHANGE
+     ======================================================= */
+
+  function handleFeedChange(
+    feed: StreamFeed,
+  ): void {
+    if (feed === activeFeed) {
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    setPosts([]);
+    setActiveFeed(feed);
+  }
+
+  /* =======================================================
      RENDER
      ======================================================= */
 
@@ -452,14 +459,34 @@ export default function StreamPage() {
           >
             <button
               type="button"
-              className="aio-v2-stream-tab is-active"
+              className={`aio-v2-stream-tab ${
+                activeFeed === "for-you"
+                  ? "is-active"
+                  : ""
+              }`}
+              onClick={() =>
+                handleFeedChange("for-you")
+              }
+              aria-pressed={
+                activeFeed === "for-you"
+              }
             >
               For You
             </button>
 
             <button
               type="button"
-              className="aio-v2-stream-tab"
+              className={`aio-v2-stream-tab ${
+                activeFeed === "following"
+                  ? "is-active"
+                  : ""
+              }`}
+              onClick={() =>
+                handleFeedChange("following")
+              }
+              aria-pressed={
+                activeFeed === "following"
+              }
             >
               Following
             </button>
@@ -467,6 +494,9 @@ export default function StreamPage() {
             <button
               type="button"
               className="aio-v2-stream-tab"
+              disabled
+              title="Coming soon"
+              aria-disabled="true"
             >
               Spaces
             </button>
@@ -474,6 +504,9 @@ export default function StreamPage() {
             <button
               type="button"
               className="aio-v2-stream-tab"
+              disabled
+              title="Coming soon"
+              aria-disabled="true"
             >
               Local
             </button>
@@ -481,6 +514,9 @@ export default function StreamPage() {
             <button
               type="button"
               className="aio-v2-stream-tab"
+              disabled
+              title="Coming soon"
+              aria-disabled="true"
             >
               Global
             </button>
@@ -505,7 +541,9 @@ export default function StreamPage() {
           {loading && (
             <div className="post-card">
               <p className="post-text">
-                Loading your stream...
+                {activeFeed === "following"
+                  ? "Loading posts from people you follow..."
+                  : "Loading your stream..."}
               </p>
             </div>
           )}
@@ -541,10 +579,9 @@ export default function StreamPage() {
             posts.length === 0 && (
               <div className="post-card">
                 <p className="post-text">
-                  No posts yet.
-                  Be the first
-                  to share
-                  something.
+                  {activeFeed === "following"
+                    ? "No posts from people you follow yet. Follow people to build your Following feed."
+                    : "No posts yet. Be the first to share something."}
                 </p>
               </div>
             )}
@@ -561,17 +598,11 @@ export default function StreamPage() {
                   key={post.postId}
                   postId={post.postId}
 
-                  /*
-                   * Real author information
-                   */
                   name={post.name}
                   username={
                     post.username
                   }
 
-                  /*
-                   * Real avatar + verification
-                   */
                   avatarUrl={
                     post.avatarUrl
                   }
@@ -587,9 +618,6 @@ export default function StreamPage() {
                     post.avatarClass
                   }
 
-                  /*
-                   * Post content
-                   */
                   content={
                     post.content
                   }
@@ -598,9 +626,6 @@ export default function StreamPage() {
                   }
                   type={post.type}
 
-                  /*
-                   * Backend counters
-                   */
                   likesCount={
                     post.likesCount
                   }
@@ -611,9 +636,6 @@ export default function StreamPage() {
                     post.bookmarksCount
                   }
 
-                  /*
-                   * Backend interaction state
-                   */
                   isLiked={
                     post.isLiked
                   }

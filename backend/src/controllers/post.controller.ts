@@ -9,6 +9,7 @@ import { PostModel } from "../models/Post.js";
 import { LikeModel } from "../models/Like.js";
 import { BookmarkModel } from "../models/Bookmark.js";
 import { UserModel } from "../models/User.js";
+import { FollowModel } from "../models/Follow.js";
 
 import type {
   AuthenticatedRequest,
@@ -175,14 +176,52 @@ export async function getPosts(
 
     const currentUserId = String(userId);
 
-    /*
-     * Get posts newest first.
-     */
-    const posts = await PostModel.find()
-      .sort({
-        createdAt: -1,
-      })
-      .lean();
+const feed =
+  typeof request.query.feed === "string"
+    ? request.query.feed.trim().toLowerCase()
+    : "for-you";
+
+if (
+  feed !== "for-you" &&
+  feed !== "following"
+) {
+  response.status(400).json({
+    success: false,
+    message: "Invalid feed type",
+  });
+  return;
+}
+
+let postFilter: Record<string, unknown> = {};
+
+if (feed === "following") {
+  const follows = await FollowModel.find({
+    followerId: currentUserId,
+  })
+    .select("followingId")
+    .lean();
+
+  const followingIds = follows.map(
+    (follow) => String(follow.followingId),
+  );
+
+  postFilter = {
+    authorId: {
+      $in: followingIds,
+    },
+  };
+}
+
+/*
+ * Get posts newest first.
+ */
+const posts = await PostModel.find(
+  postFilter,
+)
+  .sort({
+    createdAt: -1,
+  })
+  .lean();
 
     /*
      * No posts.

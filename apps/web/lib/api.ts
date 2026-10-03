@@ -261,16 +261,23 @@ export interface DeletePostResponse {
   post: Post;
 }
 
-export async function getPosts(): Promise<Post[]> {
+export type PostFeed =
+  | "for-you"
+  | "following";
+
+export async function getPosts(
+  feed: PostFeed = "for-you",
+): Promise<Post[]> {
   const response =
     await request<PostsResponse>(
-      "/api/posts",
+      `/api/posts?feed=${encodeURIComponent(feed)}`,
     );
 
   return response.posts.map(
     normalizePost,
   );
 }
+
 export async function getPost(
   postId: string,
 ): Promise<Post> {
