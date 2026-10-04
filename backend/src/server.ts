@@ -13,6 +13,7 @@ import uploadRoutes from "./routes/upload.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
 import messageRoutes from "./routes/message.routes.js";
+import spaceRoutes from "./routes/space.routes.js";
 
 const app = express();
 
@@ -111,6 +112,10 @@ app.use(
 app.use(
   "/api/messages",
   messageRoutes,
+);
+app.use(
+  "/api/spaces",
+  spaceRoutes,
 );
 
 async function startServer(): Promise<void> {

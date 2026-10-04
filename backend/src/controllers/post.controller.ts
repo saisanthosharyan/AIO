@@ -4,20 +4,25 @@ import type {
 } from "express";
 
 import mongoose from "mongoose";
-
 import { PostModel } from "../models/Post.js";
 import { LikeModel } from "../models/Like.js";
 import { BookmarkModel } from "../models/Bookmark.js";
 import { UserModel } from "../models/User.js";
 import { FollowModel } from "../models/Follow.js";
-
+import { SpaceModel } from "../models/Space.js";
+import { SpaceMemberModel } from "../models/SpaceMember.js";
 import type {
   AuthenticatedRequest,
 } from "../middleware/auth.middleware.js";
 
+
+
 /**
+
  * Create a new post
+
  */
+
 export async function createPost(
   request: AuthenticatedRequest,
   response: Response,
@@ -34,73 +39,92 @@ export async function createPost(
     }
 
     const body = request.body ?? {};
-
-    const content =
-      typeof body.content === "string"
-        ? body.content.trim()
-        : "";
-
-    const imageUrl =
-      typeof body.imageUrl === "string"
-        ? body.imageUrl.trim()
-        : "";
-
-    const type = body.type;
+    const content = typeof body.content === "string" ? body.content.trim() : "";
+    const imageUrl = typeof body.imageUrl === "string" ? body.imageUrl.trim() : "";
+    const requestedType = body.type;
+    const spaceId = typeof body.spaceId === "string" ? body.spaceId.trim() : "";
 
     if (!content && !imageUrl) {
-      response.status(400).json({
-        success: false,
-        message:
-          "Post must contain text or an image",
-      });
+      response.status(400).json({ success: false, message: "Post must contain text or an image" });
       return;
     }
 
     if (content.length > 5000) {
-      response.status(400).json({
-        success: false,
-        message:
-          "Post content cannot exceed 5000 characters",
-      });
+      response.status(400).json({ success: false, message: "Post content cannot exceed 5000 characters" });
       return;
     }
 
-    if (
-      type !== undefined &&
-      type !== "thought" &&
-      type !== "image" &&
-      type !== "space"
-    ) {
-      response.status(400).json({
-        success: false,
-        message: "Invalid post type",
-      });
+    if (requestedType !== undefined && requestedType !== "thought" && requestedType !== "image" && requestedType !== "space") {
+      response.status(400).json({ success: false, message: "Invalid post type" });
       return;
     }
 
-    const postType:
-      | "thought"
-      | "image"
-      | "space" =
-      type ??
-      (imageUrl ? "image" : "thought");
+    if (requestedType === "space" && !spaceId) {
+      response.status(400).json({ success: false, message: "Space ID is required for a Space post" });
+      return;
+    }
+
+    let validatedSpaceId: string | undefined;
+
+    if (spaceId) {
+      if (!mongoose.isValidObjectId(spaceId)) {
+        response.status(400).json({ success: false, message: "Invalid Space ID" });
+        return;
+      }
+
+      const space = await SpaceModel.findById(spaceId).select("_id").lean();
+      if (!space) {
+        response.status(404).json({ success: false, message: "Space not found" });
+        return;
+      }
+
+      const normalizedSpaceId = String(space._id);
+      const membership = await SpaceMemberModel.findOne({
+        spaceId: normalizedSpaceId,
+        userId: String(userId),
+      }).select("_id role").lean();
+
+      if (!membership) {
+        response.status(403).json({ success: false, message: "You must join this Space before posting" });
+        return;
+      }
+
+      validatedSpaceId = normalizedSpaceId;
+    }
+
+    const postType: "thought" | "image" | "space" = validatedSpaceId
+      ? "space"
+      : requestedType ?? (imageUrl ? "image" : "thought");
 
     const post = await PostModel.create({
       authorId: String(userId),
+      ...(validatedSpaceId ? { spaceId: validatedSpaceId } : {}),
       content,
       imageUrl: imageUrl || undefined,
       type: postType,
     });
 
-    /*
-     * Fetch the author's public profile.
-     *
-     * Password is never selected.
-     */
+    if (validatedSpaceId) {
+      try {
+        const updatedSpace = await SpaceModel.findByIdAndUpdate(
+          validatedSpaceId,
+          { $inc: { postsCount: 1 } },
+          { new: true },
+        );
+
+        if (!updatedSpace) {
+          await PostModel.findByIdAndDelete(post._id);
+          response.status(404).json({ success: false, message: "Space no longer exists" });
+          return;
+        }
+      } catch (countError) {
+        await PostModel.findByIdAndDelete(post._id);
+        throw countError;
+      }
+    }
+
     const author = await UserModel.findById(userId)
-      .select(
-        "_id username displayName avatarUrl verified",
-      )
+      .select("_id username displayName avatarUrl verified")
       .lean();
 
     const authorProfile = author
@@ -109,645 +133,1246 @@ export async function createPost(
           username: author.username,
           displayName: author.displayName,
           verified: author.verified,
-          ...(author.avatarUrl
-            ? {
-                avatarUrl:
-                  author.avatarUrl,
-              }
-            : {}),
+          ...(author.avatarUrl ? { avatarUrl: author.avatarUrl } : {}),
         }
       : undefined;
 
     response.status(201).json({
       success: true,
       message: "Post created successfully",
-
       post: {
         ...post.toObject(),
-
         author: authorProfile,
-
         isLiked: false,
         isBookmarked: false,
       },
     });
   } catch (error) {
-    console.error(
-      "Create post error:",
-      error,
-    );
-
+    console.error("Create post error:", error);
     response.status(500).json({
       success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Failed to create post",
+      message: error instanceof Error ? error.message : "Failed to create post",
     });
   }
 }
 
 /**
+
  * Get all posts.
+
  *
+
  * Returns:
+
  * - post data
+
  * - author profile
+
  * - current user's like state
+
  * - current user's bookmark state
+
  *
+
  * This endpoint requires authentication because
+
  * isLiked and isBookmarked are user-specific.
+
  */
+
 export async function getPosts(
+
   request: AuthenticatedRequest,
+
   response: Response,
+
 ): Promise<void> {
+
   try {
+
     const userId = request.userId;
 
+
+
     if (!userId) {
+
       response.status(401).json({
+
         success: false,
+
         message: "Authentication required",
+
       });
+
       return;
+
     }
+
+
 
     const currentUserId = String(userId);
 
+
+
 const feed =
+
   typeof request.query.feed === "string"
+
     ? request.query.feed.trim().toLowerCase()
+
     : "for-you";
 
+
+
 if (
+
   feed !== "for-you" &&
+
   feed !== "following"
+
 ) {
+
   response.status(400).json({
+
     success: false,
+
     message: "Invalid feed type",
+
   });
+
   return;
+
 }
+
+
 
 let postFilter: Record<string, unknown> = {};
 
+
+
 if (feed === "following") {
+
   const follows = await FollowModel.find({
+
     followerId: currentUserId,
+
   })
+
     .select("followingId")
+
     .lean();
 
+
+
   const followingIds = follows.map(
+
     (follow) => String(follow.followingId),
+
   );
 
+
+
   postFilter = {
+
     authorId: {
+
       $in: followingIds,
+
     },
+
   };
+
 }
 
+
+
 /*
+
  * Get posts newest first.
+
  */
+
 const posts = await PostModel.find(
+
   postFilter,
+
 )
+
   .sort({
+
     createdAt: -1,
+
   })
+
   .lean();
 
+
+
     /*
+
      * No posts.
+
      */
+
     if (posts.length === 0) {
+
       response.status(200).json({
+
         success: true,
+
         count: 0,
+
         posts: [],
+
       });
+
       return;
+
     }
 
-    /*
-     * Get all post IDs.
-     */
-    const postIds = posts.map(
-      (post) => post._id,
-    );
+
 
     /*
-     * Fetch current user's likes and bookmarks
-     * in parallel.
+
+     * Get all post IDs.
+
      */
+
+    const postIds = posts.map(
+
+      (post) => post._id,
+
+    );
+
+
+
+    /*
+
+     * Fetch current user's likes and bookmarks
+
+     * in parallel.
+
+     */
+
     const [likes, bookmarks] =
+
       await Promise.all([
+
         LikeModel.find({
+
           userId: currentUserId,
+
           postId: {
+
             $in: postIds,
+
           },
+
         })
+
           .select("postId")
+
           .lean(),
+
+
 
         BookmarkModel.find({
+
           userId: currentUserId,
+
           postId: {
+
             $in: postIds,
+
           },
+
         })
+
           .select("postId")
+
           .lean(),
+
       ]);
 
+
+
     /*
+
      * Create lookup sets for fast O(1) checks.
+
      */
+
     const likedPostIds = new Set<string>(
+
       likes.map((like) =>
+
         String(like.postId),
+
       ),
+
     );
 
+
+
     const bookmarkedPostIds =
+
       new Set<string>(
+
         bookmarks.map((bookmark) =>
+
           String(bookmark.postId),
+
         ),
+
       );
 
+
+
     /*
+
      * Collect unique author IDs.
+
      *
+
      * Older legacy posts may contain UUIDs
+
      * instead of MongoDB ObjectIds.
+
      *
+
      * Only valid MongoDB ObjectIds are queried
+
      * against UserModel.
+
      */
+
     const authorIds = [
+
       ...new Set(
+
         posts
+
           .map((post) =>
+
             String(post.authorId),
+
           )
+
           .filter((authorId) =>
+
             mongoose.isValidObjectId(
+
               authorId,
+
             ),
+
           ),
+
       ),
+
     ];
 
+
+
     /*
+
      * Fetch all valid authors in ONE query.
+
      *
+
      * Password is explicitly excluded.
+
      */
+
     const authors =
+
       authorIds.length > 0
+
         ? await UserModel.find({
+
             _id: {
+
               $in: authorIds,
+
             },
+
           })
+
             .select(
+
               "_id username displayName avatarUrl verified",
+
             )
+
             .lean()
+
         : [];
 
+
+
     /*
+
      * Build:
+
      *
+
      * authorId -> public author profile
+
      */
+
     const authorMap = new Map<
+
       string,
+
       {
+
         id: string;
+
         username: string;
+
         displayName: string;
+
         verified: boolean;
+
         avatarUrl?: string;
+
       }
+
     >();
 
+
+
     for (const author of authors) {
+
       const authorProfile = {
+
         id: String(author._id),
+
         username: author.username,
+
         displayName: author.displayName,
+
         verified: author.verified,
+
         ...(author.avatarUrl
+
           ? {
+
               avatarUrl:
+
                 author.avatarUrl,
+
             }
+
           : {}),
+
       };
 
+
+
       authorMap.set(
+
         String(author._id),
+
         authorProfile,
+
       );
+
     }
 
+
+
     /*
+
      * Normalize every post.
+
      *
+
      * Legacy UUID posts simply receive
+
      * author: undefined instead of crashing
+
      * the entire feed.
+
      */
+
     const normalizedPosts = posts.map(
+
       (post) => {
+
         const postId =
+
           String(post._id);
 
+
+
         const authorId =
+
           String(post.authorId);
 
+
+
         const author =
+
           authorMap.get(authorId);
 
+
+
         return {
+
           ...post,
+
+
 
           author,
 
+
+
           isLiked:
+
             likedPostIds.has(postId),
 
+
+
           isBookmarked:
+
             bookmarkedPostIds.has(postId),
+
         };
+
       },
+
     );
 
+
+
     response.status(200).json({
+
       success: true,
+
       count: normalizedPosts.length,
+
       posts: normalizedPosts,
+
     });
+
   } catch (error) {
+
     console.error(
+
       "Get posts error:",
+
       error,
+
     );
+
+
 
     response.status(500).json({
+
       success: false,
+
       message:
+
         error instanceof Error
+
           ? error.message
+
           : "Failed to fetch posts",
+
     });
+
   }
+
 }
 
+
+
 /**
+
  * Get a single post.
+
  *
+
  * This endpoint does not require authentication.
+
  *
+
  * Therefore isLiked and isBookmarked are false
+
  * because there is no current-user context.
+
  */
+
 export async function getPostById(
+
   request: Request,
+
   response: Response,
+
 ): Promise<void> {
+
   try {
+
     const { id } = request.params;
 
+
+
     if (
+
       typeof id !== "string" ||
+
       !mongoose.isValidObjectId(id)
+
     ) {
+
       response.status(400).json({
+
         success: false,
+
         message: "Invalid post ID",
+
       });
+
       return;
+
     }
+
+
 
     const post =
+
       await PostModel.findById(id).lean();
 
+
+
     if (!post) {
+
       response.status(404).json({
+
         success: false,
+
         message: "Post not found",
+
       });
+
       return;
+
     }
+
+
 
     /*
+
      * Only query UserModel if authorId is
+
      * a valid MongoDB ObjectId.
+
      */
+
     let author:
+
       | {
+
           _id: mongoose.Types.ObjectId;
+
           username: string;
+
           displayName: string;
+
           avatarUrl?: string;
+
           verified: boolean;
+
         }
+
       | null = null;
 
+
+
     const authorId =
+
       String(post.authorId);
 
+
+
     if (
+
       mongoose.isValidObjectId(
+
         authorId,
+
       )
+
     ) {
+
       author =
+
         await UserModel.findById(
+
           authorId,
+
         )
+
           .select(
+
             "_id username displayName avatarUrl verified",
+
           )
+
           .lean();
+
     }
 
+
+
     const authorProfile = author
+
       ? {
+
           id: String(author._id),
+
           username: author.username,
+
           displayName: author.displayName,
+
           verified: author.verified,
+
           ...(author.avatarUrl
+
             ? {
+
                 avatarUrl:
+
                   author.avatarUrl,
+
               }
+
             : {}),
+
         }
+
       : undefined;
 
+
+
     response.status(200).json({
+
       success: true,
 
+
+
       post: {
+
         ...post,
+
+
 
         author: authorProfile,
 
+
+
         isLiked: false,
+
         isBookmarked: false,
+
       },
+
     });
+
   } catch (error) {
+
     console.error(
+
       "Get post by id error:",
+
       error,
+
     );
 
+
+
     response.status(500).json({
+
       success: false,
+
       message:
+
         error instanceof Error
+
           ? error.message
+
           : "Failed to fetch post",
+
     });
+
   }
+
 }
 
+
+
 /**
+
  * Update a post.
+
  */
+
 export async function updatePost(
+
   request: AuthenticatedRequest,
+
   response: Response,
+
 ): Promise<void> {
+
   try {
+
     const userId = request.userId;
 
+
+
     if (!userId) {
+
       response.status(401).json({
+
         success: false,
+
         message: "Authentication required",
+
       });
+
       return;
+
     }
+
+
 
     const { id } = request.params;
 
+
+
     if (
+
       typeof id !== "string" ||
+
       !mongoose.isValidObjectId(id)
+
     ) {
+
       response.status(400).json({
+
         success: false,
+
         message: "Invalid post ID",
+
       });
+
       return;
+
     }
+
+
 
     const post =
+
       await PostModel.findById(id);
 
+
+
     if (!post) {
+
       response.status(404).json({
+
         success: false,
+
         message: "Post not found",
+
       });
+
       return;
+
     }
 
+
+
     /*
+
      * Only the owner can update the post.
+
      */
+
     if (
+
       String(post.authorId) !==
+
       String(userId)
+
     ) {
+
       response.status(403).json({
+
         success: false,
+
         message:
+
           "You are not allowed to update this post",
+
       });
+
       return;
+
     }
+
+
 
     const body = request.body ?? {};
 
+
+
     /*
+
      * Update content.
+
      */
+
     if (body.content !== undefined) {
+
       if (
+
         typeof body.content !==
+
         "string"
+
       ) {
+
         response.status(400).json({
+
           success: false,
+
           message:
+
             "Invalid post content",
+
         });
+
         return;
+
       }
+
+
 
       const content =
+
         body.content.trim();
 
+
+
       if (content.length > 5000) {
+
         response.status(400).json({
+
           success: false,
+
           message:
+
             "Post content cannot exceed 5000 characters",
+
         });
+
         return;
+
       }
+
+
 
       post.content = content;
+
     }
 
+
+
     /*
+
      * Update image.
+
      */
+
     if (body.imageUrl !== undefined) {
+
       if (
+
         typeof body.imageUrl !==
+
         "string"
+
       ) {
+
         response.status(400).json({
+
           success: false,
+
           message:
+
             "Invalid image URL",
+
         });
+
         return;
+
       }
+
+
 
       post.imageUrl =
+
         body.imageUrl.trim() ||
+
         undefined;
+
     }
 
-    /*
-     * Update type.
-     */
-    if (body.type !== undefined) {
-      if (
-        body.type !== "thought" &&
-        body.type !== "image" &&
-        body.type !== "space"
-      ) {
-        response.status(400).json({
-          success: false,
-          message:
-            "Invalid post type",
-        });
-        return;
-      }
 
-      post.type = body.type;
-    }
 
     /*
-     * A post must contain either text or an image.
-     */
-    const hasContent =
-      typeof post.content ===
-        "string" &&
-      post.content.trim().length > 0;
+ * Update type.
+ *
+ * Space association determines whether
+ * the post is a Space post.
+ *
+ * A Space post must always remain type
+ * "space", while a normal post cannot
+ * be converted into a Space post merely
+ * by changing its type.
+ */
+if (body.type !== undefined) {
+  if (
+    body.type !== "thought" &&
+    body.type !== "image" &&
+    body.type !== "space"
+  ) {
+    response.status(400).json({
+      success: false,
+      message:
+        "Invalid post type",
+    });
+    return;
+  }
 
-    const hasImage =
-      typeof post.imageUrl ===
-        "string" &&
-      post.imageUrl.trim().length > 0;
+  const isSpacePost =
+    typeof post.spaceId === "string" &&
+    post.spaceId.trim().length > 0;
 
-    if (!hasContent && !hasImage) {
+  if (isSpacePost) {
+    if (body.type !== "space") {
       response.status(400).json({
         success: false,
         message:
-          "Post must contain text or an image",
+          "Space posts must remain type space",
       });
       return;
     }
 
-    /*
-     * Automatically change the type to image
-     * when a post only contains an image.
-     */
-    if (
-      hasImage &&
-      !hasContent &&
-      post.type === "thought"
-    ) {
-      post.type = "image";
+    post.type = "space";
+  } else {
+    if (body.type === "space") {
+      response.status(400).json({
+        success: false,
+        message:
+          "A normal post cannot be converted to a Space post",
+      });
+      return;
     }
 
-    await post.save();
-
-    /*
-     * Fetch public author information.
-     */
-    const author = await UserModel.findById(
-      userId,
-    )
-      .select(
-        "_id username displayName avatarUrl verified",
-      )
-      .lean();
-
-    const authorProfile = author
-      ? {
-          id: String(author._id),
-          username: author.username,
-          displayName: author.displayName,
-          verified: author.verified,
-          ...(author.avatarUrl
-            ? {
-                avatarUrl:
-                  author.avatarUrl,
-              }
-            : {}),
-        }
-      : undefined;
-
-    response.status(200).json({
-      success: true,
-      message:
-        "Post updated successfully",
-
-      post: {
-        ...post.toObject(),
-
-        author: authorProfile,
-      },
-    });
-  } catch (error) {
-    console.error(
-      "Update post error:",
-      error,
-    );
-
-    response.status(500).json({
-      success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Failed to update post",
-    });
+    post.type = body.type;
   }
 }
 
+
+    /*
+
+     * A post must contain either text or an image.
+
+     */
+
+    const hasContent =
+
+      typeof post.content ===
+
+        "string" &&
+
+      post.content.trim().length > 0;
+
+
+
+    const hasImage =
+
+      typeof post.imageUrl ===
+
+        "string" &&
+
+      post.imageUrl.trim().length > 0;
+
+
+
+    if (!hasContent && !hasImage) {
+
+      response.status(400).json({
+
+        success: false,
+
+        message:
+
+          "Post must contain text or an image",
+
+      });
+
+      return;
+
+    }
+
+
+
+    /*
+
+     * Automatically change the type to image
+
+     * when a post only contains an image.
+
+     */
+
+    if (
+
+      hasImage &&
+
+      !hasContent &&
+
+      post.type === "thought"
+
+    ) {
+
+      post.type = "image";
+
+    }
+
+
+
+    await post.save();
+
+
+
+    /*
+
+     * Fetch public author information.
+
+     */
+
+    const author = await UserModel.findById(
+
+      userId,
+
+    )
+
+      .select(
+
+        "_id username displayName avatarUrl verified",
+
+      )
+
+      .lean();
+
+
+
+    const authorProfile = author
+
+      ? {
+
+          id: String(author._id),
+
+          username: author.username,
+
+          displayName: author.displayName,
+
+          verified: author.verified,
+
+          ...(author.avatarUrl
+
+            ? {
+
+                avatarUrl:
+
+                  author.avatarUrl,
+
+              }
+
+            : {}),
+
+        }
+
+      : undefined;
+
+
+
+    response.status(200).json({
+
+      success: true,
+
+      message:
+
+        "Post updated successfully",
+
+
+
+      post: {
+
+        ...post.toObject(),
+
+
+
+        author: authorProfile,
+
+      },
+
+    });
+
+  } catch (error) {
+
+    console.error(
+
+      "Update post error:",
+
+      error,
+
+    );
+
+
+
+    response.status(500).json({
+
+      success: false,
+
+      message:
+
+        error instanceof Error
+
+          ? error.message
+
+          : "Failed to update post",
+
+    });
+
+  }
+
+}
+
+
+
 /**
+
  * Delete a post.
+
  */
+
 export async function deletePost(
   request: AuthenticatedRequest,
   response: Response,
@@ -788,7 +1413,7 @@ export async function deletePost(
     }
 
     /*
-     * Only the owner can delete the post.
+     * Only the post owner can delete it.
      */
     if (
       String(post.authorId) !==
@@ -803,8 +1428,17 @@ export async function deletePost(
     }
 
     /*
-     * Delete related likes and bookmarks
-     * to avoid orphaned records.
+     * Store the Space ID before deleting
+     * the post so we can update its counter.
+     */
+    const spaceId =
+      typeof post.spaceId === "string" &&
+      post.spaceId.trim()
+        ? post.spaceId.trim()
+        : null;
+
+    /*
+     * Delete related records first.
      */
     await Promise.all([
       LikeModel.deleteMany({
@@ -814,15 +1448,53 @@ export async function deletePost(
       BookmarkModel.deleteMany({
         postId: post._id,
       }),
-
-      PostModel.findByIdAndDelete(id),
     ]);
+
+    /*
+     * Delete the actual post.
+     */
+    const deletedPost =
+      await PostModel.findByIdAndDelete(
+        id,
+      );
+
+    if (!deletedPost) {
+      response.status(404).json({
+        success: false,
+        message: "Post not found",
+      });
+      return;
+    }
+
+    /*
+     * If this was a Space post,
+     * decrement the Space post counter.
+     *
+     * The $gt check prevents postsCount
+     * from becoming negative.
+     */
+    if (spaceId) {
+      await SpaceModel.findOneAndUpdate(
+        {
+          _id: spaceId,
+
+          postsCount: {
+            $gt: 0,
+          },
+        },
+        {
+          $inc: {
+            postsCount: -1,
+          },
+        },
+      );
+    }
 
     response.status(200).json({
       success: true,
       message:
         "Post deleted successfully",
-      post,
+      post: deletedPost,
     });
   } catch (error) {
     console.error(
@@ -840,196 +1512,389 @@ export async function deletePost(
   }
 }
 export async function searchPosts(
+
   request: AuthenticatedRequest,
+
   response: Response,
+
 ): Promise<void> {
+
   try {
+
     const userId = request.userId;
 
+
+
     if (!userId) {
+
       response.status(401).json({
+
         success: false,
+
         message: "Authentication required",
+
       });
+
       return;
+
     }
+
+
 
     const query =
+
       typeof request.query.q === "string"
+
         ? request.query.q.trim()
+
         : "";
 
+
+
     if (!query) {
+
       response.status(200).json({
+
         success: true,
+
         count: 0,
+
         posts: [],
+
       });
+
       return;
+
     }
 
+
+
     if (query.length > 100) {
+
       response.status(400).json({
+
         success: false,
+
         message:
+
           "Search query cannot exceed 100 characters",
+
       });
+
       return;
+
     }
+
+
 
     const currentUserId = String(userId);
 
+
+
     const posts = await PostModel.find({
+
       content: {
+
         $regex: query,
+
         $options: "i",
+
       },
+
     })
+
       .sort({
+
         createdAt: -1,
+
       })
+
       .limit(30)
+
       .lean();
 
+
+
     if (posts.length === 0) {
+
       response.status(200).json({
+
         success: true,
+
         count: 0,
+
         posts: [],
+
       });
+
       return;
+
     }
+
+
 
     const postIds = posts.map(
+
       (post) => post._id,
+
     );
+
+
 
     const [likes, bookmarks] =
+
       await Promise.all([
+
         LikeModel.find({
+
           userId: currentUserId,
+
           postId: {
+
             $in: postIds,
+
           },
+
         })
+
           .select("postId")
+
           .lean(),
+
+
 
         BookmarkModel.find({
+
           userId: currentUserId,
+
           postId: {
+
             $in: postIds,
+
           },
+
         })
+
           .select("postId")
+
           .lean(),
+
       ]);
 
+
+
     const likedPostIds = new Set<string>(
+
       likes.map((like) =>
+
         String(like.postId),
+
       ),
+
     );
+
+
 
     const bookmarkedPostIds =
+
       new Set<string>(
+
         bookmarks.map((bookmark) =>
+
           String(bookmark.postId),
+
         ),
+
       );
+
+
 
     const authorIds = [
+
       ...new Set(
+
         posts
+
           .map((post) =>
+
             String(post.authorId),
+
           )
+
           .filter((authorId) =>
+
             mongoose.isValidObjectId(
+
               authorId,
+
             ),
+
           ),
+
       ),
+
     ];
 
+
+
     const authors =
+
       authorIds.length > 0
+
         ? await UserModel.find({
+
             _id: {
+
               $in: authorIds,
+
             },
+
           })
+
             .select(
+
               "_id username displayName avatarUrl verified",
+
             )
+
             .lean()
+
         : [];
 
+
+
     const authorMap = new Map<
+
       string,
+
       {
+
         id: string;
+
         username: string;
+
         displayName: string;
+
         verified: boolean;
+
         avatarUrl?: string;
+
       }
+
     >();
 
+
+
     for (const author of authors) {
+
       authorMap.set(
+
         String(author._id),
+
         {
+
           id: String(author._id),
+
           username: author.username,
+
           displayName: author.displayName,
+
           verified: author.verified,
+
           ...(author.avatarUrl
+
             ? {
+
                 avatarUrl:
+
                   author.avatarUrl,
+
               }
+
             : {}),
+
         },
+
       );
+
     }
 
+
+
     const normalizedPosts =
+
       posts.map((post) => {
+
         const postId =
+
           String(post._id);
 
+
+
         const authorId =
+
           String(post.authorId);
 
+
+
         return {
+
           ...post,
+
           author:
+
             authorMap.get(authorId),
+
           isLiked:
+
             likedPostIds.has(postId),
+
           isBookmarked:
+
             bookmarkedPostIds.has(postId),
+
         };
+
       });
 
+
+
     response.status(200).json({
+
       success: true,
+
       count: normalizedPosts.length,
+
       posts: normalizedPosts,
+
     });
+
   } catch (error) {
+
     console.error(
+
       "Search posts error:",
+
       error,
+
     );
 
+
+
     response.status(500).json({
+
       success: false,
+
       message:
+
         error instanceof Error
+
           ? error.message
+
           : "Failed to search posts",
+
     });
+
   }
+
 }

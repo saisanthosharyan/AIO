@@ -83,6 +83,7 @@ interface BackendPost {
   _id?: string;
   id?: string;
   authorId?: string;
+  spaceId?: string;
 
   author?: {
     _id?: string;
@@ -152,34 +153,46 @@ function normalizePost(
       typeof post.authorId === "string"
         ? post.authorId
         : "",
+
+    spaceId:
+      typeof post.spaceId === "string" &&
+      post.spaceId.trim().length > 0
+        ? post.spaceId
+        : undefined,
+
     author:
-  post.author &&
-  typeof post.author === "object"
-    ? {
-        id:
-          typeof post.author.id === "string"
-            ? post.author.id
-            : typeof post.author._id === "string"
-              ? post.author._id
-              : "",
-        username:
-          typeof post.author.username === "string"
-            ? post.author.username
-            : "",
-        displayName:
-          typeof post.author.displayName === "string"
-            ? post.author.displayName
-            : "",
-        avatarUrl:
-          typeof post.author.avatarUrl === "string"
-            ? post.author.avatarUrl
-            : undefined,
-        verified:
-          typeof post.author.verified === "boolean"
-            ? post.author.verified
-            : false,
-      }
-    : null,
+      post.author &&
+      typeof post.author === "object"
+        ? {
+            id:
+              typeof post.author.id === "string"
+                ? post.author.id
+                : typeof post.author._id === "string"
+                  ? post.author._id
+                  : "",
+
+            username:
+              typeof post.author.username === "string"
+                ? post.author.username
+                : "",
+
+            displayName:
+              typeof post.author.displayName === "string"
+                ? post.author.displayName
+                : "",
+
+            avatarUrl:
+              typeof post.author.avatarUrl === "string"
+                ? post.author.avatarUrl
+                : undefined,
+
+            verified:
+              typeof post.author.verified === "boolean"
+                ? post.author.verified
+                : false,
+          }
+        : null,
+
     content:
       typeof post.content === "string"
         ? post.content
@@ -286,10 +299,12 @@ export async function getPost(
       success: boolean;
       post: BackendPost;
     }>(
-      `/api/posts/${postId}`,
+      `/api/posts/${encodeURIComponent(postId)}`,
     );
 
-  return normalizePost(response.post);
+  return normalizePost(
+    response.post,
+  );
 }
 
 export async function createPost(
@@ -299,7 +314,13 @@ export async function createPost(
     | "thought"
     | "image"
     | "space" = "thought",
+  spaceId?: string,
 ): Promise<CreatePostResponse> {
+  const trimmedSpaceId =
+    typeof spaceId === "string"
+      ? spaceId.trim()
+      : "";
+
   const response =
     await request<{
       success: boolean;
@@ -307,18 +328,30 @@ export async function createPost(
       post: BackendPost;
     }>("/api/posts", {
       method: "POST",
+
       body: JSON.stringify({
         content,
+
         ...(imageUrl
-          ? { imageUrl }
+          ? {
+              imageUrl,
+            }
           : {}),
+
         type,
+
+        ...(trimmedSpaceId
+          ? {
+              spaceId: trimmedSpaceId,
+            }
+          : {}),
       }),
     });
 
   return {
     success: response.success,
     message: response.message,
+
     post: normalizePost(
       response.post,
     ),
@@ -1212,4 +1245,319 @@ export async function markConversationAsRead(
         "Failed to mark conversation as read.",
     );
   }
+}
+/* -------------------------------------------------------------------------- */
+/* Spaces                                                                     */
+/* -------------------------------------------------------------------------- */
+
+export type SpacePrivacy =
+  | "public"
+  | "private";
+
+export type SpaceRole =
+  | "owner"
+  | "admin"
+  | "member";
+
+export interface SpaceCreator {
+  id: string;
+  username: string;
+  displayName: string;
+  avatarUrl?: string;
+  verified: boolean;
+}
+
+export interface SpaceMembership {
+  isMember: boolean;
+  role: SpaceRole | null;
+}
+
+export interface Space {
+  id: string;
+  creatorId: string;
+  name: string;
+  slug: string;
+  description: string;
+  avatarUrl?: string;
+  coverUrl?: string;
+  privacy: SpacePrivacy;
+  membersCount: number;
+  postsCount: number;
+  creator: SpaceCreator | null;
+  membership: SpaceMembership;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateSpaceData {
+  name: string;
+  description?: string;
+  avatarUrl?: string;
+  coverUrl?: string;
+  privacy?: SpacePrivacy;
+}
+
+interface SpacesResponse {
+  success: boolean;
+  count: number;
+  spaces: Space[];
+}
+
+interface SpaceResponse {
+  success: boolean;
+  message?: string;
+  space: Space;
+}
+
+interface SpacePostsResponse {
+  success: boolean;
+
+  space: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+
+  count: number;
+  posts: BackendPost[];
+}
+
+interface SpaceMembershipResponse {
+  success: boolean;
+  message?: string;
+
+  membership: {
+    isMember: boolean;
+    role: SpaceRole | null;
+  };
+
+  membersCount: number;
+}
+
+export async function getSpaces(): Promise<
+  Space[]
+> {
+  const response =
+    await request<SpacesResponse>(
+      "/api/spaces",
+    );
+
+  if (!response.success) {
+    throw new Error(
+      "Failed to fetch Spaces.",
+    );
+  }
+
+  return response.spaces ?? [];
+}
+
+export async function getSpaceBySlug(
+  slug: string,
+): Promise<Space> {
+  const trimmedSlug = slug.trim();
+
+  if (!trimmedSlug) {
+    throw new Error(
+      "Space slug is required.",
+    );
+  }
+
+  const response =
+    await request<SpaceResponse>(
+      `/api/spaces/${encodeURIComponent(
+        trimmedSlug,
+      )}`,
+    );
+
+  if (
+    !response.success ||
+    !response.space
+  ) {
+    throw new Error(
+      response.message ||
+        "Failed to fetch Space.",
+    );
+  }
+
+  return response.space;
+}
+
+export async function getSpacePosts(
+  slug: string,
+): Promise<Post[]> {
+  const trimmedSlug = slug.trim();
+
+  if (!trimmedSlug) {
+    throw new Error(
+      "Space slug is required.",
+    );
+  }
+
+  const response =
+    await request<SpacePostsResponse>(
+      `/api/spaces/${encodeURIComponent(
+        trimmedSlug,
+      )}/posts`,
+    );
+
+  if (!response.success) {
+    throw new Error(
+      "Failed to fetch Space posts.",
+    );
+  }
+
+  return (response.posts ?? []).map(
+    normalizePost,
+  );
+}
+
+export async function createSpace(
+  data: CreateSpaceData,
+): Promise<Space> {
+  const name = data.name.trim();
+
+  if (!name) {
+    throw new Error(
+      "Space name is required.",
+    );
+  }
+
+  const response =
+    await request<SpaceResponse>(
+      "/api/spaces",
+      {
+        method: "POST",
+
+        body: JSON.stringify({
+          name,
+
+          ...(typeof data.description ===
+            "string"
+            ? {
+                description:
+                  data.description.trim(),
+              }
+            : {}),
+
+          ...(typeof data.avatarUrl ===
+            "string" &&
+          data.avatarUrl.trim()
+            ? {
+                avatarUrl:
+                  data.avatarUrl.trim(),
+              }
+            : {}),
+
+          ...(typeof data.coverUrl ===
+            "string" &&
+          data.coverUrl.trim()
+            ? {
+                coverUrl:
+                  data.coverUrl.trim(),
+              }
+            : {}),
+
+          privacy:
+            data.privacy ?? "public",
+        }),
+      },
+    );
+
+  if (
+    !response.success ||
+    !response.space
+  ) {
+    throw new Error(
+      response.message ||
+        "Failed to create Space.",
+    );
+  }
+
+  return response.space;
+}
+
+export async function joinSpace(
+  spaceId: string,
+): Promise<SpaceMembershipResponse> {
+  const trimmedSpaceId =
+    spaceId.trim();
+
+  if (!trimmedSpaceId) {
+    throw new Error(
+      "Space ID is required.",
+    );
+  }
+
+  const response =
+    await request<SpaceMembershipResponse>(
+      `/api/spaces/${encodeURIComponent(
+        trimmedSpaceId,
+      )}/join`,
+      {
+        method: "POST",
+      },
+    );
+
+  if (!response.success) {
+    throw new Error(
+      response.message ||
+        "Failed to join Space.",
+    );
+  }
+
+  return response;
+}
+
+export async function leaveSpace(
+  spaceId: string,
+): Promise<SpaceMembershipResponse> {
+  const trimmedSpaceId =
+    spaceId.trim();
+
+  if (!trimmedSpaceId) {
+    throw new Error(
+      "Space ID is required.",
+    );
+  }
+
+  const response =
+    await request<SpaceMembershipResponse>(
+      `/api/spaces/${encodeURIComponent(
+        trimmedSpaceId,
+      )}/join`,
+      {
+        method: "DELETE",
+      },
+    );
+
+  if (!response.success) {
+    throw new Error(
+      response.message ||
+        "Failed to leave Space.",
+    );
+  }
+
+  return response;
+}
+
+export async function createSpacePost(
+  spaceId: string,
+  content: string,
+  imageUrl?: string,
+): Promise<CreatePostResponse> {
+  const trimmedSpaceId =
+    spaceId.trim();
+
+  if (!trimmedSpaceId) {
+    throw new Error(
+      "Space ID is required.",
+    );
+  }
+
+  return createPost(
+    content,
+    imageUrl,
+    "space",
+    trimmedSpaceId,
+  );
 }

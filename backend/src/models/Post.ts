@@ -7,6 +7,7 @@ import mongoose, {
 export interface IPost extends Document {
   authorId: string;
   content: string;
+  spaceId?: string;
   imageUrl?: string;
   type: "thought" | "image" | "space";
   likesCount: number;
@@ -21,6 +22,10 @@ const postSchema = new Schema<IPost>(
     authorId: {
       type: String,
       required: true,
+      index: true,
+    },
+    spaceId: {
+      type: String,
       index: true,
     },
 

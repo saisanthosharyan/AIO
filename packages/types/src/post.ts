@@ -6,6 +6,7 @@ export type PostType =
 export interface Post {
   id: string;
   authorId: string;
+  spaceId?: string;
 
   author?: {
     id: string;
