@@ -2,38 +2,43 @@
 
 import {
   ArrowUpRight,
-  CalendarDays,
-  Hash,
   Sparkles,
-  UsersRound,
 } from "lucide-react";
 import Link from "next/link";
 
-const trends = [
+const upcomingEvents = [
   {
-    tag: "#BuildInPublic",
-    posts: "2.4K posts",
+    title: "Designers Hub Meetup",
+    time: "Today, 6:00 PM",
+    attendees: "+128",
+    initials: ["D", "E", "A"],
   },
   {
-    tag: "#ArtificialIntelligence",
-    posts: "1.8K posts",
+    title: "AI in Everyday Life",
+    time: "Tomorrow, 11:00 AM",
+    attendees: "+64",
+    initials: ["D", "E", "A"],
   },
   {
-    tag: "#WebDevelopment",
-    posts: "1.2K posts",
+    title: "Photography Walk",
+    time: "Sun, 7:00 AM",
+    attendees: "+32",
+    initials: ["D", "E", "A"],
   },
 ];
 
-const spaces = [
+const trends = [
   {
-    name: "AI Builders",
-    members: "12.8K members",
-    initials: "AI",
+    title: "#AIOCreator",
+    posts: "12.5K posts",
   },
   {
-    name: "Developers",
-    members: "8.4K members",
-    initials: "DV",
+    title: "The Future of AI",
+    posts: "8.7K posts",
+  },
+  {
+    title: "#SundayVibes",
+    posts: "6.1K posts",
   },
 ];
 
@@ -44,130 +49,133 @@ export default function RightPanel() {
       aria-label="Discover on AIO"
     >
       <div className="aio-v2-right-panel-inner">
-        <section className="aio-v2-side-card">
-          <div className="aio-v2-side-card-heading">
-            <div>
-              <span className="aio-v2-side-eyebrow">
-                Happening soon
-              </span>
+        {/* Upcoming */}
+        <section className="aio-v2-side-card aio-template-upcoming">
+          <div className="aio-template-side-heading">
+            <h3>Upcoming</h3>
 
-              <h3>Upcoming</h3>
-            </div>
-
-            <CalendarDays size={18} />
+            <Link href="/spaces">
+              See all
+            </Link>
           </div>
 
-          <div className="aio-v2-event">
-            <div className="aio-v2-event-date">
-              <strong>08</strong>
-              <span>OCT</span>
-            </div>
+          <div className="aio-template-event-list">
+            {upcomingEvents.map(
+              (event, index) => (
+                <Link
+                  key={event.title}
+                  href="/spaces"
+                  className="aio-template-event"
+                >
+                  <span
+                    className={`aio-template-event-thumbnail aio-template-event-thumbnail-${index + 1}`}
+                    aria-hidden="true"
+                  />
 
-            <div className="aio-v2-event-copy">
-              <strong>AI Builders Meetup</strong>
-              <span>7:00 PM · AIO Spaces</span>
-            </div>
+                  <span className="aio-template-event-content">
+                    <strong>
+                      {event.title}
+                    </strong>
+
+                    <small>
+                      {event.time}
+                    </small>
+
+                    <span className="aio-template-event-attendees">
+                      <span className="aio-template-faces">
+                        {event.initials.map(
+                          (
+                            initial,
+                            avatarIndex,
+                          ) => (
+                            <span
+                              key={`${event.title}-${avatarIndex}`}
+                              className={`aio-template-face aio-template-face-${avatarIndex + 1}`}
+                            >
+                              {initial}
+                            </span>
+                          ),
+                        )}
+                      </span>
+
+                      <span className="aio-template-attendee-count">
+                        {event.attendees}
+                      </span>
+                    </span>
+                  </span>
+                </Link>
+              ),
+            )}
           </div>
         </section>
 
-        <section className="aio-v2-side-card">
-          <div className="aio-v2-side-card-heading">
-            <div>
-              <span className="aio-v2-side-eyebrow">
-                What&apos;s moving
-              </span>
-
-              <h3>Trending Signals</h3>
-            </div>
-
-            <Hash size={18} />
+        {/* Trending */}
+        <section className="aio-v2-side-card aio-template-trending">
+          <div className="aio-template-side-heading">
+            <h3>
+              Trending Signals
+            </h3>
           </div>
 
-          <div className="aio-v2-trend-list">
-            {trends.map((trend, index) => (
-              <Link
-                key={trend.tag}
-                href="/discover"
-                className="aio-v2-trend"
-              >
-                <span className="aio-v2-trend-number">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
+          <div className="aio-template-trend-list">
+            {trends.map(
+              (trend, index) => (
+                <Link
+                  key={trend.title}
+                  href="/discover"
+                  className="aio-template-trend"
+                >
+                  <span className="aio-template-trend-number">
+                    {index + 1}
+                  </span>
 
-                <span className="aio-v2-trend-copy">
-                  <strong>{trend.tag}</strong>
-                  <small>{trend.posts}</small>
-                </span>
+                  <span className="aio-template-trend-content">
+                    <strong>
+                      {trend.title}
+                    </strong>
 
-                <ArrowUpRight size={15} />
-              </Link>
-            ))}
+                    <small>
+                      {trend.posts}
+                    </small>
+                  </span>
+
+                  <ArrowUpRight
+                    className="aio-template-trend-arrow"
+                    size={15}
+                    strokeWidth={1.8}
+                    aria-hidden="true"
+                  />
+                </Link>
+              ),
+            )}
           </div>
+        </section>
 
-          <Link
-            href="/discover"
-            className="aio-v2-side-link"
+        {/* AIO Intelligence */}
+        <section className="aio-v2-side-card aio-template-intelligence">
+          <div
+            className="aio-template-intelligence-orb"
+            aria-hidden="true"
           >
-            Explore signals
-            <ArrowUpRight size={14} />
-          </Link>
-        </section>
-
-        <section className="aio-v2-side-card">
-          <div className="aio-v2-side-card-heading">
-            <div>
-              <span className="aio-v2-side-eyebrow">
-                Find your community
-              </span>
-
-              <h3>Spaces for you</h3>
-            </div>
-
-            <UsersRound size={18} />
+            <Sparkles
+              size={18}
+              strokeWidth={1.8}
+            />
           </div>
 
-          <div className="aio-v2-space-list">
-            {spaces.map((space) => (
-              <Link
-                key={space.name}
-                href="/spaces"
-                className="aio-v2-space"
-              >
-                <span className="aio-v2-space-avatar">
-                  {space.initials}
-                </span>
-
-                <span className="aio-v2-space-copy">
-                  <strong>{space.name}</strong>
-                  <small>{space.members}</small>
-                </span>
-
-                <ArrowUpRight size={15} />
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        <section className="aio-v2-intelligence-card">
-          <div className="aio-v2-intelligence-icon">
-            <Sparkles size={18} />
-          </div>
-
-          <div className="aio-v2-intelligence-copy">
-            <span>AIO Intelligence</span>
-
+          <div className="aio-template-intelligence-content">
             <strong>
-              Understand what matters to you.
+              Intelligence
             </strong>
 
-            <p>
-              AI-powered summaries, discovery and
-              recommendations are coming to AIO.
-            </p>
+            <span>
+              Summarize this space
+            </span>
 
-            <button type="button" disabled>
-              Coming soon
-            </button>
+            <span>
+              What are people talking
+              about?
+            </span>
           </div>
         </section>
       </div>

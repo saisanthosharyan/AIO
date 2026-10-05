@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import {
   Bell,
   Compass,
@@ -14,6 +12,8 @@ import {
   UserRound,
   Workflow,
 } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 interface NavigationItem {
   label: string;
@@ -90,6 +90,7 @@ export default function Sidebar() {
       aria-label="AIO navigation"
     >
       <div className="aio-sidebar-inner">
+        {/* Brand */}
         <div className="aio-sidebar-brand-row">
           <Link
             href="/stream"
@@ -105,10 +106,14 @@ export default function Sidebar() {
             className="aio-sidebar-brand-spark"
             aria-hidden="true"
           >
-            <Sparkles size={20} />
+            <Sparkles
+              size={20}
+              strokeWidth={1.9}
+            />
           </span>
         </div>
 
+        {/* Primary navigation */}
         <nav
           className="aio-sidebar-nav"
           aria-label="Primary navigation"
@@ -142,11 +147,11 @@ export default function Sidebar() {
                   aria-hidden="true"
                 >
                   <Icon
-                    size={21}
+                    size={22}
                     strokeWidth={
                       active
-                        ? 2.25
-                        : 1.9
+                        ? 2.1
+                        : 1.8
                     }
                   />
                 </span>
@@ -159,24 +164,35 @@ export default function Sidebar() {
           })}
         </nav>
 
+        {/* Bottom area */}
         <div className="aio-sidebar-bottom">
           <Link
             href="/stream?create=1"
             className="aio-create-button"
           >
-            <Plus size={19} />
-            <span>Create</span>
+            <Plus
+              size={19}
+              strokeWidth={2}
+            />
+
+            <span>
+              Create
+            </span>
           </Link>
 
           <Link
             href="/profile"
             className="aio-sidebar-user"
+            aria-label="View profile"
           >
             <span
               className="aio-sidebar-user-avatar"
               aria-hidden="true"
             >
-              <UserRound size={18} />
+              <UserRound
+                size={18}
+                strokeWidth={1.9}
+              />
             </span>
 
             <span className="aio-sidebar-user-copy">
@@ -191,19 +207,25 @@ export default function Sidebar() {
           </Link>
 
           <div className="aio-premium-card">
-            <div className="aio-premium-icon">
-              <Sparkles size={16} />
-            </div>
+            <span
+              className="aio-premium-icon"
+              aria-hidden="true"
+            >
+              <Sparkles
+                size={16}
+                strokeWidth={1.9}
+              />
+            </span>
 
-            <div>
+            <span className="aio-premium-copy">
               <strong>
                 AIO Premium
               </strong>
 
-              <span>
-                Explore premium benefits
-              </span>
-            </div>
+              <small>
+                Explore Premium Benefits
+              </small>
+            </span>
           </div>
         </div>
       </div>

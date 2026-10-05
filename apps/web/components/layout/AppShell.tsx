@@ -35,7 +35,9 @@ type Theme = "light" | "dark";
 const THEME_STORAGE_KEY = "aio-theme";
 const THEME_EVENT = "aio-theme-change";
 
-function isAuthRoute(pathname: string): boolean {
+function isAuthRoute(
+  pathname: string,
+): boolean {
   return AUTH_ROUTES.some(
     (route) =>
       pathname === route ||
@@ -54,8 +56,8 @@ function getStoredTheme(): Theme | null {
     );
 
   if (
-    storedTheme === "dark" ||
-    storedTheme === "light"
+    storedTheme === "light" ||
+    storedTheme === "dark"
   ) {
     return storedTheme;
   }
@@ -84,8 +86,8 @@ function getCurrentTheme(): Theme {
     document.documentElement.dataset.theme;
 
   if (
-    documentTheme === "dark" ||
-    documentTheme === "light"
+    documentTheme === "light" ||
+    documentTheme === "dark"
   ) {
     return documentTheme;
   }
@@ -141,10 +143,12 @@ export default function AppShell({
     getServerTheme,
   );
 
-  const darkMode = theme === "dark";
+  const darkMode =
+    theme === "dark";
 
   useEffect(() => {
-    const storedTheme = getStoredTheme();
+    const storedTheme =
+      getStoredTheme();
 
     const initialTheme =
       storedTheme ??
@@ -152,6 +156,11 @@ export default function AppShell({
 
     applyTheme(initialTheme);
     notifyThemeChange();
+
+    const mediaQuery =
+      window.matchMedia(
+        "(prefers-color-scheme: dark)",
+      );
 
     function handleSystemThemeChange(
       event: MediaQueryListEvent,
@@ -168,11 +177,6 @@ export default function AppShell({
       applyTheme(nextTheme);
       notifyThemeChange();
     }
-
-    const mediaQuery =
-      window.matchMedia(
-        "(prefers-color-scheme: dark)",
-      );
 
     mediaQuery.addEventListener(
       "change",
@@ -213,133 +217,154 @@ export default function AppShell({
 
   return (
     <div className="aio-app">
-      <Sidebar />
+      <div className="aio-template-shell">
+        {/* Desktop / tablet sidebar */}
+        <Sidebar />
 
-      <div className="aio-workspace">
-        {/* Mobile header */}
-        <header className="aio-mobile-topbar">
-          <Link
-            href="/stream"
-            className="aio-mobile-logo"
-          >
-            AIO
-          </Link>
-
-          <div className="aio-mobile-topbar-actions">
+        {/* Main application area */}
+        <div className="aio-workspace">
+          {/* Mobile header */}
+          <header className="aio-mobile-topbar">
             <Link
-              href="/discover"
-              aria-label="Search"
+              href="/stream"
+              className="aio-mobile-logo"
+              aria-label="AIO home"
             >
-              <Search size={20} />
+              AIO
             </Link>
 
-            <Link
-              href="/notifications"
-              aria-label="Notifications"
-            >
-              <Bell size={20} />
-            </Link>
+            <div className="aio-mobile-topbar-actions">
+              <button
+                type="button"
+                onClick={toggleTheme}
+                aria-label={
+                  darkMode
+                    ? "Switch to light mode"
+                    : "Switch to dark mode"
+                }
+                title={
+                  darkMode
+                    ? "Light mode"
+                    : "Dark mode"
+                }
+              >
+                {darkMode ? (
+                  <Sun size={20} />
+                ) : (
+                  <Palette size={20} />
+                )}
+              </button>
 
-            <button
-              type="button"
-              onClick={toggleTheme}
-              aria-label={
-                darkMode
-                  ? "Switch to light mode"
-                  : "Switch to dark mode"
-              }
-            >
-              {darkMode ? (
-                <Sun size={20} />
-              ) : (
-                <Moon size={20} />
-              )}
-            </button>
-          </div>
-        </header>
+              <Link
+                href="/discover"
+                aria-label="Search"
+                title="Search"
+              >
+                <Search size={20} />
+              </Link>
 
-        {/* Desktop header */}
-        <header className="aio-topbar">
-          <div className="aio-topbar-inner">
-            <Link
-              href="/discover"
-              className="aio-global-search"
-            >
-              <Search
-                size={19}
-                aria-hidden="true"
-              />
-
-              <span>
-                Search people, spaces,
-                posts...
-              </span>
-            </Link>
-
-            <Link
-              href="/stream?create=1"
-              className="aio-topbar-action"
-              aria-label="Create"
-              title="Create"
-            >
-              <Plus size={21} />
-            </Link>
-
-            <button
-              type="button"
-              className="aio-topbar-action"
-              onClick={toggleTheme}
-              aria-label={
-                darkMode
-                  ? "Switch to light mode"
-                  : "Switch to dark mode"
-              }
-              title={
-                darkMode
-                  ? "Light mode"
-                  : "Dark mode"
-              }
-            >
-              {darkMode ? (
-                <Sun size={19} />
-              ) : (
-                <Palette size={19} />
-              )}
-            </button>
-
-            <Link
-              href="/notifications"
-              className="aio-topbar-action aio-topbar-notifications"
-              aria-label="Notifications"
-              title="Notifications"
-            >
-              <Bell size={19} />
-            </Link>
-
-            <Link
-              href="/profile"
-              className="aio-topbar-avatar"
-              aria-label="Profile"
-            >
-              <span>
-                <span className="aio-topbar-avatar-dot" />
-              </span>
-            </Link>
-          </div>
-        </header>
-
-        {/* Main workspace */}
-        <main className="aio-workspace-main">
-          <div className="aio-workspace-inner">
-            <div className="aio-workspace-content">
-              {children}
+              <Link
+                href="/notifications"
+                aria-label="Notifications"
+                title="Notifications"
+              >
+                <Bell size={20} />
+              </Link>
             </div>
+          </header>
 
-            <RightPanel />
-          </div>
-        </main>
+          {/* Desktop header */}
+          <header className="aio-topbar">
+            <div className="aio-topbar-inner">
+              <Link
+                href="/discover"
+                className="aio-global-search"
+                aria-label="Search AIO"
+              >
+                <Search
+                  size={20}
+                  aria-hidden="true"
+                />
+
+                <span>
+                  Search people, spaces,
+                  moments...
+                </span>
+              </Link>
+
+              <Link
+                href="/stream?create=1"
+                className="aio-topbar-action"
+                aria-label="Create"
+                title="Create"
+              >
+                <Plus
+                  size={23}
+                  strokeWidth={2}
+                />
+              </Link>
+
+              <button
+                type="button"
+                className="aio-topbar-action"
+                onClick={toggleTheme}
+                aria-label={
+                  darkMode
+                    ? "Switch to light mode"
+                    : "Switch to dark mode"
+                }
+                title={
+                  darkMode
+                    ? "Light mode"
+                    : "Dark mode"
+                }
+              >
+                {darkMode ? (
+                  <Sun size={20} />
+                ) : (
+                  <Palette size={20} />
+                )}
+              </button>
+
+              <Link
+                href="/notifications"
+                className="aio-topbar-action aio-topbar-notifications"
+                aria-label="Notifications"
+                title="Notifications"
+              >
+                <Bell
+                  size={20}
+                  strokeWidth={1.9}
+                />
+              </Link>
+
+              <Link
+                href="/profile"
+                className="aio-topbar-avatar"
+                aria-label="Profile"
+                title="Profile"
+              >
+                <span className="aio-topbar-avatar-inner">
+                  <span className="aio-topbar-avatar-dot" />
+                </span>
+              </Link>
+            </div>
+          </header>
+
+          {/* Main desktop/tablet content */}
+          <main className="aio-workspace-main">
+            <div className="aio-workspace-inner">
+              <div className="aio-workspace-content">
+                {children}
+              </div>
+
+              <RightPanel />
+            </div>
+          </main>
+        </div>
       </div>
 
+      {/* Mobile bottom navigation */}
       <MobileNav />
     </div>
   );
