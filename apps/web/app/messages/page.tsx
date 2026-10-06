@@ -1,18 +1,26 @@
 "use client";
 
-import {
-  Loader2,
-  Mail,
-  Plus,
-  Search,
-  Send,
-  X,
-} from "lucide-react";
+import Link from "next/link";
 import {
   FormEvent,
   useEffect,
+  useMemo,
+  useRef,
   useState,
 } from "react";
+import {
+  ArrowLeft,
+  ArrowUpRight,
+  CheckCheck,
+  Loader2,
+  Mail,
+  MessageCircle,
+  Plus,
+  Search,
+  Send,
+  Sparkles,
+  X,
+} from "lucide-react";
 
 import {
   createConversation,
@@ -27,6 +35,119 @@ import {
   type UserProfile,
 } from "@/lib/api";
 
+function getInitials(
+  displayName?: string,
+  username?: string,
+) {
+  const source =
+    displayName?.trim() || username?.trim() || "?";
+
+  const words = source
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2);
+
+  return (
+    words
+      .map((word) => word.charAt(0).toUpperCase())
+      .join("") || "?"
+  );
+}
+
+function formatConversationTime(value?: string) {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const now = new Date();
+
+  const sameDay =
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate();
+
+  if (sameDay) {
+    return date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
+  const difference =
+    now.getTime() - date.getTime();
+
+  const sevenDays =
+    7 * 24 * 60 * 60 * 1000;
+
+  if (difference >= 0 && difference < sevenDays) {
+    return date.toLocaleDateString([], {
+      weekday: "short",
+    });
+  }
+
+  return date.toLocaleDateString([], {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function formatMessageTime(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function formatDayLabel(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const today = new Date();
+
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+
+  const sameDate = (
+    first: Date,
+    second: Date,
+  ) =>
+    first.getFullYear() === second.getFullYear() &&
+    first.getMonth() === second.getMonth() &&
+    first.getDate() === second.getDate();
+
+  if (sameDate(date, today)) {
+    return "Today";
+  }
+
+  if (sameDate(date, yesterday)) {
+    return "Yesterday";
+  }
+
+  return date.toLocaleDateString([], {
+    month: "short",
+    day: "numeric",
+    year:
+      date.getFullYear() !== today.getFullYear()
+        ? "numeric"
+        : undefined,
+  });
+}
+
 export default function MessagesPage() {
   const [
     conversations,
@@ -36,9 +157,7 @@ export default function MessagesPage() {
   const [
     selectedConversation,
     setSelectedConversation,
-  ] = useState<ConversationItem | null>(
-    null,
-  );
+  ] = useState<ConversationItem | null>(null);
 
   const [messages, setMessages] =
     useState<MessageItem[]>([]);
@@ -46,8 +165,7 @@ export default function MessagesPage() {
   const [currentUser, setCurrentUser] =
     useState<UserProfile | null>(null);
 
-  const [draft, setDraft] =
-    useState("");
+  const [draft, setDraft] = useState("");
 
   const [loading, setLoading] =
     useState(true);
@@ -67,10 +185,6 @@ export default function MessagesPage() {
     messagesError,
     setMessagesError,
   ] = useState("");
-
-  /* ---------------------------------------------------------------------- */
-  /* New Message state                                                      */
-  /* ---------------------------------------------------------------------- */
 
   const [
     newMessageOpen,
@@ -102,37 +216,49 @@ export default function MessagesPage() {
     setStartingConversation,
   ] = useState<string | null>(null);
 
-  /* ---------------------------------------------------------------------- */
-  /* Initial page loading                                                   */
-  /* ---------------------------------------------------------------------- */
+  const threadEndRef =
+    useRef<HTMLDivElement | null>(null);
+
+  const selectedParticipant =
+    selectedConversation?.participant ?? null;
+
+  const visibleMessages = useMemo(
+    () => messages,
+    [messages],
+  );
 
   async function loadPage() {
     try {
       setLoading(true);
       setError("");
 
-      const [
-        user,
-        conversationList,
-      ] = await Promise.all([
-        getCurrentUser(),
-        getConversations(),
-      ]);
+      const [user, conversationList] =
+        await Promise.all([
+          getCurrentUser(),
+          getConversations(),
+        ]);
 
       setCurrentUser(user);
-      setConversations(
-        conversationList,
-      );
+      setConversations(conversationList);
 
-      if (
-        conversationList.length > 0
-      ) {
-        setSelectedConversation(
-          conversationList[0],
-        );
-      } else {
-        setSelectedConversation(null);
-      }
+      setSelectedConversation(
+        (currentConversation) => {
+          if (currentConversation) {
+            const refreshed =
+              conversationList.find(
+                (conversation) =>
+                  conversation.id ===
+                  currentConversation.id,
+              );
+
+            if (refreshed) {
+              return refreshed;
+            }
+          }
+
+          return conversationList[0] ?? null;
+        },
+      );
     } catch (err) {
       console.error(
         "Messages page error:",
@@ -153,10 +279,6 @@ export default function MessagesPage() {
     void loadPage();
   }, []);
 
-  /* ---------------------------------------------------------------------- */
-  /* Load selected conversation                                             */
-  /* ---------------------------------------------------------------------- */
-
   useEffect(() => {
     if (!selectedConversation) {
       setMessages([]);
@@ -170,10 +292,9 @@ export default function MessagesPage() {
         setMessagesLoading(true);
         setMessagesError("");
 
-        const result =
-          await getMessages(
-            selectedConversation!.id,
-          );
+        const result = await getMessages(
+          selectedConversation!.id,
+        );
 
         if (cancelled) {
           return;
@@ -189,30 +310,27 @@ export default function MessagesPage() {
           return;
         }
 
-        setMessages(
-          (currentMessages) =>
-            currentMessages.map(
-              (message) => {
-                if (
-                  !currentUser ||
-                  message.senderId ===
-                    currentUser.id ||
-                  message.readBy.includes(
-                    currentUser.id,
-                  )
-                ) {
-                  return message;
-                }
+        setMessages((currentMessages) =>
+          currentMessages.map((message) => {
+            if (
+              !currentUser ||
+              message.senderId ===
+                currentUser.id ||
+              message.readBy.includes(
+                currentUser.id,
+              )
+            ) {
+              return message;
+            }
 
-                return {
-                  ...message,
-                  readBy: [
-                    ...message.readBy,
-                    currentUser.id,
-                  ],
-                };
-              },
-            ),
+            return {
+              ...message,
+              readBy: [
+                ...message.readBy,
+                currentUser.id,
+              ],
+            };
+          }),
         );
       } catch (err) {
         console.error(
@@ -240,13 +358,9 @@ export default function MessagesPage() {
       cancelled = true;
     };
   }, [
-    selectedConversation,
-    currentUser,
+    selectedConversation?.id,
+    currentUser?.id,
   ]);
-
-  /* ---------------------------------------------------------------------- */
-  /* Search users                                                           */
-  /* ---------------------------------------------------------------------- */
 
   useEffect(() => {
     if (!newMessageOpen) {
@@ -268,98 +382,95 @@ export default function MessagesPage() {
 
     let cancelled = false;
 
-    const timeoutId =
-      window.setTimeout(
-        async () => {
-          try {
-            setUserSearchLoading(true);
-            setUserSearchError("");
+    const timeoutId = window.setTimeout(
+      async () => {
+        try {
+          setUserSearchLoading(true);
+          setUserSearchError("");
 
-            const results =
-              await searchUsers(query);
+          const results =
+            await searchUsers(query);
 
-            if (cancelled) {
-              return;
-            }
-
-            setUserSearchResults(
-              results.filter(
-                (user) => {
-                  const userId =
-                    user.id;
-
-                  return (
-                    userId !==
-                    currentUser?.id
-                  );
-                },
-              ),
-            );
-          } catch (err) {
-            console.error(
-              "User search error:",
-              err,
-            );
-
-            if (!cancelled) {
-              setUserSearchResults(
-                [],
-              );
-
-              setUserSearchError(
-                err instanceof Error
-                  ? err.message
-                  : "Failed to search users.",
-              );
-            }
-          } finally {
-            if (!cancelled) {
-              setUserSearchLoading(
-                false,
-              );
-            }
+          if (cancelled) {
+            return;
           }
-        },
-        300,
-      );
+
+          setUserSearchResults(
+            results.filter(
+              (user) =>
+                user.id !== currentUser?.id,
+            ),
+          );
+        } catch (err) {
+          console.error(
+            "User search error:",
+            err,
+          );
+
+          if (!cancelled) {
+            setUserSearchResults([]);
+            setUserSearchError(
+              err instanceof Error
+                ? err.message
+                : "Failed to search users.",
+            );
+          }
+        } finally {
+          if (!cancelled) {
+            setUserSearchLoading(false);
+          }
+        }
+      },
+      300,
+    );
 
     return () => {
       cancelled = true;
-
-      window.clearTimeout(
-        timeoutId,
-      );
+      window.clearTimeout(timeoutId);
     };
   }, [
     newMessageOpen,
     userSearchQuery,
-    currentUser,
+    currentUser?.id,
   ]);
 
-  /* ---------------------------------------------------------------------- */
-  /* Conversation selection                                                 */
-  /* ---------------------------------------------------------------------- */
+  useEffect(() => {
+    if (
+      messagesLoading ||
+      visibleMessages.length === 0
+    ) {
+      return;
+    }
+
+    threadEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "end",
+    });
+  }, [
+    visibleMessages.length,
+    messagesLoading,
+    selectedConversation?.id,
+  ]);
+
+  function closeNewMessage() {
+    setNewMessageOpen(false);
+    setUserSearchQuery("");
+    setUserSearchResults([]);
+    setUserSearchError("");
+  }
 
   function handleSelectConversation(
     conversation: ConversationItem,
   ) {
-    setSelectedConversation(
-      conversation,
-    );
-
-    setNewMessageOpen(false);
+    setSelectedConversation(conversation);
     setMessagesError("");
+    closeNewMessage();
   }
-
-  /* ---------------------------------------------------------------------- */
-  /* Start/open conversation                                                */
-  /* ---------------------------------------------------------------------- */
 
   async function handleStartConversation(
     user: UserProfile,
   ) {
-    const participantId =
-      user.id;
+    const participantId = user.id;
 
     if (
       !participantId ||
@@ -372,7 +483,6 @@ export default function MessagesPage() {
       setStartingConversation(
         participantId,
       );
-
       setUserSearchError("");
 
       const conversation =
@@ -389,23 +499,19 @@ export default function MessagesPage() {
                 conversation.id,
             );
 
-          if (
-            existingIndex !== -1
-          ) {
+          if (existingIndex !== -1) {
             const updated = [
               ...currentConversations,
             ];
 
-            updated[
-              existingIndex
-            ] = conversation;
+            updated[existingIndex] =
+              conversation;
 
-            const [
-              selectedItem,
-            ] = updated.splice(
-              existingIndex,
-              1,
-            );
+            const [selectedItem] =
+              updated.splice(
+                existingIndex,
+                1,
+              );
 
             if (!selectedItem) {
               return updated;
@@ -428,10 +534,7 @@ export default function MessagesPage() {
         conversation,
       );
 
-      setNewMessageOpen(false);
-      setUserSearchQuery("");
-      setUserSearchResults([]);
-      setUserSearchError("");
+      closeNewMessage();
     } catch (err) {
       console.error(
         "Start conversation error:",
@@ -444,15 +547,9 @@ export default function MessagesPage() {
           : "Failed to start conversation.",
       );
     } finally {
-      setStartingConversation(
-        null,
-      );
+      setStartingConversation(null);
     }
   }
-
-  /* ---------------------------------------------------------------------- */
-  /* Send message                                                           */
-  /* ---------------------------------------------------------------------- */
 
   async function handleSendMessage(
     event: FormEvent<HTMLFormElement>,
@@ -476,11 +573,10 @@ export default function MessagesPage() {
       setSending(true);
       setMessagesError("");
 
-      const message =
-        await sendMessage(
-          selectedConversation.id,
-          content,
-        );
+      const message = await sendMessage(
+        selectedConversation.id,
+        content,
+      );
 
       setMessages(
         (currentMessages) => [
@@ -519,22 +615,17 @@ export default function MessagesPage() {
 
           return updated.sort(
             (first, second) => {
-              const firstTime =
-                new Date(
-                  first.lastMessageAt ??
-                    first.updatedAt,
-                ).getTime();
+              const firstTime = new Date(
+                first.lastMessageAt ??
+                  first.updatedAt,
+              ).getTime();
 
-              const secondTime =
-                new Date(
-                  second.lastMessageAt ??
-                    second.updatedAt,
-                ).getTime();
+              const secondTime = new Date(
+                second.lastMessageAt ??
+                  second.updatedAt,
+              ).getTime();
 
-              return (
-                secondTime -
-                firstTime
-              );
+              return secondTime - firstTime;
             },
           );
         },
@@ -574,21 +665,23 @@ export default function MessagesPage() {
     }
   }
 
-  /* ---------------------------------------------------------------------- */
-  /* Loading/error states                                                   */
-  /* ---------------------------------------------------------------------- */
-
   if (loading) {
     return (
-      <main className="messages-page">
-        <div className="messages-state">
-          <Loader2
-            size={28}
-            className="messages-spinner"
-          />
+      <main className="aio-messages-page">
+        <div className="aio-messages-page-state">
+          <div className="aio-messages-state-icon">
+            <Loader2
+              size={25}
+              className="aio-messages-spinner"
+            />
+          </div>
+
+          <strong>
+            Loading your conversations
+          </strong>
 
           <span>
-            Loading messages...
+            Getting your AIO messages ready.
           </span>
         </div>
       </main>
@@ -597,9 +690,11 @@ export default function MessagesPage() {
 
   if (error) {
     return (
-      <main className="messages-page">
-        <div className="messages-state">
-          <Mail size={32} />
+      <main className="aio-messages-page">
+        <div className="aio-messages-page-state">
+          <div className="aio-messages-state-icon">
+            <Mail size={25} />
+          </div>
 
           <strong>
             Unable to load messages
@@ -609,9 +704,7 @@ export default function MessagesPage() {
 
           <button
             type="button"
-            onClick={() =>
-              void loadPage()
-            }
+            onClick={() => void loadPage()}
           >
             Try again
           </button>
@@ -620,30 +713,30 @@ export default function MessagesPage() {
     );
   }
 
-  /* ---------------------------------------------------------------------- */
-  /* Page                                                                   */
-  /* ---------------------------------------------------------------------- */
-
   return (
-    <main className="messages-page">
-      <header className="messages-header">
-        <div>
+    <main className="aio-messages-page">
+      <section className="aio-messages-hero">
+        <div className="aio-messages-hero-copy">
+          <div className="aio-messages-eyebrow">
+            <Sparkles size={14} />
+            AIO Conversations
+          </div>
+
           <h1>Messages</h1>
 
           <p>
-            Private conversations
-            across AIO.
+            Stay close to the people you
+            connect with across AIO.
           </p>
         </div>
 
         <button
           type="button"
-          className="messages-new-button"
+          className="aio-messages-new-button"
           onClick={() => {
             setNewMessageOpen(
               (current) => !current,
             );
-
             setUserSearchError("");
           }}
         >
@@ -659,38 +752,37 @@ export default function MessagesPage() {
               : "New message"}
           </span>
         </button>
-      </header>
+      </section>
 
       {newMessageOpen && (
-        <section className="messages-new-panel">
-          <div className="messages-new-panel-header">
+        <section className="aio-messages-new-panel">
+          <div className="aio-messages-new-heading">
+            <div className="aio-messages-new-icon">
+              <MessageCircle size={19} />
+            </div>
+
             <div>
               <strong>
                 Start a conversation
               </strong>
 
               <span>
-                Search for someone on
-                AIO.
+                Search for someone on AIO
+                and send them a message.
               </span>
             </div>
 
             <button
               type="button"
-              className="messages-new-close"
+              className="aio-messages-close-button"
               aria-label="Close new message"
-              onClick={() => {
-                setNewMessageOpen(false);
-                setUserSearchQuery("");
-                setUserSearchResults([]);
-                setUserSearchError("");
-              }}
+              onClick={closeNewMessage}
             >
-              <X size={18} />
+              <X size={17} />
             </button>
           </div>
 
-          <div className="messages-user-search">
+          <div className="aio-messages-user-search">
             <Search
               size={18}
               aria-hidden="true"
@@ -712,14 +804,21 @@ export default function MessagesPage() {
             {userSearchLoading && (
               <Loader2
                 size={18}
-                className="messages-spinner"
+                className="aio-messages-spinner"
               />
             )}
           </div>
 
           {userSearchError && (
-            <div className="messages-search-error">
+            <div className="aio-messages-search-error">
               {userSearchError}
+            </div>
+          )}
+
+          {!userSearchQuery.trim() && (
+            <div className="aio-messages-search-hint">
+              Search for a person to start
+              a private conversation.
             </div>
           )}
 
@@ -728,41 +827,39 @@ export default function MessagesPage() {
             !userSearchError &&
             userSearchResults.length ===
               0 && (
-              <div className="messages-search-empty">
-                No users found.
+              <div className="aio-messages-search-empty">
+                <Search size={20} />
+
+                <span>
+                  No matching users found.
+                </span>
               </div>
             )}
 
           {userSearchResults.length >
             0 && (
-            <div className="messages-user-results">
+            <div className="aio-messages-user-results">
               {userSearchResults.map(
                 (user) => {
-                  const userId =
-                    user.id ||
-                    user.username;
-
                   const isStarting =
                     startingConversation ===
                     user.id;
 
                   return (
                     <button
-                      key={userId}
+                      key={user.id}
                       type="button"
-                      className="messages-user-result"
-                      disabled={
-                        Boolean(
-                          startingConversation,
-                        )
-                      }
+                      className="aio-messages-user-result"
+                      disabled={Boolean(
+                        startingConversation,
+                      )}
                       onClick={() =>
                         void handleStartConversation(
                           user,
                         )
                       }
                     >
-                      <div className="messages-avatar">
+                      <div className="aio-messages-avatar">
                         {user.avatarUrl ? (
                           <img
                             src={
@@ -774,18 +871,15 @@ export default function MessagesPage() {
                           />
                         ) : (
                           <span>
-                            {user.displayName
-                              ?.charAt(0)
-                              .toUpperCase() ||
-                              user.username
-                                ?.charAt(0)
-                                .toUpperCase() ||
-                              "?"}
+                            {getInitials(
+                              user.displayName,
+                              user.username,
+                            )}
                           </span>
                         )}
                       </div>
 
-                      <div className="messages-user-result-info">
+                      <div className="aio-messages-user-result-copy">
                         <strong>
                           {user.displayName}
                         </strong>
@@ -795,16 +889,19 @@ export default function MessagesPage() {
                         </span>
                       </div>
 
-                      <div className="messages-user-result-action">
+                      <div className="aio-messages-user-result-action">
                         {isStarting ? (
                           <Loader2
                             size={18}
-                            className="messages-spinner"
+                            className="aio-messages-spinner"
                           />
                         ) : (
-                          <span>
+                          <>
                             Message
-                          </span>
+                            <ArrowUpRight
+                              size={15}
+                            />
+                          </>
                         )}
                       </div>
                     </button>
@@ -816,45 +913,57 @@ export default function MessagesPage() {
         </section>
       )}
 
-      <section className="messages-layout">
-        <aside className="messages-inbox">
-          <div className="messages-inbox-header">
-            <strong>
-              Conversations
-            </strong>
+      <section
+        className={`aio-messages-workspace${
+          selectedConversation
+            ? " has-conversation"
+            : ""
+        }`}
+      >
+        <aside className="aio-messages-inbox">
+          <div className="aio-messages-inbox-header">
+            <div>
+              <span className="aio-messages-inbox-label">
+                Inbox
+              </span>
 
-            <span>
+              <strong>
+                Conversations
+              </strong>
+            </div>
+
+            <span className="aio-messages-count">
               {conversations.length}
             </span>
           </div>
 
-          {conversations.length ===
-          0 ? (
-            <div className="messages-empty-inbox">
-              <Mail size={28} />
+          {conversations.length === 0 ? (
+            <div className="aio-messages-empty-inbox">
+              <div className="aio-messages-empty-icon">
+                <Mail size={23} />
+              </div>
 
               <strong>
                 No conversations yet
               </strong>
 
               <span>
-                Start chatting with
-                someone on AIO.
+                Start chatting with someone
+                on AIO.
               </span>
 
               <button
                 type="button"
-                className="messages-empty-start"
                 onClick={() =>
                   setNewMessageOpen(true)
                 }
               >
-                <Plus size={17} />
-                Start a conversation
+                <Plus size={16} />
+                Start conversation
               </button>
             </div>
           ) : (
-            <div className="messages-conversation-list">
+            <div className="aio-messages-conversation-list">
               {conversations.map(
                 (conversation) => {
                   const participant =
@@ -866,11 +975,9 @@ export default function MessagesPage() {
 
                   return (
                     <button
-                      key={
-                        conversation.id
-                      }
+                      key={conversation.id}
                       type="button"
-                      className={`messages-conversation${
+                      className={`aio-messages-conversation${
                         active
                           ? " is-active"
                           : ""
@@ -881,7 +988,7 @@ export default function MessagesPage() {
                         )
                       }
                     >
-                      <div className="messages-avatar">
+                      <div className="aio-messages-avatar aio-messages-conversation-avatar">
                         {participant?.avatarUrl ? (
                           <img
                             src={
@@ -893,24 +1000,35 @@ export default function MessagesPage() {
                           />
                         ) : (
                           <span>
-                            {participant?.displayName
-                              ?.charAt(0)
-                              .toUpperCase() ??
-                              "?"}
+                            {getInitials(
+                              participant?.displayName,
+                              participant?.username,
+                            )}
                           </span>
                         )}
                       </div>
 
-                      <div className="messages-conversation-content">
-                        <strong>
-                          {participant?.displayName ??
-                            "AIO User"}
-                        </strong>
+                      <div className="aio-messages-conversation-copy">
+                        <div className="aio-messages-conversation-top">
+                          <strong>
+                            {participant?.displayName ??
+                              "AIO User"}
+                          </strong>
 
-                        <span>
-                          {conversation.lastMessageText ??
-                            "Start a conversation"}
-                        </span>
+                          <time>
+                            {formatConversationTime(
+                              conversation.lastMessageAt ??
+                                conversation.updatedAt,
+                            )}
+                          </time>
+                        </div>
+
+                        <div className="aio-messages-conversation-bottom">
+                          <span>
+                            {conversation.lastMessageText ??
+                              "Start a conversation"}
+                          </span>
+                        </div>
                       </div>
                     </button>
                   );
@@ -920,23 +1038,28 @@ export default function MessagesPage() {
           )}
         </aside>
 
-        <section className="messages-chat">
+        <section className="aio-messages-chat">
           {!selectedConversation ? (
-            <div className="messages-chat-empty">
-              <Mail size={38} />
+            <div className="aio-messages-chat-empty">
+              <div className="aio-messages-empty-orbit">
+                <MessageCircle size={31} />
+              </div>
+
+              <span className="aio-messages-empty-kicker">
+                Your inbox
+              </span>
 
               <h2>
-                Your messages
+                Start a meaningful conversation
               </h2>
 
               <p>
-                Select a conversation
-                or start a new one.
+                Select a conversation from your
+                inbox or find someone new on AIO.
               </p>
 
               <button
                 type="button"
-                className="messages-empty-start"
                 onClick={() =>
                   setNewMessageOpen(true)
                 }
@@ -947,177 +1070,255 @@ export default function MessagesPage() {
             </div>
           ) : (
             <>
-              <header className="messages-chat-header">
-                <div className="messages-avatar">
-                  {selectedConversation
-                    .participant
-                    ?.avatarUrl ? (
+              <header className="aio-messages-chat-header">
+                <button
+                  type="button"
+                  className="aio-messages-mobile-back"
+                  aria-label="Back to conversations"
+                  onClick={() =>
+                    setSelectedConversation(
+                      null,
+                    )
+                  }
+                >
+                  <ArrowLeft size={19} />
+                </button>
+
+                <div className="aio-messages-avatar aio-messages-chat-avatar">
+                  {selectedParticipant?.avatarUrl ? (
                     <img
                       src={
-                        selectedConversation
-                          .participant
-                          .avatarUrl
+                        selectedParticipant.avatarUrl
                       }
                       alt={
-                        selectedConversation
-                          .participant
-                          .displayName
+                        selectedParticipant.displayName
                       }
                     />
                   ) : (
                     <span>
-                      {selectedConversation
-                        .participant
-                        ?.displayName
-                        ?.charAt(0)
-                        .toUpperCase() ??
-                        "?"}
+                      {getInitials(
+                        selectedParticipant?.displayName,
+                        selectedParticipant?.username,
+                      )}
                     </span>
                   )}
                 </div>
 
-                <div>
+                <div className="aio-messages-chat-person">
                   <strong>
-                    {selectedConversation
-                      .participant
-                      ?.displayName ??
+                    {selectedParticipant?.displayName ??
                       "AIO User"}
                   </strong>
 
                   <span>
                     @
-                    {selectedConversation
-                      .participant
-                      ?.username ??
+                    {selectedParticipant?.username ??
                       "user"}
                   </span>
                 </div>
+
+                {selectedParticipant?.username && (
+                  <Link
+                    href={`/profile/${encodeURIComponent(
+                      selectedParticipant.username,
+                    )}`}
+                    className="aio-messages-profile-link"
+                    aria-label={`View ${selectedParticipant.displayName}'s profile`}
+                  >
+                    View profile
+                    <ArrowUpRight
+                      size={15}
+                    />
+                  </Link>
+                )}
               </header>
 
-              <div className="messages-thread">
+              <div className="aio-messages-thread">
                 {messagesLoading ? (
-                  <div className="messages-thread-state">
+                  <div className="aio-messages-thread-state">
                     <Loader2
                       size={24}
-                      className="messages-spinner"
+                      className="aio-messages-spinner"
                     />
 
+                    <strong>
+                      Loading conversation
+                    </strong>
+
                     <span>
-                      Loading conversation...
+                      Getting your messages.
                     </span>
                   </div>
                 ) : messagesError &&
-                  messages.length ===
-                    0 ? (
-                  <div className="messages-thread-state">
+                  messages.length === 0 ? (
+                  <div className="aio-messages-thread-state">
+                    <Mail size={26} />
+
                     <strong>
-                      Unable to load
-                      conversation
+                      Unable to load conversation
                     </strong>
 
                     <span>
                       {messagesError}
                     </span>
                   </div>
-                ) : messages.length ===
-                  0 ? (
-                  <div className="messages-thread-state">
-                    <Mail size={28} />
+                ) : messages.length === 0 ? (
+                  <div className="aio-messages-thread-state">
+                    <div className="aio-messages-thread-empty-icon">
+                      <MessageCircle
+                        size={24}
+                      />
+                    </div>
 
                     <strong>
                       Start the conversation
                     </strong>
 
                     <span>
-                      Send the first
-                      message.
+                      Send the first message to{" "}
+                      {selectedParticipant?.displayName ??
+                        "this person"}.
                     </span>
                   </div>
                 ) : (
-                  messages.map(
-                    (message) => {
+                  visibleMessages.map(
+                    (message, index) => {
                       const mine =
                         message.senderId ===
                         currentUser?.id;
 
+                      const previousMessage =
+                        visibleMessages[
+                          index - 1
+                        ];
+
+                      const currentDay =
+                        formatDayLabel(
+                          message.createdAt,
+                        );
+
+                      const previousDay =
+                        previousMessage
+                          ? formatDayLabel(
+                              previousMessage.createdAt,
+                            )
+                          : null;
+
+                      const showDay =
+                        index === 0 ||
+                        currentDay !==
+                          previousDay;
+
+                      const read =
+                        mine &&
+                        message.readBy.some(
+                          (userId) =>
+                            userId !==
+                            currentUser?.id,
+                        );
+
                       return (
                         <div
-                          key={
-                            message.id
-                          }
-                          className={`messages-message-row ${
-                            mine
-                              ? "is-mine"
-                              : "is-theirs"
-                          }`}
+                          key={message.id}
+                          className="aio-messages-message-block"
                         >
-                          <div className="messages-bubble">
-                            {message.content && (
-                              <p>
-                                {
-                                  message.content
-                                }
-                              </p>
-                            )}
+                          {showDay && (
+                            <div className="aio-messages-day">
+                              <span>
+                                {currentDay}
+                              </span>
+                            </div>
+                          )}
 
-                            {message.imageUrl && (
-                              <img
-                                src={
-                                  message.imageUrl
-                                }
-                                alt=""
-                              />
-                            )}
-
-                            <span className="messages-message-time">
-                              {new Date(
-                                message.createdAt,
-                              ).toLocaleTimeString(
-                                [],
-                                {
-                                  hour: "2-digit",
-                                  minute:
-                                    "2-digit",
-                                },
+                          <div
+                            className={`aio-messages-message-row ${
+                              mine
+                                ? "is-mine"
+                                : "is-theirs"
+                            }`}
+                          >
+                            <div className="aio-messages-bubble">
+                              {message.content && (
+                                <p>
+                                  {
+                                    message.content
+                                  }
+                                </p>
                               )}
-                            </span>
+
+                              {message.imageUrl && (
+                                <img
+                                  src={
+                                    message.imageUrl
+                                  }
+                                  alt="Shared in conversation"
+                                />
+                              )}
+
+                              <div className="aio-messages-message-meta">
+                                <time>
+                                  {formatMessageTime(
+                                    message.createdAt,
+                                  )}
+                                </time>
+
+                                {mine && (
+                                  <CheckCheck
+                                    size={13}
+                                    aria-label={
+                                      read
+                                        ? "Read"
+                                        : "Sent"
+                                    }
+                                  />
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       );
                     },
                   )
                 )}
+
+                <div ref={threadEndRef} />
               </div>
 
               {messagesError &&
                 messages.length > 0 && (
-                  <div className="messages-inline-error">
+                  <div className="aio-messages-inline-error">
                     {messagesError}
                   </div>
                 )}
 
               <form
-                className="messages-composer"
+                className="aio-messages-composer"
                 onSubmit={
                   handleSendMessage
                 }
               >
-                <input
-                  type="text"
-                  value={draft}
-                  onChange={(event) =>
-                    setDraft(
-                      event.target.value,
-                    )
-                  }
-                  placeholder="Write a message..."
-                  maxLength={5000}
-                  disabled={sending}
-                  aria-label="Message"
-                />
+                <div className="aio-messages-composer-field">
+                  <input
+                    type="text"
+                    value={draft}
+                    onChange={(event) =>
+                      setDraft(
+                        event.target.value,
+                      )
+                    }
+                    placeholder={`Message ${
+                      selectedParticipant?.displayName ??
+                      "AIO user"
+                    }...`}
+                    maxLength={5000}
+                    disabled={sending}
+                    aria-label="Message"
+                  />
+                </div>
 
                 <button
                   type="submit"
+                  className="aio-messages-send"
                   disabled={
                     sending ||
                     !draft.trim()
@@ -1127,7 +1328,7 @@ export default function MessagesPage() {
                   {sending ? (
                     <Loader2
                       size={18}
-                      className="messages-spinner"
+                      className="aio-messages-spinner"
                     />
                   ) : (
                     <Send size={18} />
