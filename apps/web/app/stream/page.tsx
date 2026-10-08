@@ -8,10 +8,12 @@ import CreatePostModal, {
 import PostCard from "@/components/stream/PostCard";
 import { createPost, getPosts } from "@/lib/api";
 import {
+  Suspense,
   useCallback,
   useEffect,
   useState,
 } from "react";
+
 import { useSearchParams } from "next/navigation";
 
 interface PostAuthor {
@@ -233,7 +235,7 @@ function convertPost(
    STREAM PAGE
    ========================================================= */
 
-export default function StreamPage() {
+function StreamPageContent() {
   const searchParams = useSearchParams();
 
   const [activeFeed, setActiveFeed] =
@@ -682,5 +684,18 @@ export default function StreamPage() {
         )}
       </>
     </AuthGuard>
+  );
+}
+export default function StreamPage() {
+  return (
+    <Suspense
+      fallback={
+        <div role="status" aria-live="polite">
+          Loading stream...
+        </div>
+      }
+    >
+      <StreamPageContent />
+    </Suspense>
   );
 }

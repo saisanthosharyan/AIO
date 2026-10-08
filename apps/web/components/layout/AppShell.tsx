@@ -2,12 +2,12 @@
 
 import {
   Bell,
-  Moon,
   Palette,
   Plus,
   Search,
   Sun,
 } from "lucide-react";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -136,6 +136,9 @@ export default function AppShell({
   children,
 }: AppShellProps) {
   const pathname = usePathname();
+  const isMessagesRoute =
+    pathname === "/messages" ||
+    pathname.startsWith("/messages/");
 
   const theme = useSyncExternalStore(
     subscribeToTheme,
@@ -353,13 +356,19 @@ export default function AppShell({
 
           {/* Main desktop/tablet content */}
           <main className="aio-workspace-main">
-            <div className="aio-workspace-inner">
-              <div className="aio-workspace-content">
-                {children}
-              </div>
-
-              <RightPanel />
+            <div
+            className={`aio-workspace-inner${
+              isMessagesRoute
+                ? " aio-workspace-inner--messages"
+                : ""
+            }`}
+          >
+            <div className="aio-workspace-content">
+              {children}
             </div>
+
+            {!isMessagesRoute && <RightPanel />}
+          </div>
           </main>
         </div>
       </div>
