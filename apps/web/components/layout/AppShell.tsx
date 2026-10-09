@@ -1,24 +1,22 @@
+
 "use client";
 
 import {
   Bell,
+  Moon,
   Palette,
   Plus,
   Search,
   Sun,
+  UserRound,
 } from "lucide-react";
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  useCallback,
-  useEffect,
-  useSyncExternalStore,
-} from "react";
 
 import MobileNav from "./MobileNav";
 import RightPanel from "./RightPanel";
 import Sidebar from "./Sidebar";
+import { useTheme } from "@/components/theme/ThemeProvider";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -30,14 +28,7 @@ const AUTH_ROUTES = [
   "/forgot-password",
 ];
 
-type Theme = "light" | "dark";
-
-const THEME_STORAGE_KEY = "aio-theme";
-const THEME_EVENT = "aio-theme-change";
-
-function isAuthRoute(
-  pathname: string,
-): boolean {
+function isAuthRoute(pathname: string) {
   return AUTH_ROUTES.some(
     (route) =>
       pathname === route ||
@@ -45,335 +36,126 @@ function isAuthRoute(
   );
 }
 
-function getStoredTheme(): Theme | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  const storedTheme =
-    window.localStorage.getItem(
-      THEME_STORAGE_KEY,
-    );
-
-  if (
-    storedTheme === "light" ||
-    storedTheme === "dark"
-  ) {
-    return storedTheme;
-  }
-
-  return null;
-}
-
-function getSystemTheme(): Theme {
-  if (typeof window === "undefined") {
-    return "light";
-  }
-
-  return window.matchMedia(
-    "(prefers-color-scheme: dark)",
-  ).matches
-    ? "dark"
-    : "light";
-}
-
-function getCurrentTheme(): Theme {
-  if (typeof document === "undefined") {
-    return "light";
-  }
-
-  const documentTheme =
-    document.documentElement.dataset.theme;
-
-  if (
-    documentTheme === "light" ||
-    documentTheme === "dark"
-  ) {
-    return documentTheme;
-  }
-
-  return (
-    getStoredTheme() ??
-    getSystemTheme()
-  );
-}
-
-function getServerTheme(): Theme {
-  return "light";
-}
-
-function subscribeToTheme(
-  callback: () => void,
-) {
-  window.addEventListener(
-    THEME_EVENT,
-    callback,
-  );
-
-  return () => {
-    window.removeEventListener(
-      THEME_EVENT,
-      callback,
-    );
-  };
-}
-
-function applyTheme(theme: Theme) {
-  document.documentElement.dataset.theme =
-    theme;
-
-  document.documentElement.style.colorScheme =
-    theme;
-}
-
-function notifyThemeChange() {
-  window.dispatchEvent(
-    new Event(THEME_EVENT),
-  );
-}
-
-export default function AppShell({
-  children,
-}: AppShellProps) {
+export default function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
+  const { resolvedAppearance, setAppearance } = useTheme();
+
+  const darkMode = resolvedAppearance === "dark";
   const isMessagesRoute =
     pathname === "/messages" ||
     pathname.startsWith("/messages/");
 
-  const theme = useSyncExternalStore(
-    subscribeToTheme,
-    getCurrentTheme,
-    getServerTheme,
-  );
-
-  const darkMode =
-    theme === "dark";
-
-  useEffect(() => {
-    const storedTheme =
-      getStoredTheme();
-
-    const initialTheme =
-      storedTheme ??
-      getSystemTheme();
-
-    applyTheme(initialTheme);
-    notifyThemeChange();
-
-    const mediaQuery =
-      window.matchMedia(
-        "(prefers-color-scheme: dark)",
-      );
-
-    function handleSystemThemeChange(
-      event: MediaQueryListEvent,
-    ) {
-      if (getStoredTheme()) {
-        return;
-      }
-
-      const nextTheme: Theme =
-        event.matches
-          ? "dark"
-          : "light";
-
-      applyTheme(nextTheme);
-      notifyThemeChange();
-    }
-
-    mediaQuery.addEventListener(
-      "change",
-      handleSystemThemeChange,
-    );
-
-    return () => {
-      mediaQuery.removeEventListener(
-        "change",
-        handleSystemThemeChange,
-      );
-    };
-  }, []);
-
-  const toggleTheme =
-    useCallback(() => {
-      const currentTheme =
-        getCurrentTheme();
-
-      const nextTheme: Theme =
-        currentTheme === "dark"
-          ? "light"
-          : "dark";
-
-      applyTheme(nextTheme);
-
-      window.localStorage.setItem(
-        THEME_STORAGE_KEY,
-        nextTheme,
-      );
-
-      notifyThemeChange();
-    }, []);
+  const toggleTheme = () => {
+    setAppearance(darkMode ? "light" : "dark");
+  };
 
   if (isAuthRoute(pathname)) {
     return <>{children}</>;
   }
 
   return (
-    <div className="aio-app">
-      <div className="aio-template-shell">
-        {/* Desktop / tablet sidebar */}
+    <div className="aio-app aio-canvas-app">
+      <div className="aio-canvas-shell">
         <Sidebar />
 
-        {/* Main application area */}
-        <div className="aio-workspace">
-          {/* Mobile header */}
-          <header className="aio-mobile-topbar">
+        <div className="aio-canvas-workspace">
+          <header className="aio-canvas-header">
             <Link
               href="/stream"
-              className="aio-mobile-logo"
+              className="aio-canvas-mobile-brand"
               aria-label="AIO home"
             >
               AIO
             </Link>
 
-            <div className="aio-mobile-topbar-actions">
-              <button
-                type="button"
-                onClick={toggleTheme}
-                aria-label={
-                  darkMode
-                    ? "Switch to light mode"
-                    : "Switch to dark mode"
-                }
-                title={
-                  darkMode
-                    ? "Light mode"
-                    : "Dark mode"
-                }
-              >
-                {darkMode ? (
-                  <Sun size={20} />
-                ) : (
-                  <Palette size={20} />
-                )}
-              </button>
+            <Link
+              href="/discover"
+              className="aio-canvas-search"
+              aria-label="Search AIO"
+            >
+              <Search size={18} aria-hidden="true" />
+              <span>Search people, spaces or topics...</span>
+            </Link>
 
-              <Link
-                href="/discover"
-                aria-label="Search"
-                title="Search"
-              >
-                <Search size={20} />
-              </Link>
-
-              <Link
-                href="/notifications"
-                aria-label="Notifications"
-                title="Notifications"
-              >
-                <Bell size={20} />
-              </Link>
-            </div>
-          </header>
-
-          {/* Desktop header */}
-          <header className="aio-topbar">
-            <div className="aio-topbar-inner">
-              <Link
-                href="/discover"
-                className="aio-global-search"
-                aria-label="Search AIO"
-              >
-                <Search
-                  size={20}
-                  aria-hidden="true"
-                />
-
-                <span>
-                  Search people, spaces,
-                  moments...
-                </span>
-              </Link>
-
+            <div className="aio-canvas-header-actions">
               <Link
                 href="/stream?create=1"
-                className="aio-topbar-action"
-                aria-label="Create"
-                title="Create"
+                className="aio-canvas-icon-button aio-canvas-header-create"
+                aria-label="Create post"
+                title="Create post"
               >
-                <Plus
-                  size={23}
-                  strokeWidth={2}
-                />
+                <Plus size={19} />
+              </Link>
+
+              <Link
+                href="/settings#appearance"
+                className="aio-canvas-icon-button aio-canvas-header-palette"
+                aria-label="Customize appearance"
+                title="Customize appearance"
+              >
+                <Palette size={18} />
               </Link>
 
               <button
                 type="button"
-                className="aio-topbar-action"
+                className="aio-canvas-icon-button"
                 onClick={toggleTheme}
                 aria-label={
                   darkMode
                     ? "Switch to light mode"
                     : "Switch to dark mode"
                 }
-                title={
-                  darkMode
-                    ? "Light mode"
-                    : "Dark mode"
-                }
+                title={darkMode ? "Light mode" : "Dark mode"}
               >
                 {darkMode ? (
-                  <Sun size={20} />
+                  <Sun size={19} />
                 ) : (
-                  <Palette size={20} />
+                  <Moon size={19} />
                 )}
               </button>
 
               <Link
                 href="/notifications"
-                className="aio-topbar-action aio-topbar-notifications"
+                className="aio-canvas-icon-button"
                 aria-label="Notifications"
                 title="Notifications"
               >
-                <Bell
-                  size={20}
-                  strokeWidth={1.9}
-                />
+                <Bell size={19} />
               </Link>
 
               <Link
                 href="/profile"
-                className="aio-topbar-avatar"
-                aria-label="Profile"
+                className="aio-canvas-header-profile"
+                aria-label="Your profile"
                 title="Profile"
               >
-                <span className="aio-topbar-avatar-inner">
-                  <span className="aio-topbar-avatar-dot" />
-                </span>
+                <UserRound size={19} />
               </Link>
             </div>
           </header>
 
-          {/* Main desktop/tablet content */}
-          <main className="aio-workspace-main">
+          <main className="aio-canvas-main">
             <div
-            className={`aio-workspace-inner${
-              isMessagesRoute
-                ? " aio-workspace-inner--messages"
-                : ""
-            }`}
-          >
-            <div className="aio-workspace-content">
-              {children}
-            </div>
+              className={`aio-canvas-content-grid${
+                isMessagesRoute
+                  ? " aio-canvas-content-grid--messages"
+                  : ""
+              }`}
+            >
+              <div className="aio-canvas-page-content">
+                {children}
+              </div>
 
-            {!isMessagesRoute && <RightPanel />}
-          </div>
+              {!isMessagesRoute && (
+                <div className="aio-canvas-right">
+                  <RightPanel />
+                </div>
+              )}
+            </div>
           </main>
         </div>
       </div>
 
-      {/* Mobile bottom navigation */}
       <MobileNav />
     </div>
   );

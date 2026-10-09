@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import type { Response } from "express";
+import { getSocketServer } from "../socket/socket.js";
 
 import {
   ConversationModel,
@@ -449,6 +450,28 @@ export async function sendMessage(
       message.createdAt;
 
     await conversation.save();
+    const io = getSocketServer();
+
+if (io) {
+  const messagePayload = {
+    id: message._id.toString(),
+    _id: message._id.toString(),
+    conversationId: message.conversationId,
+    senderId: message.senderId,
+    content: message.content,
+    imageUrl: message.imageUrl,
+    readBy: message.readBy,
+    createdAt: message.createdAt,
+    updatedAt: message.updatedAt,
+  };
+
+  for (const participantId of conversation.participantIds) {
+    io.to(`user:${participantId}`).emit(
+      "message:new",
+      messagePayload,
+    );
+  }
+}
 
     response.status(201).json({
       success: true,

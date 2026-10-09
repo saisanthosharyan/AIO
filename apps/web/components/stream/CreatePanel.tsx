@@ -1,91 +1,54 @@
+
 "use client";
 
 import {
   Image as ImageIcon,
   PenLine,
-  Sparkles,
-  WandSparkles,
+  Plus,
 } from "lucide-react";
 
 interface CreatePanelProps {
   onOpenCreate: () => void;
 }
 
-const actions = [
-  {
-    label: "Post",
-    icon: PenLine,
-  },
-  {
-    label: "Image",
-    icon: ImageIcon,
-  },
-  {
-    label: "Moment",
-    icon: Sparkles,
-  },
-  {
-    label: "Ask AI",
-    icon: WandSparkles,
-  },
-];
-
 export default function CreatePanel({
   onOpenCreate,
 }: CreatePanelProps) {
   return (
     <section
-      className="create-panel aio-v2-composer"
+      className="aio-canvas-composer"
       aria-label="Create a post"
     >
-      <div className="aio-v2-composer-main">
-        <button
-          type="button"
-          className="aio-v2-composer-avatar"
-          onClick={onOpenCreate}
-          aria-label="Create post"
-        >
-          AI
-        </button>
-
-        <button
-          type="button"
-          className="aio-v2-composer-input"
-          onClick={onOpenCreate}
-        >
-          <span>
-            What&apos;s on your mind?
-          </span>
-        </button>
+      <div className="aio-canvas-composer-avatar" aria-hidden="true">
+        AI
       </div>
 
-      <div className="aio-v2-composer-divider" />
+      <button
+        type="button"
+        className="aio-canvas-composer-prompt"
+        onClick={onOpenCreate}
+      >
+        What's happening?
+      </button>
 
-      <div className="aio-v2-composer-actions">
-        {actions.map((action) => {
-          const Icon = action.icon;
+      <button
+        type="button"
+        className="aio-canvas-composer-icon"
+        onClick={onOpenCreate}
+        aria-label="Create image post"
+        title="Add image"
+      >
+        <ImageIcon size={18} />
+      </button>
 
-          return (
-            <button
-              key={action.label}
-              type="button"
-              onClick={onOpenCreate}
-              aria-label={`Create ${action.label}`}
-            >
-              <span className="aio-v2-composer-action-icon">
-                <Icon
-                  size={17}
-                  strokeWidth={2}
-                />
-              </span>
-
-              <span>
-                {action.label}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+      <button
+        type="button"
+        className="aio-canvas-composer-submit"
+        onClick={onOpenCreate}
+      >
+        <Plus size={16} />
+        <span>Post</span>
+      </button>
     </section>
   );
 }

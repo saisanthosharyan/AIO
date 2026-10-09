@@ -1,233 +1,89 @@
+
 "use client";
 
 import {
   Bell,
+  Bookmark,
   Compass,
   Film,
   Home,
   Layers3,
   Mail,
   Plus,
-  Sparkles,
+  Settings2,
   UserRound,
   Workflow,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-interface NavigationItem {
-  label: string;
-  href: string;
-  icon: typeof Home;
-}
-
-const navigation: NavigationItem[] = [
-  {
-    label: "Home",
-    href: "/stream",
-    icon: Home,
-  },
-  {
-    label: "Discover",
-    href: "/discover",
-    icon: Compass,
-  },
-  {
-    label: "Flow",
-    href: "/flow",
-    icon: Workflow,
-  },
-  {
-    label: "Messages",
-    href: "/messages",
-    icon: Mail,
-  },
-  {
-    label: "Spaces",
-    href: "/spaces",
-    icon: Layers3,
-  },
-  {
-    label: "Clips",
-    href: "/clips",
-    icon: Film,
-  },
-  {
-    label: "Notifications",
-    href: "/notifications",
-    icon: Bell,
-  },
-  {
-    label: "Profile",
-    href: "/profile",
-    icon: UserRound,
-  },
+const navigation = [
+  { label: "Home", href: "/stream", icon: Home },
+  { label: "Discover", href: "/discover", icon: Compass },
+  { label: "Flow", href: "/flow", icon: Workflow },
+  { label: "Messages", href: "/messages", icon: Mail },
+  { label: "Spaces", href: "/spaces", icon: Layers3 },
+  { label: "Clips", href: "/clips", icon: Film },
+  { label: "Notifications", href: "/notifications", icon: Bell },
+  { label: "Saved", href: "/saved", icon: Bookmark },
+  { label: "Profile", href: "/profile", icon: UserRound },
+  { label: "Settings", href: "/settings", icon: Settings2 },
 ];
 
-function isActivePath(
-  pathname: string,
-  href: string,
-): boolean {
+function isActivePath(pathname: string, href: string) {
   if (href === "/stream") {
-    return (
-      pathname === "/" ||
-      pathname === "/stream"
-    );
+    return pathname === "/" || pathname === "/stream";
   }
 
-  return (
-    pathname === href ||
-    pathname.startsWith(`${href}/`)
-  );
+  return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside
-      className="aio-sidebar"
-      aria-label="AIO navigation"
-    >
-      <div className="aio-sidebar-inner">
-        {/* Brand */}
-        <div className="aio-sidebar-brand-row">
-          <Link
-            href="/stream"
-            className="aio-wordmark"
-            aria-label="AIO home"
-          >
-            <span className="aio-wordmark-text">
-              AIO
-            </span>
-          </Link>
-
-          <span
-            className="aio-sidebar-brand-spark"
-            aria-hidden="true"
-          >
-            <Sparkles
-              size={20}
-              strokeWidth={1.9}
-            />
-          </span>
-        </div>
-
-        {/* Primary navigation */}
-        <nav
-          className="aio-sidebar-nav"
-          aria-label="Primary navigation"
+    <aside className="aio-canvas-sidebar" aria-label="AIO navigation">
+      <div className="aio-canvas-sidebar-inner">
+        <Link
+          href="/stream"
+          className="aio-canvas-brand"
+          aria-label="AIO home"
         >
-          {navigation.map((item) => {
-            const Icon = item.icon;
+          AIO
+          <span className="aio-canvas-brand-dot" />
+        </Link>
 
-            const active =
-              isActivePath(
-                pathname,
-                item.href,
-              );
+        <nav className="aio-canvas-nav" aria-label="Primary navigation">
+          {navigation.map(({ label, href, icon: Icon }) => {
+            const active = isActivePath(pathname, href);
 
             return (
               <Link
-                key={item.href}
-                href={item.href}
-                className={`aio-nav-item${
-                  active
-                    ? " is-active"
-                    : ""
+                key={href}
+                href={href}
+                className={`aio-canvas-nav-link${
+                  active ? " is-active" : ""
                 }`}
-                aria-current={
-                  active
-                    ? "page"
-                    : undefined
-                }
+                aria-current={active ? "page" : undefined}
               >
-                <span
-                  className="aio-nav-icon"
+                <Icon
+                  size={18}
+                  strokeWidth={active ? 2.2 : 1.8}
                   aria-hidden="true"
-                >
-                  <Icon
-                    size={22}
-                    strokeWidth={
-                      active
-                        ? 2.1
-                        : 1.8
-                    }
-                  />
-                </span>
-
-                <span className="aio-nav-label">
-                  {item.label}
-                </span>
+                />
+                <span>{label}</span>
               </Link>
             );
           })}
         </nav>
 
-        {/* Bottom area */}
-        <div className="aio-sidebar-bottom">
-          <Link
-            href="/stream?create=1"
-            className="aio-create-button"
-          >
-            <Plus
-              size={19}
-              strokeWidth={2}
-            />
-
-            <span>
-              Create
-            </span>
-          </Link>
-
-          <Link
-            href="/profile"
-            className="aio-sidebar-user"
-            aria-label="View profile"
-          >
-            <span
-              className="aio-sidebar-user-avatar"
-              aria-hidden="true"
-            >
-              <UserRound
-                size={18}
-                strokeWidth={1.9}
-              />
-            </span>
-
-            <span className="aio-sidebar-user-copy">
-              <strong>
-                Your profile
-              </strong>
-
-              <small>
-                View profile
-              </small>
-            </span>
-          </Link>
-
-          <div className="aio-premium-card">
-            <span
-              className="aio-premium-icon"
-              aria-hidden="true"
-            >
-              <Sparkles
-                size={16}
-                strokeWidth={1.9}
-              />
-            </span>
-
-            <span className="aio-premium-copy">
-              <strong>
-                AIO Premium
-              </strong>
-
-              <small>
-                Explore Premium Benefits
-              </small>
-            </span>
-          </div>
-        </div>
+        <Link
+          href="/stream?create=1"
+          className="aio-canvas-create"
+        >
+          <Plus size={18} strokeWidth={2} aria-hidden="true" />
+          <span>Create</span>
+        </Link>
       </div>
     </aside>
   );

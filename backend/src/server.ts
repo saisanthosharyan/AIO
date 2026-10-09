@@ -14,8 +14,13 @@ import userRoutes from "./routes/user.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
 import messageRoutes from "./routes/message.routes.js";
 import spaceRoutes from "./routes/space.routes.js";
+import { createServer } from "node:http";
+import { initializeSocket } from "./socket/socket.js";
 
 const app = express();
+const httpServer = createServer(app);
+
+initializeSocket(httpServer);
 
 const PORT = Number(
   process.env.PORT ?? 5000,
@@ -122,7 +127,7 @@ async function startServer(): Promise<void> {
   try {
     await connectDatabase();
 
-    app.listen(PORT, () => {
+    httpServer.listen(PORT, () => {
       console.log(
         `AIO backend running on http://localhost:${PORT}`,
       );
