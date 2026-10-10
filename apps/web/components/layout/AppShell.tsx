@@ -3,6 +3,7 @@
 
 import {
   Bell,
+  Menu,
   Moon,
   Palette,
   Plus,
@@ -12,6 +13,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 
 import MobileNav from "./MobileNav";
 import RightPanel from "./RightPanel";
@@ -36,11 +38,15 @@ function isAuthRoute(pathname: string) {
   );
 }
 
-export default function AppShell({ children }: AppShellProps) {
+export default function AppShell({
+  children,
+}: AppShellProps) {
   const pathname = usePathname();
   const { resolvedAppearance, setAppearance } = useTheme();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const darkMode = resolvedAppearance === "dark";
+
   const isMessagesRoute =
     pathname === "/messages" ||
     pathname.startsWith("/messages/");
@@ -60,6 +66,17 @@ export default function AppShell({ children }: AppShellProps) {
 
         <div className="aio-canvas-workspace">
           <header className="aio-canvas-header">
+            <button
+              type="button"
+              className="aio-canvas-icon-button aio-mobile-menu-trigger"
+              onClick={() => setMobileMenuOpen((open) => !open)}
+              aria-label="Open navigation menu"
+              aria-expanded={mobileMenuOpen}
+              title="Menu"
+            >
+              <Menu size={21} />
+            </button>
+
             <Link
               href="/stream"
               className="aio-canvas-mobile-brand"
@@ -156,7 +173,10 @@ export default function AppShell({ children }: AppShellProps) {
         </div>
       </div>
 
-      <MobileNav />
+      <MobileNav
+        menuOpen={mobileMenuOpen}
+        onMenuChange={setMobileMenuOpen}
+      />
     </div>
   );
 }

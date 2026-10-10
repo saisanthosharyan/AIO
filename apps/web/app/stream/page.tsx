@@ -45,6 +45,7 @@ interface StreamPost {
   postId: string;
   name: string;
   username: string;
+  authorId: string;
   time: string;
   initials: string;
   avatarClass: string;
@@ -170,6 +171,7 @@ function convertPost(
 
   return {
     postId,
+    authorId: post.authorId,
 
     name: displayName,
 

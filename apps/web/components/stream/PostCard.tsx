@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from "next/image";
@@ -5,13 +6,14 @@ import {
   BadgeCheck,
   Bookmark,
   Heart,
+  Link2,
   Loader2,
   MessageCircle,
   MoreHorizontal,
   Send,
   Trash2,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   bookmarkPost,
@@ -29,6 +31,7 @@ import type { Comment } from "../../../../packages/types/src/post";
 
 interface PostCardProps {
   postId: string;
+  authorId?: string;
   name: string;
   username: string;
   time: string;
@@ -46,40 +49,26 @@ interface PostCardProps {
   isBookmarked?: boolean;
 }
 
-function getCommentTime(
-  createdAt: string,
-): string {
+function getCommentTime(createdAt: string): string {
   const created = new Date(createdAt);
 
-  if (Number.isNaN(created.getTime())) {
-    return "";
-  }
+  if (Number.isNaN(created.getTime())) return "";
 
-  const seconds = Math.floor(
-    (Date.now() - created.getTime()) / 1000,
+  const seconds = Math.max(
+    0,
+    Math.floor((Date.now() - created.getTime()) / 1000),
   );
 
-  if (seconds < 60) {
-    return "just now";
-  }
+  if (seconds < 60) return "just now";
 
   const minutes = Math.floor(seconds / 60);
-
-  if (minutes < 60) {
-    return `${minutes}m`;
-  }
+  if (minutes < 60) return `${minutes}m`;
 
   const hours = Math.floor(minutes / 60);
-
-  if (hours < 24) {
-    return `${hours}h`;
-  }
+  if (hours < 24) return `${hours}h`;
 
   const days = Math.floor(hours / 24);
-
-  if (days < 7) {
-    return `${days}d`;
-  }
+  if (days < 7) return `${days}d`;
 
   return created.toLocaleDateString();
 }
@@ -93,22 +82,18 @@ function getInitials(
     username?.trim() ||
     "AI";
 
-  const parts = value
-    .split(/\s+/)
-    .filter(Boolean);
+  const parts = value.split(/\s+/).filter(Boolean);
 
   if (parts.length >= 2) {
-    return `${parts[0][0]}${parts[1][0]}`
-      .toUpperCase();
+    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
   }
 
-  return value
-    .slice(0, 2)
-    .toUpperCase();
+  return value.slice(0, 2).toUpperCase();
 }
 
 export default function PostCard({
   postId,
+  authorId,
   name,
   username,
   time,
@@ -116,6 +101,7 @@ export default function PostCard({
   avatarClass,
   content,
   imageUrl,
+  avatarUrl,
   verified = false,
   type = "thought",
   likesCount = 0,
@@ -123,110 +109,162 @@ export default function PostCard({
   bookmarksCount = 0,
   isLiked = false,
   isBookmarked = false,
-  avatarUrl,
 }: PostCardProps) {
-  const [liked, setLiked] =
-    useState(isLiked);
+  const [liked, setLiked] = useState(isLiked);
+  const [saved, setSaved] = useState(isBookmarked);
 
-  const [saved, setSaved] =
-    useState(isBookmarked);
+  const [likes, setLikes] = useState(likesCount);
+  const [comments, setComments] = useState(commentsCount);
+  const [bookmarks, setBookmarks] = useState(bookmarksCount);
 
-  const [likes, setLikes] =
-    useState(likesCount);
+  const [likeLoading, setLikeLoading] = useState(false);
+  const [bookmarkLoading, setBookmarkLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
-  const [comments, setComments] =
-    useState(commentsCount);
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentsLoaded, setCommentsLoaded] = useState(false);
 
-  const [bookmarks, setBookmarks] =
-    useState(bookmarksCount);
+  const [commentList, setCommentList] = useState<Comment[]>([]);
+  const [commentText, setCommentText] = useState("");
+  const [commentSubmitting, setCommentSubmitting] = useState(false);
+  const [deletingCommentId, setDeletingCommentId] = useState("");
 
-  const [likeLoading, setLikeLoading] =
-    useState(false);
+  const [currentUserId, setCurrentUserId] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [error, setError] = useState("");
+  const [commentError, setCommentError] = useState("");
+  const [shareMessage, setShareMessage] = useState("");
 
-  const [
-    bookmarkLoading,
-    setBookmarkLoading,
-  ] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
-  const [
-    deleteLoading,
-    setDeleteLoading,
-  ] = useState(false);
+  const isPostOwner = Boolean(
+    authorId &&
+    currentUserId &&
+    authorId === currentUserId,
+  );
 
-  const [
-    commentsOpen,
-    setCommentsOpen,
-  ] = useState(false);
+  const safeName = name.trim() || "AIO User";
+  const safeUsername =
+    username.replace(/^@/, "").trim() || "aio-user";
 
-  const [
-    commentsLoading,
-    setCommentsLoading,
-  ] = useState(false);
+  const safeInitials =
+    initials.trim().slice(0, 2).toUpperCase() || "AI";
 
-  const [
-    commentsLoaded,
-    setCommentsLoaded,
-  ] = useState(false);
+  useEffect(() => {
+    let active = true;
 
-  const [
-    commentList,
-    setCommentList,
-  ] = useState<Comment[]>([]);
+    async function loadUser() {
+      try {
+        const user = await getCurrentUser();
 
-  const [
-    commentText,
-    setCommentText,
-  ] = useState("");
+        if (active) {
+          setCurrentUserId(user.id);
+        }
+      } catch {
+        if (active) {
+          setCurrentUserId("");
+        }
+      }
+    }
 
-  const [
-    commentSubmitting,
-    setCommentSubmitting,
-  ] = useState(false);
+    void loadUser();
 
-  const [
-    deletingCommentId,
-    setDeletingCommentId,
-  ] = useState("");
+    return () => {
+      active = false;
+    };
+  }, []);
 
-  const [
-    currentUserId,
-    setCurrentUserId,
-  ] = useState("");
+  useEffect(() => {
+    if (!menuOpen) return;
 
-  const [error, setError] =
-    useState("");
+    function handleOutsideClick(event: PointerEvent) {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(event.target as Node)
+      ) {
+        setMenuOpen(false);
+      }
+    }
 
-  const [
-    commentError,
-    setCommentError,
-  ] = useState("");
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", handleOutsideClick);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("pointerdown", handleOutsideClick);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [menuOpen]);
+
+  function getPostUrl(): string {
+    return `${window.location.origin}/post/${encodeURIComponent(postId)}`;
+  }
+
+  async function copyPostLink(): Promise<void> {
+    setMenuOpen(false);
+    setError("");
+    setShareMessage("");
+
+    try {
+      await navigator.clipboard.writeText(getPostUrl());
+      setShareMessage("Post link copied to clipboard.");
+    } catch {
+      setError("Unable to copy post link.");
+    }
+  }
+
+  async function handleShare(): Promise<void> {
+    setError("");
+    setShareMessage("");
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `Post by ${safeName}`,
+          text: content,
+          url: getPostUrl(),
+        });
+      } else {
+        await copyPostLink();
+      }
+    } catch (shareError) {
+      if (
+        shareError instanceof Error &&
+        shareError.name === "AbortError"
+      ) {
+        return;
+      }
+
+      setError("Unable to share this post.");
+    }
+  }
 
   async function handleLike(): Promise<void> {
-    if (likeLoading) {
-      return;
-    }
+    if (likeLoading) return;
 
     setError("");
     setLikeLoading(true);
 
     try {
       if (liked) {
-        const response =
-          await unlikePost(postId);
-
+        const response = await unlikePost(postId);
         setLiked(false);
         setLikes(response.likesCount);
       } else {
-        const response =
-          await likePost(postId);
-
+        const response = await likePost(postId);
         setLiked(true);
         setLikes(response.likesCount);
       }
-    } catch (likeError) {
+    } catch (err) {
       setError(
-        likeError instanceof Error
-          ? likeError.message
+        err instanceof Error
+          ? err.message
           : "Unable to update like.",
       );
     } finally {
@@ -235,35 +273,25 @@ export default function PostCard({
   }
 
   async function handleBookmark(): Promise<void> {
-    if (bookmarkLoading) {
-      return;
-    }
+    if (bookmarkLoading) return;
 
     setError("");
     setBookmarkLoading(true);
 
     try {
       if (saved) {
-        const response =
-          await unbookmarkPost(postId);
-
+        const response = await unbookmarkPost(postId);
         setSaved(false);
-        setBookmarks(
-          response.bookmarksCount,
-        );
+        setBookmarks(response.bookmarksCount);
       } else {
-        const response =
-          await bookmarkPost(postId);
-
+        const response = await bookmarkPost(postId);
         setSaved(true);
-        setBookmarks(
-          response.bookmarksCount,
-        );
+        setBookmarks(response.bookmarksCount);
       }
-    } catch (bookmarkError) {
+    } catch (err) {
       setError(
-        bookmarkError instanceof Error
-          ? bookmarkError.message
+        err instanceof Error
+          ? err.message
           : "Unable to update bookmark.",
       );
     } finally {
@@ -272,33 +300,28 @@ export default function PostCard({
   }
 
   async function handleDelete(): Promise<void> {
-    if (deleteLoading) {
-      return;
-    }
+    if (deleteLoading || !isPostOwner) return;
 
-    const confirmed =
-      window.confirm(
-        "Are you sure you want to delete this post?",
-      );
+    setMenuOpen(false);
 
-    if (!confirmed) {
-      return;
-    }
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this post?",
+    );
+
+    if (!confirmed) return;
 
     setError("");
     setDeleteLoading(true);
 
     try {
       await deletePost(postId);
-
       window.location.reload();
-    } catch (deleteError) {
+    } catch (err) {
       setError(
-        deleteError instanceof Error
-          ? deleteError.message
+        err instanceof Error
+          ? err.message
           : "Unable to delete post.",
       );
-
       setDeleteLoading(false);
     }
   }
@@ -308,24 +331,15 @@ export default function PostCard({
     setCommentError("");
 
     try {
-      const [
-        loadedComments,
-        currentUser,
-      ] = await Promise.all([
-        getComments(postId),
-        getCurrentUser(),
-      ]);
+      const loadedComments = await getComments(postId);
 
       setCommentList(loadedComments);
-      setCurrentUserId(currentUser.id);
-      setComments(
-        loadedComments.length,
-      );
+      setComments(loadedComments.length);
       setCommentsLoaded(true);
-    } catch (commentsLoadError) {
+    } catch (err) {
       setCommentError(
-        commentsLoadError instanceof Error
-          ? commentsLoadError.message
+        err instanceof Error
+          ? err.message
           : "Unable to load comments.",
       );
     } finally {
@@ -335,7 +349,6 @@ export default function PostCard({
 
   async function handleCommentsToggle(): Promise<void> {
     const nextOpen = !commentsOpen;
-
     setCommentsOpen(nextOpen);
 
     if (
@@ -348,52 +361,40 @@ export default function PostCard({
   }
 
   async function handleCreateComment(): Promise<void> {
-    const trimmedComment =
-      commentText.trim();
+    const trimmed = commentText.trim();
 
-    if (!trimmedComment) {
-      setCommentError(
-        "Write something before posting your comment.",
-      );
+    if (!trimmed) {
+      setCommentError("Write something before posting.");
       return;
     }
 
-    if (trimmedComment.length > 1000) {
+    if (trimmed.length > 1000) {
       setCommentError(
         "Comment must be 1000 characters or less.",
       );
       return;
     }
 
-    if (commentSubmitting) {
-      return;
-    }
+    if (commentSubmitting) return;
 
     setCommentError("");
     setCommentSubmitting(true);
 
     try {
-      const response =
-        await createComment(
-          postId,
-          trimmedComment,
-        );
+      const response = await createComment(postId, trimmed);
 
       setCommentList((current) => [
         response.comment,
         ...current,
       ]);
 
-      setComments(
-        response.commentsCount,
-      );
-
+      setComments(response.commentsCount);
       setCommentText("");
       setCommentsLoaded(true);
-    } catch (createError) {
+    } catch (err) {
       setCommentError(
-        createError instanceof Error
-          ? createError.message
+        err instanceof Error
+          ? err.message
           : "Unable to create comment.",
       );
     } finally {
@@ -404,43 +405,29 @@ export default function PostCard({
   async function handleDeleteComment(
     commentId: string,
   ): Promise<void> {
-    if (deletingCommentId) {
-      return;
-    }
+    if (deletingCommentId) return;
 
-    const confirmed =
-      window.confirm(
-        "Delete this comment?",
-      );
-
-    if (!confirmed) {
-      return;
-    }
+    const confirmed = window.confirm("Delete this comment?");
+    if (!confirmed) return;
 
     setCommentError("");
     setDeletingCommentId(commentId);
 
     try {
-      const response =
-        await deleteComment(
-          postId,
-          commentId,
-        );
+      const response = await deleteComment(
+        postId,
+        commentId,
+      );
 
       setCommentList((current) =>
-        current.filter(
-          (comment) =>
-            comment.id !== commentId,
-        ),
+        current.filter((comment) => comment.id !== commentId),
       );
 
-      setComments(
-        response.commentsCount,
-      );
-    } catch (deleteError) {
+      setComments(response.commentsCount);
+    } catch (err) {
       setCommentError(
-        deleteError instanceof Error
-          ? deleteError.message
+        err instanceof Error
+          ? err.message
           : "Unable to delete comment.",
       );
     } finally {
@@ -448,21 +435,17 @@ export default function PostCard({
     }
   }
 
-  const normalizedUsername =
-    username.startsWith("@")
-      ? username.slice(1)
-      : username;
-
-  const safeName =
-    name.trim() || "AIO User";
-
-  const safeUsername =
-    normalizedUsername.trim() ||
-    "aio-user";
-
-  const safeInitials =
-    initials.trim().slice(0, 2).toUpperCase() ||
-    "AI";
+  const menuItemStyle = {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    width: "100%",
+    padding: "10px",
+    borderRadius: 7,
+    textAlign: "left" as const,
+    fontSize: 13,
+    cursor: "pointer",
+  };
 
   return (
     <article
@@ -493,9 +476,7 @@ export default function PostCard({
 
           <div className="post-author-details">
             <div className="post-author-line">
-              <strong>
-                {safeName}
-              </strong>
+              <strong>{safeName}</strong>
 
               {verified && (
                 <span
@@ -512,41 +493,104 @@ export default function PostCard({
             </div>
 
             <div className="post-meta-line">
-              <span>
-                @{safeUsername}
-              </span>
-
+              <span>@{safeUsername}</span>
               <span
                 className="post-meta-dot"
                 aria-hidden="true"
               >
                 ·
               </span>
-
-              <time>
-                {time}
-              </time>
+              <time>{time}</time>
             </div>
           </div>
         </div>
 
-        <button
-          type="button"
-          className="more-button"
-          aria-label="Post options"
-          title="Post options"
+        <div
+          ref={menuRef}
+          className="aio-post-menu-wrap"
+          style={{ position: "relative" }}
         >
-          <MoreHorizontal
-            size={20}
-          />
-        </button>
+          <button
+            type="button"
+            className="more-button"
+            aria-label="Post options"
+            aria-expanded={menuOpen}
+            aria-haspopup="menu"
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            {deleteLoading ? (
+              <Loader2 size={18} className="aio-spin" />
+            ) : (
+              <MoreHorizontal size={20} />
+            )}
+          </button>
+
+          {menuOpen && (
+            <div
+              className="aio-post-menu"
+              role="menu"
+              aria-label="Post options"
+              style={{
+                position: "absolute",
+                right: 0,
+                top: "100%",
+                zIndex: 30,
+                minWidth: 185,
+                padding: 6,
+                borderRadius: 10,
+                border: "1px solid var(--aio-border)",
+                background: "var(--aio-surface)",
+                color: "var(--aio-text)",
+                boxShadow: "0 10px 30px rgba(0,0,0,.18)",
+              }}
+            >
+              <button
+                type="button"
+                role="menuitem"
+                style={menuItemStyle}
+                onClick={() => void copyPostLink()}
+              >
+                <Link2 size={16} />
+                Copy post link
+              </button>
+
+              <button
+                type="button"
+                role="menuitem"
+                style={menuItemStyle}
+                disabled={bookmarkLoading}
+                onClick={() => {
+                  setMenuOpen(false);
+                  void handleBookmark();
+                }}
+              >
+                <Bookmark size={16} />
+                {saved ? "Remove bookmark" : "Save post"}
+              </button>
+
+              {isPostOwner && (
+                <button
+                  type="button"
+                  role="menuitem"
+                  style={{
+                    ...menuItemStyle,
+                    color: "#ef4444",
+                  }}
+                  disabled={deleteLoading}
+                  onClick={() => void handleDelete()}
+                >
+                  <Trash2 size={16} />
+                  Delete post
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </header>
 
       <div className="post-content">
         {content && (
-          <p className="post-text">
-            {content}
-          </p>
+          <p className="post-text">{content}</p>
         )}
 
         {imageUrl && (
@@ -556,10 +600,7 @@ export default function PostCard({
               alt="Post attachment"
               width={1200}
               height={675}
-              sizes="
-                (max-width: 760px) 100vw,
-                640px
-              "
+              sizes="(max-width: 760px) 100vw, 640px"
               className="post-media-image"
               unoptimized
             />
@@ -567,56 +608,42 @@ export default function PostCard({
         )}
 
         {type === "space" && (
-          <span className="aio-badge">
-            Space
-          </span>
+          <span className="aio-badge">Space</span>
         )}
       </div>
 
       {error && (
-        <div
-          className="aio-error"
-          role="alert"
-        >
+        <div className="aio-error" role="alert">
           {error}
+        </div>
+      )}
+
+      {shareMessage && (
+        <div
+          role="status"
+          style={{ fontSize: 12, padding: "4px 0" }}
+        >
+          {shareMessage}
         </div>
       )}
 
       <footer className="post-footer">
         <button
           type="button"
-          className={
-            liked
-              ? "post-action liked"
-              : "post-action"
-          }
-          onClick={() =>
-            void handleLike()
-          }
+          className={liked ? "post-action liked" : "post-action"}
+          onClick={() => void handleLike()}
           disabled={likeLoading}
-          aria-label={
-            liked
-              ? "Unlike post"
-              : "Like post"
-          }
+          aria-label={liked ? "Unlike post" : "Like post"}
           aria-pressed={liked}
         >
           {likeLoading ? (
-            <Loader2
-              size={18}
-              className="aio-spin"
-            />
+            <Loader2 size={18} className="aio-spin" />
           ) : (
             <Heart
               size={18}
-              fill={
-                liked
-                  ? "currentColor"
-                  : "none"
-              }
+              fill={liked ? "currentColor" : "none"}
             />
           )}
-
           <span>{likes}</span>
         </button>
 
@@ -627,9 +654,7 @@ export default function PostCard({
               ? "post-action comments-open"
               : "post-action"
           }
-          onClick={() =>
-            void handleCommentsToggle()
-          }
+          onClick={() => void handleCommentsToggle()}
           aria-label={
             commentsOpen
               ? "Hide comments"
@@ -638,53 +663,31 @@ export default function PostCard({
           aria-expanded={commentsOpen}
         >
           {commentsLoading ? (
-            <Loader2
-              size={18}
-              className="aio-spin"
-            />
+            <Loader2 size={18} className="aio-spin" />
           ) : (
-            <MessageCircle
-              size={18}
-            />
+            <MessageCircle size={18} />
           )}
-
           <span>{comments}</span>
         </button>
 
         <button
           type="button"
-          className={
-            saved
-              ? "post-action saved"
-              : "post-action"
-          }
-          onClick={() =>
-            void handleBookmark()
-          }
+          className={saved ? "post-action saved" : "post-action"}
+          onClick={() => void handleBookmark()}
           disabled={bookmarkLoading}
           aria-label={
-            saved
-              ? "Remove bookmark"
-              : "Bookmark post"
+            saved ? "Remove bookmark" : "Bookmark post"
           }
           aria-pressed={saved}
         >
           {bookmarkLoading ? (
-            <Loader2
-              size={18}
-              className="aio-spin"
-            />
+            <Loader2 size={18} className="aio-spin" />
           ) : (
             <Bookmark
               size={18}
-              fill={
-                saved
-                  ? "currentColor"
-                  : "none"
-              }
+              fill={saved ? "currentColor" : "none"}
             />
           )}
-
           <span>{bookmarks}</span>
         </button>
 
@@ -692,27 +695,9 @@ export default function PostCard({
           type="button"
           className="post-action"
           aria-label="Share post"
+          onClick={() => void handleShare()}
         >
           <Send size={18} />
-        </button>
-
-        <button
-          type="button"
-          className="post-action post-delete-action"
-          onClick={() =>
-            void handleDelete()
-          }
-          disabled={deleteLoading}
-          aria-label="Delete post"
-        >
-          {deleteLoading ? (
-            <Loader2
-              size={18}
-              className="aio-spin"
-            />
-          ) : (
-            <Trash2 size={18} />
-          )}
         </button>
       </footer>
 
@@ -739,23 +724,17 @@ export default function PostCard({
               <textarea
                 value={commentText}
                 onChange={(event) =>
-                  setCommentText(
-                    event.target.value,
-                  )
+                  setCommentText(event.target.value)
                 }
                 placeholder="Write a comment..."
                 maxLength={1000}
                 rows={2}
                 aria-label="Write a comment"
-                disabled={
-                  commentSubmitting
-                }
+                disabled={commentSubmitting}
               />
 
               <div className="comment-composer-footer">
-                <span>
-                  {commentText.length}/1000
-                </span>
+                <span>{commentText.length}/1000</span>
 
                 <button
                   type="submit"
@@ -785,10 +764,7 @@ export default function PostCard({
           </form>
 
           {commentError && (
-            <div
-              className="aio-error"
-              role="alert"
-            >
+            <div className="aio-error" role="alert">
               {commentError}
             </div>
           )}
@@ -799,145 +775,114 @@ export default function PostCard({
                 size={20}
                 className="aio-spin"
               />
-
-              <span>
-                Loading comments...
-              </span>
+              <span>Loading comments...</span>
             </div>
           ) : commentList.length === 0 ? (
             <div className="comments-empty">
-              <MessageCircle
-                size={22}
-              />
-
-              <strong>
-                No comments yet
-              </strong>
-
+              <MessageCircle size={22} />
+              <strong>No comments yet</strong>
               <span>
-                Be the first to join the
-                conversation.
+                Be the first to join the conversation.
               </span>
             </div>
           ) : (
             <div className="comment-list">
-              {commentList.map(
-                (comment) => {
-                  const author =
-                    comment.author;
+              {commentList.map((comment) => {
+                const author = comment.author;
 
-                  const displayName =
-                    author?.displayName?.trim() ||
-                    "AIO User";
+                const displayName =
+                  author?.displayName?.trim() ||
+                  "AIO User";
 
-                  const commentUsername =
-                    author?.username?.trim() ||
-                    "aio-user";
+                const commentUsername =
+                  author?.username?.trim() ||
+                  "aio-user";
 
-                  const commentInitials =
-                    getInitials(
-                      author?.displayName,
-                      author?.username,
-                    );
+                const commentInitials = getInitials(
+                  author?.displayName,
+                  author?.username,
+                );
 
-                  const canDelete =
-                    Boolean(
-                      currentUserId &&
-                      comment.userId ===
-                        currentUserId,
-                    );
+                const canDelete = Boolean(
+                  currentUserId &&
+                  comment.userId === currentUserId,
+                );
 
-                  return (
-                    <article
-                      key={comment.id}
-                      className="comment-item"
+                return (
+                  <article
+                    key={comment.id}
+                    className="comment-item"
+                  >
+                    <div
+                      className={`comment-avatar ${avatarClass}`}
                     >
-                      <div
-                        className={`comment-avatar ${avatarClass}`}
-                      >
-                        {author?.avatarUrl ? (
-                          <Image
-                            src={
-                              author.avatarUrl
-                            }
-                            alt={`${displayName}'s avatar`}
-                            width={36}
-                            height={36}
-                            unoptimized
-                          />
-                        ) : (
-                          commentInitials
-                        )}
-                      </div>
+                      {author?.avatarUrl ? (
+                        <Image
+                          src={author.avatarUrl}
+                          alt={`${displayName}'s avatar`}
+                          width={36}
+                          height={36}
+                          unoptimized
+                        />
+                      ) : (
+                        commentInitials
+                      )}
+                    </div>
 
-                      <div className="comment-body">
-                        <div className="comment-header">
-                          <div className="comment-author">
-                            <strong>
-                              {displayName}
-                            </strong>
+                    <div className="comment-body">
+                      <div className="comment-header">
+                        <div className="comment-author">
+                          <strong>{displayName}</strong>
 
-                            {author?.verified && (
-                              <BadgeCheck
-                                size={14}
-                                strokeWidth={2.4}
-                                aria-label="Verified account"
-                              />
-                            )}
-                          </div>
-
-                          <time>
-                            {getCommentTime(
-                              comment.createdAt,
-                            )}
-                          </time>
+                          {author?.verified && (
+                            <BadgeCheck
+                              size={14}
+                              strokeWidth={2.4}
+                              aria-label="Verified account"
+                            />
+                          )}
                         </div>
 
-                        <div className="comment-username">
-                          @{commentUsername}
-                        </div>
-
-                        <p>
-                          {comment.content}
-                        </p>
-
-                        {canDelete && (
-                          <button
-                            type="button"
-                            className="comment-delete"
-                            onClick={() =>
-                              void handleDeleteComment(
-                                comment.id,
-                              )
-                            }
-                            disabled={
-                              deletingCommentId ===
-                              comment.id
-                            }
-                            aria-label="Delete comment"
-                          >
-                            {deletingCommentId ===
-                            comment.id ? (
-                              <Loader2
-                                size={14}
-                                className="aio-spin"
-                              />
-                            ) : (
-                              <Trash2
-                                size={14}
-                              />
-                            )}
-
-                            <span>
-                              Delete
-                            </span>
-                          </button>
-                        )}
+                        <time>
+                          {getCommentTime(comment.createdAt)}
+                        </time>
                       </div>
-                    </article>
-                  );
-                },
-              )}
+
+                      <div className="comment-username">
+                        @{commentUsername}
+                      </div>
+
+                      <p>{comment.content}</p>
+
+                      {canDelete && (
+                        <button
+                          type="button"
+                          className="comment-delete"
+                          onClick={() =>
+                            void handleDeleteComment(
+                              comment.id,
+                            )
+                          }
+                          disabled={
+                            deletingCommentId === comment.id
+                          }
+                          aria-label="Delete comment"
+                        >
+                          {deletingCommentId === comment.id ? (
+                            <Loader2
+                              size={14}
+                              className="aio-spin"
+                            />
+                          ) : (
+                            <Trash2 size={14} />
+                          )}
+                          <span>Delete</span>
+                        </button>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>
