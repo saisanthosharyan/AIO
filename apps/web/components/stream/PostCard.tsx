@@ -12,6 +12,7 @@ import {
   MoreHorizontal,
   Send,
   Trash2,
+  X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -47,6 +48,7 @@ interface PostCardProps {
   bookmarksCount?: number;
   isLiked?: boolean;
   isBookmarked?: boolean;
+  onDeleted?: (postId: string) => void;
 }
 
 function getCommentTime(createdAt: string): string {
@@ -109,6 +111,7 @@ export default function PostCard({
   bookmarksCount = 0,
   isLiked = false,
   isBookmarked = false,
+  onDeleted,
 }: PostCardProps) {
   const [liked, setLiked] = useState(isLiked);
   const [saved, setSaved] = useState(isBookmarked);
@@ -123,8 +126,6 @@ export default function PostCard({
 
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [commentsLoading, setCommentsLoading] = useState(false);
-  const [commentsLoaded, setCommentsLoaded] = useState(false);
-
   const [commentList, setCommentList] = useState<Comment[]>([]);
   const [commentText, setCommentText] = useState("");
   const [commentSubmitting, setCommentSubmitting] = useState(false);
@@ -132,6 +133,7 @@ export default function PostCard({
 
   const [currentUserId, setCurrentUserId] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [error, setError] = useState("");
   const [commentError, setCommentError] = useState("");
   const [shareMessage, setShareMessage] = useState("");
@@ -141,13 +143,12 @@ export default function PostCard({
   const isPostOwner = Boolean(
     authorId &&
     currentUserId &&
-    authorId === currentUserId,
+    String(authorId) === String(currentUserId),
   );
 
   const safeName = name.trim() || "AIO User";
   const safeUsername =
     username.replace(/^@/, "").trim() || "aio-user";
-
   const safeInitials =
     initials.trim().slice(0, 2).toUpperCase() || "AI";
 
@@ -202,6 +203,22 @@ export default function PostCard({
     };
   }, [menuOpen]);
 
+  useEffect(() => {
+    if (!deleteDialogOpen) return;
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape" && !deleteLoading) {
+        setDeleteDialogOpen(false);
+      }
+    }
+
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [deleteDialogOpen, deleteLoading]);
+
   function getPostUrl(): string {
     return `${window.location.origin}/post/${encodeURIComponent(postId)}`;
   }
@@ -248,20 +265,27 @@ export default function PostCard({
   async function handleLike(): Promise<void> {
     if (likeLoading) return;
 
+    const previousLiked = liked;
+    const previousLikes = likes;
+
     setError("");
     setLikeLoading(true);
 
+    setLiked(!previousLiked);
+    setLikes((count) =>
+      Math.max(0, count + (previousLiked ? -1 : 1)),
+    );
+
     try {
-      if (liked) {
-        const response = await unlikePost(postId);
-        setLiked(false);
-        setLikes(response.likesCount);
-      } else {
-        const response = await likePost(postId);
-        setLiked(true);
-        setLikes(response.likesCount);
-      }
+      const response = previousLiked
+        ? await unlikePost(postId)
+        : await likePost(postId);
+
+      setLikes(response.likesCount);
     } catch (err) {
+      setLiked(previousLiked);
+      setLikes(previousLikes);
+
       setError(
         err instanceof Error
           ? err.message
@@ -275,20 +299,27 @@ export default function PostCard({
   async function handleBookmark(): Promise<void> {
     if (bookmarkLoading) return;
 
+    const previousSaved = saved;
+    const previousBookmarks = bookmarks;
+
     setError("");
     setBookmarkLoading(true);
 
+    setSaved(!previousSaved);
+    setBookmarks((count) =>
+      Math.max(0, count + (previousSaved ? -1 : 1)),
+    );
+
     try {
-      if (saved) {
-        const response = await unbookmarkPost(postId);
-        setSaved(false);
-        setBookmarks(response.bookmarksCount);
-      } else {
-        const response = await bookmarkPost(postId);
-        setSaved(true);
-        setBookmarks(response.bookmarksCount);
-      }
+      const response = previousSaved
+        ? await unbookmarkPost(postId)
+        : await bookmarkPost(postId);
+
+      setBookmarks(response.bookmarksCount);
     } catch (err) {
+      setSaved(previousSaved);
+      setBookmarks(previousBookmarks);
+
       setError(
         err instanceof Error
           ? err.message
@@ -302,26 +333,28 @@ export default function PostCard({
   async function handleDelete(): Promise<void> {
     if (deleteLoading || !isPostOwner) return;
 
-    setMenuOpen(false);
-
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this post?",
-    );
-
-    if (!confirmed) return;
-
     setError("");
     setDeleteLoading(true);
 
     try {
       await deletePost(postId);
-      window.location.reload();
+
+      setDeleteDialogOpen(false);
+
+      if (onDeleted) {
+        onDeleted(postId);
+      } else {
+        window.location.reload();
+      }
     } catch (err) {
       setError(
         err instanceof Error
           ? err.message
           : "Unable to delete post.",
       );
+
+      setDeleteDialogOpen(false);
+    } finally {
       setDeleteLoading(false);
     }
   }
@@ -335,7 +368,6 @@ export default function PostCard({
 
       setCommentList(loadedComments);
       setComments(loadedComments.length);
-      setCommentsLoaded(true);
     } catch (err) {
       setCommentError(
         err instanceof Error
@@ -348,14 +380,12 @@ export default function PostCard({
   }
 
   async function handleCommentsToggle(): Promise<void> {
+    if (commentsLoading) return;
+
     const nextOpen = !commentsOpen;
     setCommentsOpen(nextOpen);
 
-    if (
-      nextOpen &&
-      !commentsLoaded &&
-      !commentsLoading
-    ) {
+    if (nextOpen) {
       await loadComments();
     }
   }
@@ -390,7 +420,6 @@ export default function PostCard({
 
       setComments(response.commentsCount);
       setCommentText("");
-      setCommentsLoaded(true);
     } catch (err) {
       setCommentError(
         err instanceof Error
@@ -414,10 +443,7 @@ export default function PostCard({
     setDeletingCommentId(commentId);
 
     try {
-      const response = await deleteComment(
-        postId,
-        commentId,
-      );
+      const response = await deleteComment(postId, commentId);
 
       setCommentList((current) =>
         current.filter((comment) => comment.id !== commentId),
@@ -434,18 +460,6 @@ export default function PostCard({
       setDeletingCommentId("");
     }
   }
-
-  const menuItemStyle = {
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    width: "100%",
-    padding: "10px",
-    borderRadius: 7,
-    textAlign: "left" as const,
-    fontSize: 13,
-    cursor: "pointer",
-  };
 
   return (
     <article
@@ -517,6 +531,7 @@ export default function PostCard({
             aria-expanded={menuOpen}
             aria-haspopup="menu"
             onClick={() => setMenuOpen((open) => !open)}
+            disabled={deleteLoading}
           >
             {deleteLoading ? (
               <Loader2 size={18} className="aio-spin" />
@@ -533,38 +548,64 @@ export default function PostCard({
               style={{
                 position: "absolute",
                 right: 0,
-                top: "100%",
-                zIndex: 30,
-                minWidth: 185,
+                top: "calc(100% + 6px)",
+                zIndex: 100,
+                minWidth: 210,
                 padding: 6,
-                borderRadius: 10,
-                border: "1px solid var(--aio-border)",
-                background: "var(--aio-surface)",
-                color: "var(--aio-text)",
-                boxShadow: "0 10px 30px rgba(0,0,0,.18)",
+                borderRadius: 12,
+                border: "1px solid var(--canvas-border)",
+                background: "var(--canvas-surface)",
+                color: "var(--canvas-text)",
+                boxShadow: "0 12px 35px rgba(0,0,0,.3)",
               }}
             >
               <button
                 type="button"
                 role="menuitem"
-                style={menuItemStyle}
+                className="aio-post-menu-item"
                 onClick={() => void copyPostLink()}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  width: "100%",
+                  padding: "11px 12px",
+                  border: 0,
+                  borderRadius: 8,
+                  background: "transparent",
+                  color: "inherit",
+                  textAlign: "left",
+                  cursor: "pointer",
+                }}
               >
-                <Link2 size={16} />
+                <Link2 size={17} />
                 Copy post link
               </button>
 
               <button
                 type="button"
                 role="menuitem"
-                style={menuItemStyle}
+                className="aio-post-menu-item"
                 disabled={bookmarkLoading}
                 onClick={() => {
                   setMenuOpen(false);
                   void handleBookmark();
                 }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  width: "100%",
+                  padding: "11px 12px",
+                  border: 0,
+                  borderRadius: 8,
+                  background: "transparent",
+                  color: "inherit",
+                  textAlign: "left",
+                  cursor: "pointer",
+                }}
               >
-                <Bookmark size={16} />
+                <Bookmark size={17} />
                 {saved ? "Remove bookmark" : "Save post"}
               </button>
 
@@ -572,14 +613,27 @@ export default function PostCard({
                 <button
                   type="button"
                   role="menuitem"
-                  style={{
-                    ...menuItemStyle,
-                    color: "#ef4444",
-                  }}
+                  className="aio-post-menu-item"
                   disabled={deleteLoading}
-                  onClick={() => void handleDelete()}
+                  onClick={() => {
+                    setMenuOpen(false);
+                    setDeleteDialogOpen(true);
+                  }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    width: "100%",
+                    padding: "11px 12px",
+                    border: 0,
+                    borderRadius: 8,
+                    background: "transparent",
+                    color: "#ef4444",
+                    textAlign: "left",
+                    cursor: "pointer",
+                  }}
                 >
-                  <Trash2 size={16} />
+                  <Trash2 size={17} />
                   Delete post
                 </button>
               )}
@@ -589,9 +643,7 @@ export default function PostCard({
       </header>
 
       <div className="post-content">
-        {content && (
-          <p className="post-text">{content}</p>
-        )}
+        {content && <p className="post-text">{content}</p>}
 
         {imageUrl && (
           <div className="post-media">
@@ -619,10 +671,7 @@ export default function PostCard({
       )}
 
       {shareMessage && (
-        <div
-          role="status"
-          style={{ fontSize: 12, padding: "4px 0" }}
-        >
+        <div role="status" style={{ fontSize: 12, padding: 8 }}>
           {shareMessage}
         </div>
       )}
@@ -740,8 +789,7 @@ export default function PostCard({
                   type="submit"
                   className="aio-button aio-button-primary"
                   disabled={
-                    commentSubmitting ||
-                    !commentText.trim()
+                    commentSubmitting || !commentText.trim()
                   }
                 >
                   {commentSubmitting ? (
@@ -752,7 +800,6 @@ export default function PostCard({
                   ) : (
                     <Send size={16} />
                   )}
-
                   <span>
                     {commentSubmitting
                       ? "Posting..."
@@ -833,7 +880,6 @@ export default function PostCard({
                       <div className="comment-header">
                         <div className="comment-author">
                           <strong>{displayName}</strong>
-
                           {author?.verified && (
                             <BadgeCheck
                               size={14}
@@ -886,6 +932,143 @@ export default function PostCard({
             </div>
           )}
         </section>
+      )}
+
+      {deleteDialogOpen && (
+        <div
+          role="presentation"
+          onMouseDown={(event) => {
+            if (
+              event.target === event.currentTarget &&
+              !deleteLoading
+            ) {
+              setDeleteDialogOpen(false);
+            }
+          }}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 2000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 20,
+            background: "rgba(0,0,0,.65)",
+          }}
+        >
+          <section
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby={`delete-title-${postId}`}
+            aria-describedby={`delete-desc-${postId}`}
+            style={{
+              width: "100%",
+              maxWidth: 390,
+              padding: 24,
+              borderRadius: 18,
+              border: "1px solid var(--canvas-border)",
+              background: "var(--canvas-surface)",
+              color: "var(--canvas-text)",
+              boxShadow: "0 20px 60px rgba(0,0,0,.4)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <h2
+                id={`delete-title-${postId}`}
+                style={{
+                  fontSize: 21,
+                  fontWeight: 800,
+                  margin: 0,
+                }}
+              >
+                Delete post?
+              </h2>
+
+              <button
+                type="button"
+                onClick={() => setDeleteDialogOpen(false)}
+                disabled={deleteLoading}
+                aria-label="Close dialog"
+                style={{
+                  border: 0,
+                  background: "transparent",
+                  color: "inherit",
+                  cursor: "pointer",
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <p
+              id={`delete-desc-${postId}`}
+              style={{
+                margin: "12px 0 24px",
+                fontSize: 14,
+                lineHeight: 1.6,
+                color: "var(--canvas-muted)",
+              }}
+            >
+              This action cannot be undone. Your post will
+              be permanently deleted from AIO.
+            </p>
+
+            <button
+              type="button"
+              onClick={() => void handleDelete()}
+              disabled={deleteLoading}
+              style={{
+                width: "100%",
+                minHeight: 44,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                border: 0,
+                borderRadius: 24,
+                background: "#dc2626",
+                color: "#fff",
+                fontWeight: 700,
+                cursor: deleteLoading ? "wait" : "pointer",
+              }}
+            >
+              {deleteLoading ? (
+                <Loader2
+                  size={18}
+                  className="aio-spin"
+                />
+              ) : (
+                <Trash2 size={18} />
+              )}
+              {deleteLoading ? "Deleting..." : "Delete"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setDeleteDialogOpen(false)}
+              disabled={deleteLoading}
+              style={{
+                width: "100%",
+                minHeight: 44,
+                marginTop: 10,
+                border: "1px solid var(--canvas-border)",
+                borderRadius: 24,
+                background: "transparent",
+                color: "var(--canvas-text)",
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              Cancel
+            </button>
+          </section>
+        </div>
       )}
     </article>
   );

@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -29,19 +30,13 @@ interface ThemeContextValue {
   resolvedAppearance: ResolvedAppearance;
   isDark: boolean;
   setTheme: (theme: ThemeId) => void;
-  setAppearance: (
-    appearance: AppearanceMode,
-  ) => void;
-  setCustomAccent: (
-    color: string | null,
-  ) => void;
+  setAppearance: (appearance: AppearanceMode) => void;
+  setCustomAccent: (color: string | null) => void;
   resetTheme: () => void;
 }
 
 const ThemeContext =
-  createContext<ThemeContextValue | null>(
-    null,
-  );
+  createContext<ThemeContextValue | null>(null);
 
 function getSystemPrefersDark(): boolean {
   if (typeof window === "undefined") {
@@ -53,11 +48,30 @@ function getSystemPrefersDark(): boolean {
   ).matches;
 }
 
+function getContrastColor(hex: string): string {
+  const normalized = hex.replace("#", "");
+
+  const channels = [0, 2, 4].map((start) => {
+    const channel =
+      parseInt(normalized.slice(start, start + 2), 16) /
+      255;
+
+    return channel <= 0.04045
+      ? channel / 12.92
+      : ((channel + 0.055) / 1.055) ** 2.4;
+  });
+
+  const luminance =
+    0.2126 * channels[0] +
+    0.7152 * channels[1] +
+    0.0722 * channels[2];
+
+  return luminance > 0.179 ? "#111827" : "#FFFFFF";
+}
+
 function loadThemePreferences(): ThemePreferences {
   if (typeof window === "undefined") {
-    return {
-      ...DEFAULT_THEME_PREFERENCES,
-    };
+    return { ...DEFAULT_THEME_PREFERENCES };
   }
 
   try {
@@ -72,19 +86,14 @@ function loadThemePreferences(): ThemePreferences {
         typeof parsed === "object" &&
         parsed !== null
       ) {
-        const data = parsed as Record<
-          string,
-          unknown
-        >;
+        const data = parsed as Record<string, unknown>;
 
         return {
           theme: isThemeId(data.theme)
             ? data.theme
             : DEFAULT_THEME_PREFERENCES.theme,
 
-          appearance: isAppearanceMode(
-            data.appearance,
-          )
+          appearance: isAppearanceMode(data.appearance)
             ? data.appearance
             : DEFAULT_THEME_PREFERENCES.appearance,
 
@@ -97,7 +106,6 @@ function loadThemePreferences(): ThemePreferences {
       }
     }
 
-    // Migrate existing AIO light/dark preference.
     const legacyTheme =
       window.localStorage.getItem(
         LEGACY_THEME_STORAGE_KEY,
@@ -113,19 +121,16 @@ function loadThemePreferences(): ThemePreferences {
       };
     }
   } catch {
-    // Invalid or inaccessible storage:
-    // continue using defaults.
+    // Use default preferences if storage is unavailable.
   }
 
-  return {
-    ...DEFAULT_THEME_PREFERENCES,
-  };
+  return { ...DEFAULT_THEME_PREFERENCES };
 }
 
 function applyThemeToDocument(
   preferences: ThemePreferences,
   resolvedAppearance: ResolvedAppearance,
-) {
+): void {
   const root = document.documentElement;
 
   const colors = getThemeColors(
@@ -133,61 +138,46 @@ function applyThemeToDocument(
     resolvedAppearance,
   );
 
+  const primaryForeground = getContrastColor(
+    colors.primary,
+  );
+
+  const primaryHoverForeground = getContrastColor(
+    colors.primaryHover,
+  );
+
   root.dataset.theme = resolvedAppearance;
   root.dataset.aioTheme = preferences.theme;
 
   root.style.colorScheme = resolvedAppearance;
 
-  root.style.setProperty(
-    "--aio-primary",
-    colors.primary,
-  );
+  const variables: Record<string, string> = {
+    "--aio-primary": colors.primary,
+    "--aio-primary-hover": colors.primaryHover,
 
-  root.style.setProperty(
-    "--aio-primary-hover",
-    colors.primaryHover,
-  );
+    "--aio-primary-foreground": primaryForeground,
+    "--aio-primary-hover-foreground":
+      primaryHoverForeground,
 
-  root.style.setProperty(
-    "--aio-bg",
-    colors.background,
-  );
+    "--aio-bg": colors.background,
+    "--aio-surface": colors.surface,
 
-  root.style.setProperty(
-    "--aio-surface",
-    colors.surface,
-  );
+    "--aio-primary-soft": `color-mix(in srgb, ${colors.primary} 12%, ${colors.surface})`,
 
-  root.style.setProperty(
-    "--aio-primary-soft",
-    `color-mix(in srgb, ${colors.primary} 12%, ${colors.surface})`,
-  );
+    "--aio-accent": colors.primary,
 
-  // Compatibility with existing Messages styles.
-  root.style.setProperty(
-    "--brand",
-    colors.primary,
-  );
+    "--brand": colors.primary,
+    "--brand-hover": colors.primaryHover,
+    "--surface": colors.surface,
+    "--soft": colors.background,
 
-  root.style.setProperty(
-    "--brand-hover",
-    colors.primaryHover,
-  );
+    "--canvas-accent": colors.primary,
+    "--canvas-accent-soft": `color-mix(in srgb, ${colors.primary} 12%, ${colors.surface})`,
+  };
 
-  root.style.setProperty(
-    "--surface",
-    colors.surface,
-  );
-
-  root.style.setProperty(
-    "--soft",
-    colors.background,
-  );
-
-  root.style.setProperty(
-    "--aio-accent",
-    colors.primary,
-  );
+  Object.entries(variables).forEach(([name, value]) => {
+    root.style.setProperty(name, value);
+  });
 }
 
 export function ThemeProvider({
@@ -208,29 +198,19 @@ export function ThemeProvider({
   const [initialized, setInitialized] =
     useState(false);
 
-  const resolvedAppearance =
-    resolveAppearance(
-      preferences.appearance,
-      systemPrefersDark,
-    );
+  const resolvedAppearance = resolveAppearance(
+    preferences.appearance,
+    systemPrefersDark,
+  );
 
-  const isDark =
-    resolvedAppearance === "dark";
+  const isDark = resolvedAppearance === "dark";
 
-  // Load saved preferences when the app starts.
   useEffect(() => {
-    setPreferences(
-      loadThemePreferences(),
-    );
-
-    setSystemPrefersDark(
-      getSystemPrefersDark(),
-    );
-
+    setPreferences(loadThemePreferences());
+    setSystemPrefersDark(getSystemPrefersDark());
     setInitialized(true);
   }, []);
 
-  // Detect operating-system appearance changes.
   useEffect(() => {
     const mediaQuery = window.matchMedia(
       "(prefers-color-scheme: dark)",
@@ -239,9 +219,7 @@ export function ThemeProvider({
     function handleSystemChange(
       event: MediaQueryListEvent,
     ) {
-      setSystemPrefersDark(
-        event.matches,
-      );
+      setSystemPrefersDark(event.matches);
     }
 
     mediaQuery.addEventListener(
@@ -257,7 +235,6 @@ export function ThemeProvider({
     };
   }, []);
 
-  // Apply the selected theme globally.
   useEffect(() => {
     if (!initialized) {
       return;
@@ -274,26 +251,17 @@ export function ThemeProvider({
         JSON.stringify(preferences),
       );
     } catch {
-      // The theme still works if storage is blocked.
+      // Theme changes still work without local storage.
     }
-  }, [
-    preferences,
-    resolvedAppearance,
-    initialized,
-  ]);
+  }, [preferences, resolvedAppearance, initialized]);
 
-  // Sync changes made in another browser tab.
   useEffect(() => {
-    function handleStorage(
-      event: StorageEvent,
-    ) {
+    function handleStorage(event: StorageEvent) {
       if (
         event.key === THEME_STORAGE_KEY ||
         event.key === null
       ) {
-        setPreferences(
-          loadThemePreferences(),
-        );
+        setPreferences(loadThemePreferences());
       }
     }
 
@@ -310,15 +278,12 @@ export function ThemeProvider({
     };
   }, []);
 
-  const setTheme = useCallback(
-    (theme: ThemeId) => {
-      setPreferences((previous) => ({
-        ...previous,
-        theme,
-      }));
-    },
-    [],
-  );
+  const setTheme = useCallback((theme: ThemeId) => {
+    setPreferences((previous) => ({
+      ...previous,
+      theme,
+    }));
+  }, []);
 
   const setAppearance = useCallback(
     (appearance: AppearanceMode) => {
@@ -370,7 +335,7 @@ export function ThemeProvider({
   );
 }
 
-export function useTheme() {
+export function useTheme(): ThemeContextValue {
   const context = useContext(ThemeContext);
 
   if (!context) {

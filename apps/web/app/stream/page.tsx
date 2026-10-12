@@ -1,3 +1,4 @@
+
 "use client";
 
 import AuthGuard from "@/components/auth/AuthGuard";
@@ -6,15 +7,15 @@ import CreatePostModal, {
   type CreatePostData,
 } from "@/components/stream/CreatePostModal";
 import PostCard from "@/components/stream/PostCard";
+
 import { createPost, getPosts } from "@/lib/api";
+import { useSearchParams } from "next/navigation";
 import {
   Suspense,
   useCallback,
   useEffect,
   useState,
 } from "react";
-
-import { useSearchParams } from "next/navigation";
 
 interface PostAuthor {
   id: string;
@@ -43,31 +44,25 @@ interface ApiPost {
 
 interface StreamPost {
   postId: string;
+  authorId: string;
   name: string;
   username: string;
-  authorId: string;
   time: string;
   initials: string;
   avatarClass: string;
   content: string;
   imageUrl?: string;
-  type?: "thought" | "space";
+  avatarUrl?: string;
+  type: "thought" | "image" | "space";
   likesCount: number;
   commentsCount: number;
   bookmarksCount: number;
   isLiked: boolean;
   isBookmarked: boolean;
   verified: boolean;
-  avatarUrl?: string;
 }
 
-type StreamFeed =
-  | "for-you"
-  | "following";
-
-/* =========================================================
-   HELPERS
-   ========================================================= */
+type StreamFeed = "for-you" | "following";
 
 function formatTime(createdAt: string): string {
   const created = new Date(createdAt);
@@ -82,33 +77,18 @@ function formatTime(createdAt: string): string {
     Date.now() - createdTime,
   );
 
-  const minutes = Math.floor(
-    difference / 60000,
-  );
+  const minutes = Math.floor(difference / 60000);
 
-  if (minutes < 1) {
-    return "now";
-  }
+  if (minutes < 1) return "now";
+  if (minutes < 60) return `${minutes}m`;
 
-  if (minutes < 60) {
-    return `${minutes}m`;
-  }
+  const hours = Math.floor(minutes / 60);
 
-  const hours = Math.floor(
-    minutes / 60,
-  );
+  if (hours < 24) return `${hours}h`;
 
-  if (hours < 24) {
-    return `${hours}h`;
-  }
+  const days = Math.floor(hours / 24);
 
-  const days = Math.floor(
-    hours / 24,
-  );
-
-  if (days < 7) {
-    return `${days}d`;
-  }
+  if (days < 7) return `${days}d`;
 
   return created.toLocaleDateString();
 }
@@ -118,36 +98,22 @@ function getInitials(
   username: string,
 ): string {
   const source =
-    displayName.trim() ||
-    username.trim();
+    displayName.trim() || username.trim();
 
-  if (!source) {
-    return "AI";
-  }
+  if (!source) return "AI";
 
-  const words = source
-    .split(/\s+/)
-    .filter(Boolean);
+  const words = source.split(/\s+/).filter(Boolean);
 
   if (words.length >= 2) {
     return `${words[0][0]}${words[1][0]}`.toUpperCase();
   }
 
-  return source
-    .slice(0, 2)
-    .toUpperCase();
+  return source.slice(0, 2).toUpperCase();
 }
 
-/* =========================================================
-   API POST -> UI POST
-   ========================================================= */
-
-function convertPost(
-  post: ApiPost,
-): StreamPost {
+function convertPost(post: ApiPost): StreamPost {
   const postId =
-    typeof post.id === "string" &&
-    post.id.length > 0
+    typeof post.id === "string" && post.id.length > 0
       ? post.id
       : typeof post._id === "string" &&
           post._id.length > 0
@@ -157,108 +123,61 @@ function convertPost(
   const author = post.author;
 
   const displayName =
-    author?.displayName?.trim() ||
-    "AIO User";
+    author?.displayName?.trim() || "AIO User";
 
   const username =
-    author?.username?.trim() ||
-    "";
-
-  const initials = getInitials(
-    displayName,
-    username,
-  );
+    author?.username?.trim() || "";
 
   return {
     postId,
     authorId: post.authorId,
-
     name: displayName,
-
-    username:
-      username.length > 0
-        ? `@${username}`
-        : "@aio-user",
-
-    time: formatTime(
-      post.createdAt,
-    ),
-
-    initials,
-
+    username: username ? `@${username}` : "@aio-user",
+    time: formatTime(post.createdAt),
+    initials: getInitials(displayName, username),
     avatarClass: "avatar-purple",
-
     content:
       typeof post.content === "string"
         ? post.content
         : "",
-
     imageUrl: post.imageUrl,
-
+    avatarUrl: author?.avatarUrl,
     type:
       post.type === "space"
         ? "space"
-        : "thought",
-
+        : post.type === "image"
+          ? "image"
+          : "thought",
     likesCount:
       typeof post.likesCount === "number"
         ? post.likesCount
         : 0,
-
     commentsCount:
       typeof post.commentsCount === "number"
         ? post.commentsCount
         : 0,
-
     bookmarksCount:
       typeof post.bookmarksCount === "number"
         ? post.bookmarksCount
         : 0,
-
-    isLiked:
-      post.isLiked === true,
-
-    isBookmarked:
-      post.isBookmarked === true,
-
-    verified:
-      author?.verified === true,
-
-    ...(author?.avatarUrl
-      ? {
-          avatarUrl:
-            author.avatarUrl,
-        }
-      : {}),
+    isLiked: post.isLiked === true,
+    isBookmarked: post.isBookmarked === true,
+    verified: author?.verified === true,
   };
 }
-
-/* =========================================================
-   STREAM PAGE
-   ========================================================= */
 
 function StreamPageContent() {
   const searchParams = useSearchParams();
 
   const [activeFeed, setActiveFeed] =
-    useState<StreamFeed>(
-      "for-you",
-    );
+    useState<StreamFeed>("for-you");
 
-  const [posts, setPosts] =
-    useState<StreamPost[]>([]);
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [publishing, setPublishing] =
-    useState(false);
-
-  const [error, setError] =
-    useState("");
-
-  const [createOpen, setCreateOpen] =
-    useState(false);
+  const [posts, setPosts] = useState<StreamPost[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [publishing, setPublishing] = useState(false);
+  const [error, setError] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     if (searchParams.get("create") === "1") {
@@ -267,85 +186,55 @@ function StreamPageContent() {
     }
   }, [searchParams]);
 
-  /* =======================================================
-     LOAD POSTS
-     ======================================================= */
+  const loadPosts = useCallback(async (): Promise<void> => {
+    setLoading(true);
+    setError("");
 
-  const loadPosts = useCallback(
-    async (): Promise<void> => {
-      try {
-        setLoading(true);
-        setError("");
+    try {
+      const data = await getPosts(activeFeed);
+      const apiPosts = data as unknown as ApiPost[];
 
-        const data =
-          await getPosts(activeFeed);
-
-        const apiPosts =
-          data as unknown as ApiPost[];
-
-        const convertedPosts =
-          apiPosts
-            .map(convertPost)
-            .filter(
-              (post) =>
-                post.postId.length > 0,
-            );
-
-        setPosts(convertedPosts);
-      } catch (loadError) {
-        setError(
-          loadError instanceof Error
-            ? loadError.message
-            : "Failed to load posts",
-        );
-      } finally {
-        setLoading(false);
-      }
-    },
-    [activeFeed],
-  );
-
-  /* =======================================================
-     FEED LOAD
-
-     Runs initially and whenever the user changes
-     between For You and Following.
-     ======================================================= */
+      setPosts(
+        apiPosts
+          .map(convertPost)
+          .filter((post) => post.postId.length > 0),
+      );
+    } catch (loadError) {
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : "Failed to load posts.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [activeFeed]);
 
   useEffect(() => {
     let cancelled = false;
 
     async function fetchPosts(): Promise<void> {
       try {
-        const data =
-          await getPosts(activeFeed);
+        const data = await getPosts(activeFeed);
 
-        if (cancelled) {
-          return;
-        }
+        if (cancelled) return;
 
-        const apiPosts =
-          data as unknown as ApiPost[];
+        const apiPosts = data as unknown as ApiPost[];
 
-        const convertedPosts =
+        setPosts(
           apiPosts
             .map(convertPost)
-            .filter(
-              (post) =>
-                post.postId.length > 0,
-            );
+            .filter((post) => post.postId.length > 0),
+        );
 
-        setPosts(convertedPosts);
         setError("");
       } catch (loadError) {
-        if (cancelled) {
-          return;
-        }
+        if (cancelled) return;
 
         setError(
           loadError instanceof Error
             ? loadError.message
-            : "Failed to load posts",
+            : "Failed to load posts.",
         );
       } finally {
         if (!cancelled) {
@@ -359,25 +248,16 @@ function StreamPageContent() {
     return () => {
       cancelled = true;
     };
-  }, [activeFeed]);
-
-  /* =======================================================
-     CREATE / PUBLISH
-     ======================================================= */
+  }, [activeFeed, refreshKey]);
 
   async function handlePublish(
     post: CreatePostData,
   ): Promise<void> {
-    if (publishing) {
-      return;
-    }
+    if (publishing) return;
 
-    const content =
-      post.content.trim();
+    const content = post.content.trim();
 
-    if (!content && !post.imageUrl) {
-      return;
-    }
+    if (!content && !post.imageUrl) return;
 
     try {
       setPublishing(true);
@@ -386,20 +266,19 @@ function StreamPageContent() {
       await createPost(
         content,
         post.imageUrl,
-        post.imageUrl
-          ? "image"
-          : "thought",
+        post.imageUrl ? "image" : "thought",
       );
 
       setCreateOpen(false);
-
       await loadPosts();
     } catch (publishError) {
-      setError(
+      const message =
         publishError instanceof Error
           ? publishError.message
-          : "Failed to publish post",
-      );
+          : "Failed to publish post.";
+
+      setError(message);
+      throw publishError;
     } finally {
       setPublishing(false);
     }
@@ -411,23 +290,12 @@ function StreamPageContent() {
   }
 
   function handleCloseCreate(): void {
-    if (publishing) {
-      return;
-    }
-
+    if (publishing) return;
     setCreateOpen(false);
   }
 
-  /* =======================================================
-     FEED CHANGE
-     ======================================================= */
-
-  function handleFeedChange(
-    feed: StreamFeed,
-  ): void {
-    if (feed === activeFeed) {
-      return;
-    }
+  function handleFeedChange(feed: StreamFeed): void {
+    if (feed === activeFeed) return;
 
     setLoading(true);
     setError("");
@@ -435,9 +303,19 @@ function StreamPageContent() {
     setActiveFeed(feed);
   }
 
-  /* =======================================================
-     RENDER
-     ======================================================= */
+  function handlePostDeleted(postId: string): void {
+    setPosts((currentPosts) =>
+      currentPosts.filter(
+        (post) => post.postId !== postId,
+      ),
+    );
+  }
+
+  function handleRefresh(): void {
+    setLoading(true);
+    setError("");
+    setRefreshKey((current) => current + 1);
+  }
 
   return (
     <AuthGuard>
@@ -464,16 +342,10 @@ function StreamPageContent() {
             <button
               type="button"
               className={`aio-v2-stream-tab ${
-                activeFeed === "for-you"
-                  ? "is-active"
-                  : ""
+                activeFeed === "for-you" ? "is-active" : ""
               }`}
-              onClick={() =>
-                handleFeedChange("for-you")
-              }
-              aria-pressed={
-                activeFeed === "for-you"
-              }
+              onClick={() => handleFeedChange("for-you")}
+              aria-pressed={activeFeed === "for-you"}
             >
               For You
             </button>
@@ -481,66 +353,18 @@ function StreamPageContent() {
             <button
               type="button"
               className={`aio-v2-stream-tab ${
-                activeFeed === "following"
-                  ? "is-active"
-                  : ""
+                activeFeed === "following" ? "is-active" : ""
               }`}
-              onClick={() =>
-                handleFeedChange("following")
-              }
-              aria-pressed={
-                activeFeed === "following"
-              }
+              onClick={() => handleFeedChange("following")}
+              aria-pressed={activeFeed === "following"}
             >
               Following
-            </button>
-
-            <button
-              type="button"
-              className="aio-v2-stream-tab"
-              disabled
-              title="Coming soon"
-              aria-disabled="true"
-            >
-              Spaces
-            </button>
-
-            <button
-              type="button"
-              className="aio-v2-stream-tab"
-              disabled
-              title="Coming soon"
-              aria-disabled="true"
-            >
-              Local
-            </button>
-
-            <button
-              type="button"
-              className="aio-v2-stream-tab"
-              disabled
-              title="Coming soon"
-              aria-disabled="true"
-            >
-              Global
             </button>
           </nav>
         </header>
 
         <section className="aio-feed">
-          {/* =================================================
-              CREATE PANEL
-             ================================================= */}
-
-          <CreatePanel
-            onOpenCreate={
-              handleOpenCreate
-            }
-          />
-
-          {/* =================================================
-              LOADING
-             ================================================= */}
+          <CreatePanel onOpenCreate={handleOpenCreate} />
 
           {loading && (
             <div className="post-card">
@@ -552,31 +376,19 @@ function StreamPageContent() {
             </div>
           )}
 
-          {/* =================================================
-              ERROR
-             ================================================= */}
-
           {!loading && error && (
             <div className="post-card">
-              <p className="post-text">
-                {error}
-              </p>
+              <p className="post-text">{error}</p>
 
               <button
                 type="button"
-                onClick={() =>
-                  void loadPosts()
-                }
+                onClick={handleRefresh}
                 className="aio-button aio-button-small aio-button-secondary"
               >
                 Try again
               </button>
             </div>
           )}
-
-          {/* =================================================
-              EMPTY STATE
-             ================================================= */}
 
           {!loading &&
             !error &&
@@ -590,94 +402,48 @@ function StreamPageContent() {
               </div>
             )}
 
-          {/* =================================================
-              POSTS
-             ================================================= */}
-
           {!loading &&
             !error &&
-            posts.map(
-              (post) => (
-                <PostCard
-                  key={post.postId}
-                  postId={post.postId}
-
-                  name={post.name}
-                  username={
-                    post.username
-                  }
-
-                  avatarUrl={
-                    post.avatarUrl
-                  }
-                  verified={
-                    post.verified
-                  }
-
-                  time={post.time}
-                  initials={
-                    post.initials
-                  }
-                  avatarClass={
-                    post.avatarClass
-                  }
-
-                  content={
-                    post.content
-                  }
-                  imageUrl={
-                    post.imageUrl
-                  }
-                  type={post.type}
-
-                  likesCount={
-                    post.likesCount
-                  }
-                  commentsCount={
-                    post.commentsCount
-                  }
-                  bookmarksCount={
-                    post.bookmarksCount
-                  }
-
-                  isLiked={
-                    post.isLiked
-                  }
-                  isBookmarked={
-                    post.isBookmarked
-                  }
-                />
-              ),
-            )}
+            posts.map((post) => (
+              <PostCard
+                key={post.postId}
+                postId={post.postId}
+                authorId={post.authorId}
+                name={post.name}
+                username={post.username}
+                avatarUrl={post.avatarUrl}
+                verified={post.verified}
+                time={post.time}
+                initials={post.initials}
+                avatarClass={post.avatarClass}
+                content={post.content}
+                imageUrl={post.imageUrl}
+                type={post.type}
+                likesCount={post.likesCount}
+                commentsCount={post.commentsCount}
+                bookmarksCount={post.bookmarksCount}
+                isLiked={post.isLiked}
+                isBookmarked={post.isBookmarked}
+                onDeleted={handlePostDeleted}
+              />
+            ))}
         </section>
-
-        {/* ===================================================
-            CREATE POST MODAL
-           =================================================== */}
 
         <CreatePostModal
           open={createOpen}
-          onClose={
-            handleCloseCreate
-          }
-          onPublish={
-            handlePublish
-          }
+          onClose={handleCloseCreate}
+          onPublish={handlePublish}
         />
-
-        {/* ===================================================
-            PUBLISHING INDICATOR
-           =================================================== */}
 
         {publishing && (
           <div
+            role="status"
             aria-live="polite"
             style={{
               position: "fixed",
-              bottom: "24px",
+              bottom: 24,
               left: "50%",
-              transform:
-                "translateX(-50%)",
+              transform: "translateX(-50%)",
               zIndex: 1000,
             }}
           >
@@ -688,6 +454,7 @@ function StreamPageContent() {
     </AuthGuard>
   );
 }
+
 export default function StreamPage() {
   return (
     <Suspense

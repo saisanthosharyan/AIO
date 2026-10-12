@@ -1,11 +1,12 @@
+
 "use client";
 
 import {
-  useCallback,
   useEffect,
   useRef,
   useState,
   type ChangeEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
 
 import Image from "next/image";
@@ -14,6 +15,7 @@ import {
   Image as ImageIcon,
   Loader2,
   Sparkles,
+  UserRound,
   X,
 } from "lucide-react";
 
@@ -27,9 +29,7 @@ export interface CreatePostData {
 interface CreatePostModalProps {
   open: boolean;
   onClose: () => void;
-  onPublish: (
-    post: CreatePostData,
-  ) => Promise<void>;
+  onPublish: (post: CreatePostData) => Promise<void>;
 }
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
@@ -42,18 +42,13 @@ function fileToDataUrl(file: File): Promise<string> {
     reader.onload = () => {
       if (typeof reader.result === "string") {
         resolve(reader.result);
-        return;
+      } else {
+        reject(new Error("Failed to read image."));
       }
-
-      reject(
-        new Error("Failed to read image."),
-      );
     };
 
     reader.onerror = () => {
-      reject(
-        new Error("Failed to read image."),
-      );
+      reject(new Error("Failed to read image."));
     };
 
     reader.readAsDataURL(file);
@@ -66,177 +61,149 @@ export default function CreatePostModal({
   onPublish,
 }: CreatePostModalProps) {
   const [content, setContent] = useState("");
-
-  const [selectedImage, setSelectedImage] =
-    useState<File | null>(null);
-
-  const [imagePreviewUrl, setImagePreviewUrl] =
-    useState<string | null>(null);
-
-  const [publishing, setPublishing] =
-    useState(false);
-
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState("");
 
-  const fileInputRef =
-    useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const modalRef = useRef<HTMLElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const previewUrlRef = useRef<string | null>(null);
+  const publishingRef = useRef(false);
 
-  const textareaRef =
-    useRef<HTMLTextAreaElement>(null);
-
-  /*
-   * Revoke the current image preview URL.
-   */
-  const revokePreviewUrl = useCallback(() => {
-    if (imagePreviewUrl) {
-      URL.revokeObjectURL(imagePreviewUrl);
+  function clearPreview() {
+    if (previewUrlRef.current) {
+      URL.revokeObjectURL(previewUrlRef.current);
+      previewUrlRef.current = null;
     }
-  }, [imagePreviewUrl]);
 
-  /*
-   * Reset the composer state.
-   */
-  const resetForm = useCallback(() => {
-    revokePreviewUrl();
+    setImagePreviewUrl(null);
+  }
 
+  function resetForm() {
+    clearPreview();
     setContent("");
     setSelectedImage(null);
-    setImagePreviewUrl(null);
     setError("");
 
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
-  }, [revokePreviewUrl]);
+  }
 
-  /*
-   * Close the modal.
-   *
-   * useCallback keeps the function reference
-   * stable and prevents the Escape-key effect
-   * from triggering an ESLint dependency warning.
-   */
-  const handleClose = useCallback(() => {
-    if (publishing) {
-      return;
-    }
+  function handleClose() {
+    if (publishingRef.current) return;
 
     resetForm();
     onClose();
-  }, [onClose, publishing, resetForm]);
+  }
 
-  /*
-   * Clean up the object URL when the component
-   * unmounts or the preview URL changes.
-   */
   useEffect(() => {
     return () => {
-      if (imagePreviewUrl) {
-        URL.revokeObjectURL(imagePreviewUrl);
+      if (previewUrlRef.current) {
+        URL.revokeObjectURL(previewUrlRef.current);
+        previewUrlRef.current = null;
       }
     };
-  }, [imagePreviewUrl]);
+  }, []);
 
-  /*
-   * Focus the textarea whenever the modal opens.
-   */
   useEffect(() => {
-    if (!open) {
-      return;
-    }
+    if (!open) return;
 
-    const timer = window.setTimeout(() => {
+    previousFocusRef.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const focusTimer = window.setTimeout(() => {
       textareaRef.current?.focus();
-    }, 50);
+    }, 0);
 
     return () => {
-      window.clearTimeout(timer);
+      window.clearTimeout(focusTimer);
+      document.body.style.overflow = previousOverflow;
+      previousFocusRef.current?.focus();
     };
   }, [open]);
 
-  /*
-   * Allow Escape to close the modal.
-   */
   useEffect(() => {
-    if (!open) {
-      return;
-    }
+    if (!open) return;
 
-    function handleKeyDown(event: KeyboardEvent) {
-      if (
-        event.key === "Escape" &&
-        !publishing
-      ) {
+    function handleEscape(event: globalThis.KeyboardEvent) {
+      if (event.key === "Escape" && !publishingRef.current) {
+        event.preventDefault();
         handleClose();
       }
     }
 
-    window.addEventListener(
-      "keydown",
-      handleKeyDown,
-    );
+    window.addEventListener("keydown", handleEscape);
 
     return () => {
-      window.removeEventListener(
-        "keydown",
-        handleKeyDown,
-      );
+      window.removeEventListener("keydown", handleEscape);
     };
-  }, [
-    open,
-    publishing,
-    handleClose,
-  ]);
+  });
 
-  /*
-   * Handle image selection.
-   */
-  function handleImageSelect(
-    event: ChangeEvent<HTMLInputElement>,
-  ) {
-    const file = event.target.files?.[0];
+  function handleModalKeyDown(event: ReactKeyboardEvent<HTMLElement>) {
+    if (event.key !== "Tab") return;
 
-    if (!file) {
-      return;
+    const modal = modalRef.current;
+    if (!modal) return;
+
+    const focusable = Array.from(
+      modal.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), textarea:not([disabled]), input:not([disabled]):not([type="hidden"]), a[href]',
+      ),
+    ).filter((element) => element.getClientRects().length > 0);
+
+    if (focusable.length === 0) return;
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
     }
+  }
+
+  function handleImageSelect(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
     setError("");
 
     if (!file.type.startsWith("image/")) {
-      setError(
-        "Please select a valid image file.",
-      );
-
+      setError("Please select a valid image file.");
       event.target.value = "";
       return;
     }
 
     if (file.size > MAX_IMAGE_SIZE) {
-      setError(
-        "Image must be smaller than 5MB.",
-      );
-
+      setError("Image must be smaller than 5MB.");
       event.target.value = "";
       return;
     }
 
-    revokePreviewUrl();
+    clearPreview();
 
-    const previewUrl =
-      URL.createObjectURL(file);
+    const previewUrl = URL.createObjectURL(file);
+    previewUrlRef.current = previewUrl;
 
     setSelectedImage(file);
     setImagePreviewUrl(previewUrl);
   }
 
-  /*
-   * Remove the currently selected image.
-   */
   function handleRemoveImage() {
-    revokePreviewUrl();
-
+    clearPreview();
     setSelectedImage(null);
-    setImagePreviewUrl(null);
     setError("");
 
     if (fileInputRef.current) {
@@ -244,75 +211,41 @@ export default function CreatePostModal({
     }
   }
 
-  /*
-   * Publish the post.
-   */
   async function handlePublish() {
-    if (publishing) {
+    if (publishingRef.current) return;
+
+    const trimmedContent = content.trim();
+
+    if (!trimmedContent && !selectedImage) {
+      setError("Write something or add an image before publishing.");
       return;
     }
 
-    const trimmedContent =
-      content.trim();
-
-    if (
-      !trimmedContent &&
-      !selectedImage
-    ) {
-      setError(
-        "Write something or add an image before publishing.",
-      );
-
-      return;
-    }
+    publishingRef.current = true;
+    setPublishing(true);
+    setError("");
 
     try {
-      setPublishing(true);
-      setError("");
-
       let imageUrl: string | undefined;
 
-      /*
-       * Upload the selected image first.
-       */
       if (selectedImage) {
-        const imageData =
-          await fileToDataUrl(
-            selectedImage,
-          );
+        const imageData = await fileToDataUrl(selectedImage);
+        const uploadResponse = await uploadImage(imageData);
 
-        const uploadResponse =
-          await uploadImage(imageData);
-
-        if (
-          !uploadResponse.success ||
-          !uploadResponse.imageUrl
-        ) {
+        if (!uploadResponse.success || !uploadResponse.imageUrl) {
           throw new Error(
-            uploadResponse.message ||
-              "Image upload failed.",
+            uploadResponse.message || "Image upload failed.",
           );
         }
 
         const apiUrl =
-          process.env
-            .NEXT_PUBLIC_API_URL ??
-          "http://localhost:5000";
+          process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
 
-        imageUrl =
-          uploadResponse.imageUrl.startsWith(
-            "http",
-          )
-            ? uploadResponse.imageUrl
-            : `${apiUrl.replace(
-                /\/$/,
-                "",
-              )}${uploadResponse.imageUrl}`;
+        imageUrl = uploadResponse.imageUrl.startsWith("http")
+          ? uploadResponse.imageUrl
+          : `${apiUrl.replace(/\/$/, "")}/${uploadResponse.imageUrl.replace(/^\//, "")}`;
       }
 
-      /*
-       * Send the post data to the parent.
-       */
       await onPublish({
         content: trimmedContent,
         imageUrl,
@@ -327,49 +260,39 @@ export default function CreatePostModal({
           : "Failed to publish post.",
       );
     } finally {
+      publishingRef.current = false;
       setPublishing(false);
     }
   }
 
-  if (!open) {
-    return null;
-  }
+  if (!open) return null;
 
   const canPublish =
-    Boolean(
-      content.trim() ||
-        selectedImage,
-    ) && !publishing;
+    Boolean(content.trim() || selectedImage) && !publishing;
 
   return (
     <div
       className="modal-overlay"
       role="presentation"
       onMouseDown={(event) => {
-        if (
-          event.target ===
-          event.currentTarget
-        ) {
+        if (event.target === event.currentTarget) {
           handleClose();
         }
       }}
     >
       <section
+        ref={modalRef}
         className="create-post-modal"
         role="dialog"
         aria-modal="true"
         aria-labelledby="create-post-title"
+        aria-describedby="create-post-description"
+        onKeyDown={handleModalKeyDown}
       >
-        {/* Header */}
         <header className="modal-header">
           <div>
-            <span className="eyebrow">
-              CREATE
-            </span>
-
-            <h2 id="create-post-title">
-              Share with your world
-            </h2>
+            <span className="eyebrow">CREATE</span>
+            <h2 id="create-post-title">Share with your world</h2>
           </div>
 
           <button
@@ -383,36 +306,25 @@ export default function CreatePostModal({
           </button>
         </header>
 
-        {/* Author */}
         <div className="modal-author">
-          <div
-            className="avatar avatar-purple"
-            aria-hidden="true"
-          >
-            AI
+          <div className="avatar avatar-purple" aria-hidden="true">
+            <UserRound size={19} />
           </div>
 
           <div>
             <strong>Your post</strong>
-
-            <span>
+            <span id="create-post-description">
               Visible to the AIO community
             </span>
           </div>
         </div>
 
-        {/* Composer */}
         <div className="composer-body">
           <textarea
             ref={textareaRef}
             value={content}
             onChange={(event) =>
-              setContent(
-                event.target.value.slice(
-                  0,
-                  MAX_CONTENT_LENGTH,
-                ),
-              )
+              setContent(event.target.value.slice(0, MAX_CONTENT_LENGTH))
             }
             placeholder="What is on your mind?"
             maxLength={MAX_CONTENT_LENGTH}
@@ -435,9 +347,7 @@ export default function CreatePostModal({
               <button
                 type="button"
                 className="image-remove-button"
-                onClick={
-                  handleRemoveImage
-                }
+                onClick={handleRemoveImage}
                 disabled={publishing}
                 aria-label="Remove selected image"
               >
@@ -447,17 +357,12 @@ export default function CreatePostModal({
           )}
         </div>
 
-        {/* Error */}
         {error && (
-          <div
-            className="aio-error composer-error"
-            role="alert"
-          >
+          <div className="aio-error composer-error" role="alert">
             {error}
           </div>
         )}
 
-        {/* Toolbar */}
         <div className="modal-toolbar">
           <div className="modal-tools">
             <input
@@ -465,17 +370,13 @@ export default function CreatePostModal({
               type="file"
               accept="image/*"
               hidden
-              onChange={
-                handleImageSelect
-              }
+              onChange={handleImageSelect}
               disabled={publishing}
             />
 
             <button
               type="button"
-              onClick={() =>
-                fileInputRef.current?.click()
-              }
+              onClick={() => fileInputRef.current?.click()}
               disabled={publishing}
               aria-label="Add image"
               title="Add image"
@@ -485,21 +386,19 @@ export default function CreatePostModal({
 
             <button
               type="button"
-              disabled={publishing}
-              aria-label="AI writing assistance"
-              title="AI writing assistance"
+              disabled
+              aria-label="AI writing assistance coming soon"
+              title="AI writing assistance coming soon"
             >
               <Sparkles size={18} />
             </button>
           </div>
 
           <span>
-            {content.length}/
-            {MAX_CONTENT_LENGTH}
+            {content.length}/{MAX_CONTENT_LENGTH}
           </span>
         </div>
 
-        {/* Footer */}
         <footer className="modal-footer">
           <button
             type="button"
@@ -513,18 +412,12 @@ export default function CreatePostModal({
           <button
             type="button"
             className="publish-button"
-            onClick={() =>
-              void handlePublish()
-            }
+            onClick={() => void handlePublish()}
             disabled={!canPublish}
           >
             {publishing ? (
               <>
-                <Loader2
-                  size={17}
-                  className="aio-spin"
-                />
-
+                <Loader2 size={17} className="aio-spin" />
                 Publishing...
               </>
             ) : (

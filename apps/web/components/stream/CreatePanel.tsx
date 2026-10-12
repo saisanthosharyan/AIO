@@ -5,6 +5,7 @@ import {
   Image as ImageIcon,
   PenLine,
   Plus,
+  UserRound,
 } from "lucide-react";
 
 interface CreatePanelProps {
@@ -19,8 +20,11 @@ export default function CreatePanel({
       className="aio-canvas-composer"
       aria-label="Create a post"
     >
-      <div className="aio-canvas-composer-avatar" aria-hidden="true">
-        AI
+      <div
+        className="aio-canvas-composer-avatar"
+        aria-hidden="true"
+      >
+        <UserRound size={19} strokeWidth={1.8} />
       </div>
 
       <button
@@ -35,18 +39,19 @@ export default function CreatePanel({
         type="button"
         className="aio-canvas-composer-icon"
         onClick={onOpenCreate}
-        aria-label="Create image post"
+        aria-label="Create an image post"
         title="Add image"
       >
-        <ImageIcon size={18} />
+        <ImageIcon size={18} strokeWidth={1.8} />
       </button>
 
       <button
         type="button"
         className="aio-canvas-composer-submit"
         onClick={onOpenCreate}
+        aria-label="Create post"
       >
-        <Plus size={16} />
+        <Plus size={16} strokeWidth={2} />
         <span>Post</span>
       </button>
     </section>

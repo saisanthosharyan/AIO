@@ -1,3 +1,4 @@
+
 export const THEME_PRESETS = [
   {
     id: "standard",
@@ -85,6 +86,15 @@ export interface ThemePreferences {
   customAccent: string | null;
 }
 
+export interface ThemeColors {
+  primary: string;
+  primaryHover: string;
+  primaryForeground: string;
+  primaryHoverForeground: string;
+  background: string;
+  surface: string;
+}
+
 export const DEFAULT_THEME_PREFERENCES: ThemePreferences = {
   theme: "standard",
   appearance: "system",
@@ -124,9 +134,7 @@ export function isValidHexColor(
   );
 }
 
-export function getThemePreset(
-  themeId: ThemeId,
-) {
+export function getThemePreset(themeId: ThemeId) {
   return (
     THEME_PRESETS.find(
       (preset) => preset.id === themeId,
@@ -139,36 +147,129 @@ export function resolveAppearance(
   systemPrefersDark: boolean,
 ): ResolvedAppearance {
   if (appearance === "system") {
-    return systemPrefersDark
-      ? "dark"
-      : "light";
+    return systemPrefersDark ? "dark" : "light";
   }
 
   return appearance;
 }
 
+function hexToRgb(hex: string) {
+  const value = hex.replace("#", "");
+
+  return {
+    r: Number.parseInt(value.slice(0, 2), 16),
+    g: Number.parseInt(value.slice(2, 4), 16),
+    b: Number.parseInt(value.slice(4, 6), 16),
+  };
+}
+
+function rgbToHex(
+  red: number,
+  green: number,
+  blue: number,
+): string {
+  const toHex = (value: number) =>
+    Math.max(0, Math.min(255, Math.round(value)))
+      .toString(16)
+      .padStart(2, "0");
+
+  return `#${toHex(red)}${toHex(green)}${toHex(blue)}`;
+}
+
+function getLuminance(hex: string): number {
+  const { r, g, b } = hexToRgb(hex);
+
+  const linearize = (channel: number) => {
+    const value = channel / 255;
+
+    return value <= 0.04045
+      ? value / 12.92
+      : Math.pow((value + 0.055) / 1.055, 2.4);
+  };
+
+  return (
+    0.2126 * linearize(r) +
+    0.7152 * linearize(g) +
+    0.0722 * linearize(b)
+  );
+}
+
+export function getReadableTextColor(
+  background: string,
+): string {
+  if (!isValidHexColor(background)) {
+    return "#FFFFFF";
+  }
+
+  const luminance = getLuminance(background);
+
+  const contrastWithWhite =
+    1.05 / (luminance + 0.05);
+
+  const contrastWithDark =
+    (luminance + 0.05) / 0.05;
+
+  return contrastWithDark >= contrastWithWhite
+    ? "#000000"
+    : "#FFFFFF";
+}
+
+function getCustomHoverColor(
+  hex: string,
+  appearance: ResolvedAppearance,
+): string {
+  const { r, g, b } = hexToRgb(hex);
+
+  const factor = 0.12;
+
+  const adjust = (channel: number) => {
+    if (appearance === "dark") {
+      return channel + (255 - channel) * factor;
+    }
+
+    return channel * (1 - factor);
+  };
+
+  return rgbToHex(
+    adjust(r),
+    adjust(g),
+    adjust(b),
+  );
+}
+
 export function getThemeColors(
   preferences: ThemePreferences,
   resolvedAppearance: ResolvedAppearance,
-) {
+): ThemeColors {
   const preset = getThemePreset(
     preferences.theme,
   );
 
-  const isDark =
-    resolvedAppearance === "dark";
+  const isDark = resolvedAppearance === "dark";
+
+  const customAccent = isValidHexColor(
+    preferences.customAccent,
+  )
+    ? preferences.customAccent
+    : null;
 
   const primary =
-    preferences.customAccent ??
-    preset.primary;
+    customAccent ?? preset.primary;
 
-  const primaryHover =
-    preferences.customAccent ??
-    preset.primaryHover;
+  const primaryHover = customAccent
+    ? getCustomHoverColor(
+        customAccent,
+        resolvedAppearance,
+      )
+    : preset.primaryHover;
 
   return {
     primary,
     primaryHover,
+    primaryForeground:
+      getReadableTextColor(primary),
+    primaryHoverForeground:
+      getReadableTextColor(primaryHover),
     background: isDark
       ? preset.darkBackground
       : preset.lightBackground,

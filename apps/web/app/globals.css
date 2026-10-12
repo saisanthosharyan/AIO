@@ -9569,17 +9569,106 @@ html[data-aio-theme] .aio-workspace {
     gap: 14px;
   }
 }
-/* AIO Canvas — Compact Stream Posts */
+
+/* =========================================================
+   AIO CANVAS — STREAM REFINEMENT V2
+   ========================================================= */
+
+/* Desktop feed layout */
+
+.aio-canvas-page-content {
+  min-width: 0;
+  width: 100%;
+}
+
+.aio-canvas-content-grid {
+  grid-template-columns: minmax(0, 1fr) 290px;
+  gap: 20px;
+}
+
+.aio-canvas-page-content .aio-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* Stream header */
+
+.aio-canvas-page-content .aio-v2-stream-header {
+  margin-bottom: 14px;
+}
+
+.aio-canvas-page-content .aio-v2-stream-heading h1 {
+  font-size: 20px;
+  font-weight: 750;
+  letter-spacing: -0.035em;
+}
+
+.aio-canvas-page-content .aio-v2-stream-heading p {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.aio-canvas-page-content .aio-v2-stream-tabs {
+  gap: 22px;
+  margin-top: 12px;
+  margin-bottom: 14px;
+}
+
+/* Composer */
+
+.aio-canvas-composer {
+  min-height: 64px;
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  gap: 12px;
+  border-radius: 12px;
+}
+
+.aio-canvas-composer-avatar {
+  width: 38px;
+  height: 38px;
+}
+
+.aio-canvas-composer-prompt {
+  min-width: 0;
+  font-size: 13px;
+}
+
+.aio-canvas-composer-submit {
+  min-height: 34px;
+  padding: 0 14px;
+}
+
+/* Compact post cards */
 
 .aio-canvas-page-content .post-card {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
   padding: 14px 16px;
+  border-radius: 12px;
+  box-shadow: none;
 }
 
 .aio-canvas-page-content .post-header {
+  gap: 10px;
   margin-bottom: 8px;
 }
 
+.aio-canvas-page-content .post-user {
+  min-width: 0;
+  gap: 10px;
+}
+
+.aio-canvas-page-content .post-avatar {
+  width: 38px;
+  height: 38px;
+}
+
 .aio-canvas-page-content .post-content {
+  min-width: 0;
   margin: 0;
   padding: 0;
 }
@@ -9587,17 +9676,139 @@ html[data-aio-theme] .aio-workspace {
 .aio-canvas-page-content .post-text {
   margin: 8px 0 10px;
   font-size: 13px;
-  line-height: 1.55;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.aio-canvas-page-content .post-media {
+  margin: 10px 0;
+  overflow: hidden;
+  border-radius: 10px;
 }
 
 .aio-canvas-page-content .post-footer {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 20px;
   margin-top: 12px;
   padding-top: 10px;
 }
 
-.aio-canvas-page-content .aio-feed {
-  gap: 10px;
+.aio-canvas-page-content .post-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 5px 4px;
+  font-size: 11px;
 }
+
+/* Tablet */
+
+@media (min-width: 761px) and (max-width: 1180px) {
+  .aio-canvas-content-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .aio-canvas-page-content {
+    max-width: 760px;
+    margin-inline: auto;
+  }
+}
+
+/* Mobile */
+
+@media (max-width: 760px) {
+  .aio-canvas-content-grid {
+    display: block;
+  }
+
+  .aio-canvas-page-content {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+  }
+
+  .aio-canvas-page-content .aio-v2-stream-header {
+    padding: 0 14px;
+    margin-bottom: 12px;
+  }
+
+  .aio-canvas-page-content .aio-v2-stream-heading h1 {
+    font-size: 18px;
+  }
+
+  .aio-canvas-page-content .aio-v2-stream-tabs {
+    gap: 20px;
+  }
+
+  .aio-canvas-composer {
+    min-height: 60px;
+    margin: 0 10px 10px;
+    padding: 10px;
+    gap: 9px;
+    border-radius: 11px;
+  }
+
+  .aio-canvas-composer-avatar {
+    width: 34px;
+    height: 34px;
+  }
+
+  .aio-canvas-composer-prompt {
+    font-size: 12px;
+  }
+
+  .aio-canvas-composer-submit {
+    min-height: 32px;
+    padding: 0 10px;
+  }
+
+  .aio-canvas-page-content .aio-feed {
+    gap: 8px;
+  }
+
+  .aio-canvas-page-content .post-card {
+    width: 100%;
+    padding: 13px 14px;
+    border-left: 0;
+    border-right: 0;
+    border-radius: 0;
+  }
+
+  .aio-canvas-page-content .post-header {
+    margin-bottom: 7px;
+  }
+
+  .aio-canvas-page-content .post-avatar {
+    width: 35px;
+    height: 35px;
+  }
+
+  .aio-canvas-page-content .post-text {
+    margin: 7px 0 9px;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .aio-canvas-page-content .post-footer {
+    justify-content: space-between;
+    gap: 4px;
+    margin-top: 10px;
+    padding-top: 8px;
+  }
+
+  .aio-canvas-page-content .post-action {
+    min-width: 36px;
+    min-height: 36px;
+    gap: 4px;
+    padding: 6px 3px;
+  }
+}
+
 
 /* =========================================================
    AIO CANVAS — MOBILE NAVIGATION
@@ -10043,5 +10254,419 @@ html.aio-sidebar-collapsed .aio-canvas-shell {
   .aio-mobile-drawer {
     transition: none;
     animation: none;
+  }
+}
+/* AIO — Balanced desktop stream */
+
+@media (min-width: 1181px) {
+  .aio-canvas-page-content {
+    width: 100%;
+    max-width: 760px;
+    margin-inline: auto;
+  }
+}
+/* =========================================================
+   AIO — X-INSPIRED STREAM REDESIGN
+   ========================================================= */
+
+.aio-canvas-page-content .aio-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: visible;
+}
+
+/* Continuous timeline */
+
+.aio-canvas-page-content .post-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  column-gap: 12px;
+  padding: 16px;
+  margin: 0;
+  border: 0;
+  border-bottom: 1px solid var(--canvas-border);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.aio-canvas-page-content .post-card:hover {
+  background: var(--canvas-surface);
+}
+
+/* Avatar and author information */
+
+.aio-canvas-page-content .post-header {
+  display: contents;
+}
+
+.aio-canvas-page-content .post-user {
+  display: contents;
+}
+
+.aio-canvas-page-content .post-avatar {
+  grid-column: 1;
+  grid-row: 1 / span 3;
+  width: 42px;
+  height: 42px;
+}
+
+.aio-canvas-page-content .post-author-details {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  padding-right: 38px;
+}
+
+.aio-canvas-page-content .post-author-line strong {
+  font-size: 14px;
+}
+
+.aio-canvas-page-content .post-meta-line {
+  font-size: 12px;
+}
+
+/* Post options menu */
+
+.aio-canvas-page-content .aio-post-menu-wrap {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  align-self: start;
+  z-index: 10;
+}
+
+.aio-canvas-page-content .aio-post-menu-wrap:has(.aio-post-menu) {
+  z-index: 100;
+}
+
+.aio-canvas-page-content .aio-post-menu {
+  z-index: 110 !important;
+  min-width: 190px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+/* Content */
+
+.aio-canvas-page-content .post-content {
+  grid-column: 2;
+  grid-row: 2;
+  min-width: 0;
+  margin: 8px 0 0;
+  padding: 0;
+}
+
+.aio-canvas-page-content .post-text {
+  margin: 0 0 10px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Post action row */
+
+.aio-canvas-page-content .post-footer {
+  grid-column: 2;
+  grid-row: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 10px 0 0;
+  border-top: 0;
+}
+
+.aio-canvas-page-content .post-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 42px;
+  padding: 7px 0;
+  font-size: 12px;
+}
+
+/* Comments occupy the content column */
+
+.aio-canvas-page-content .post-comments {
+  grid-column: 2;
+  grid-row: 4;
+  min-width: 0;
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--canvas-border);
+}
+
+/* Compact composer */
+
+.aio-canvas-page-content .aio-canvas-composer {
+  margin-bottom: 0;
+  border-radius: 0;
+  border-left: 0;
+  border-right: 0;
+}
+
+/* Mobile */
+
+@media (max-width: 760px) {
+  .aio-canvas-page-content .post-card {
+    grid-template-columns: 38px minmax(0, 1fr);
+    column-gap: 10px;
+    padding: 13px 12px;
+    border-radius: 0;
+  }
+
+  .aio-canvas-page-content .post-avatar {
+    width: 38px;
+    height: 38px;
+  }
+
+  .aio-canvas-page-content .post-footer {
+    gap: 8px;
+  }
+
+  .aio-canvas-page-content .post-action {
+    min-width: 32px;
+    gap: 4px;
+  }
+
+  .aio-canvas-page-content .post-comments {
+    margin-top: 8px;
+  }
+}
+/* AIO — Compact X-style timeline refinements */
+
+.aio-canvas-page-content .post-card {
+  padding-top: 12px;
+  padding-bottom: 10px;
+  row-gap: 0;
+}
+
+.aio-canvas-page-content .post-author-details {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 7px;
+}
+
+.aio-canvas-page-content .post-author-line,
+.aio-canvas-page-content .post-meta-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.aio-canvas-page-content .post-content {
+  margin-top: 5px;
+}
+
+.aio-canvas-page-content .post-text {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.aio-canvas-page-content .post-footer {
+  margin-top: 8px;
+  padding-top: 2px;
+  padding-bottom: 0;
+}
+
+.aio-canvas-page-content .post-action {
+  padding: 5px 0;
+}
+
+.aio-canvas-page-content .post-avatar {
+  width: 40px;
+  height: 40px;
+}
+
+@media (max-width: 760px) {
+  .aio-canvas-page-content .post-card {
+    padding: 11px 12px;
+  }
+
+  .aio-canvas-page-content .post-avatar {
+    width: 36px;
+    height: 36px;
+  }
+}
+/* AIO — Post menu layering fix */
+
+.aio-canvas-page-content .post-card {
+  isolation: isolate;
+  z-index: 0;
+}
+
+.aio-canvas-page-content .post-card:has(.aio-post-menu) {
+  z-index: 20;
+}
+
+.aio-canvas-page-content .aio-post-menu {
+  z-index: 30 !important;
+  background: var(--canvas-surface) !important;
+  border: 1px solid var(--canvas-border) !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35) !important;
+}
+
+.aio-canvas-page-content .post-footer {
+  max-width: 560px;
+}
+
+/* ==========================================================
+   AIO CANVAS — CONSOLIDATED THEME INTERACTIONS
+   Single source of truth for action and hover contrast.
+   ========================================================== */
+
+/* Primary buttons use foreground values supplied by ThemeProvider. */
+.aio-canvas-app :is(
+  .aio-canvas-create,
+  .aio-canvas-composer-submit,
+  .aio-button-primary,
+  .publish-button,
+  .aio-mobile-create,
+  .aio-mobile-drawer-create
+) {
+  background-color: var(--aio-primary) !important;
+  color: var(--aio-primary-foreground, #ffffff) !important;
+  border-color: transparent;
+  -webkit-text-fill-color: currentColor;
+}
+
+.aio-canvas-app :is(
+  .aio-canvas-create,
+  .aio-canvas-composer-submit,
+  .aio-button-primary,
+  .publish-button,
+  .aio-mobile-create,
+  .aio-mobile-drawer-create
+):hover:not(:disabled) {
+  background-color: var(--aio-primary-hover) !important;
+  color: var(--aio-primary-hover-foreground, #ffffff) !important;
+}
+
+.aio-canvas-app :is(
+  .aio-canvas-create,
+  .aio-canvas-composer-submit,
+  .aio-button-primary,
+  .publish-button,
+  .aio-mobile-create,
+  .aio-mobile-drawer-create
+) :is(svg, span) {
+  color: inherit !important;
+  -webkit-text-fill-color: currentColor;
+}
+
+.aio-canvas-app :is(
+  .aio-canvas-create,
+  .aio-canvas-composer-submit,
+  .aio-button-primary,
+  .publish-button,
+  .aio-mobile-create,
+  .aio-mobile-drawer-create
+) svg {
+  stroke: currentColor !important;
+  opacity: 1;
+  visibility: visible;
+  flex-shrink: 0;
+}
+
+.aio-canvas-app :is(
+  .aio-canvas-create,
+  .aio-canvas-composer-submit,
+  .aio-button-primary,
+  .publish-button
+):disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Neutral interactive icons stay readable on pale hover surfaces. */
+.aio-canvas-app :is(
+  .aio-canvas-icon-button,
+  .post-action,
+  .more-button,
+  .aio-canvas-composer-icon
+) {
+  color: var(--canvas-text, var(--aio-text)) !important;
+  -webkit-text-fill-color: currentColor;
+}
+
+.aio-canvas-app :is(
+  .aio-canvas-icon-button,
+  .post-action,
+  .more-button,
+  .aio-canvas-composer-icon
+):is(:hover, :focus-visible) {
+  color: var(--canvas-text, var(--aio-text)) !important;
+  background-color: var(--aio-primary-soft) !important;
+  opacity: 1;
+}
+
+.aio-canvas-app :is(
+  .aio-canvas-icon-button,
+  .post-action,
+  .more-button,
+  .aio-canvas-composer-icon
+) svg {
+  color: inherit !important;
+  stroke: currentColor !important;
+  opacity: 1 !important;
+  visibility: visible;
+  flex-shrink: 0;
+}
+
+/* Selected actions keep their semantic colors until hovered. */
+.aio-canvas-app .post-action.liked {
+  color: var(--aio-danger) !important;
+}
+
+.aio-canvas-app .post-action:is(.saved, .comments-open) {
+  color: var(--aio-primary) !important;
+}
+
+.aio-canvas-app .post-action:is(.liked, .saved, .comments-open):hover {
+  color: var(--canvas-text, var(--aio-text)) !important;
+}
+
+.aio-canvas-app .aio-canvas-nav-link:is(.active, .is-active) {
+  color: var(--canvas-text, var(--aio-text));
+}
+
+.aio-canvas-app .aio-canvas-nav-link:is(.active, .is-active) svg {
+  color: inherit;
+}
+
+.aio-canvas-page-content .post-avatar,
+.aio-canvas-app .aio-canvas-composer-avatar {
+  background-color: var(--aio-primary-soft);
+  color: var(--canvas-text, var(--aio-text));
+  -webkit-text-fill-color: currentColor;
+}
+
+.aio-canvas-app .aio-post-menu {
+  background-color: var(--canvas-surface, var(--aio-surface)) !important;
+  color: var(--canvas-text, var(--aio-text));
+}
+
+.aio-canvas-app .aio-post-menu button {
+  color: var(--canvas-text, var(--aio-text));
+}
+
+.aio-canvas-app .aio-post-menu button:hover {
+  background-color: var(--aio-primary-soft);
+  color: var(--canvas-text, var(--aio-text));
+}
+
+.aio-canvas-app :is(button, a):focus-visible {
+  outline: 2px solid var(--aio-primary);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aio-canvas-app :is(button, a) {
+    transition-duration: 0.01ms;
   }
 }
