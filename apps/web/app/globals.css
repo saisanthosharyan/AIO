@@ -10670,3 +10670,371 @@ html.aio-sidebar-collapsed .aio-canvas-shell {
     transition-duration: 0.01ms;
   }
 }
+
+/* AIO THREADED COMMENTS V1 */
+
+.aio-thread {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.aio-thread-node {
+  position: relative;
+  min-width: 0;
+}
+
+.aio-thread-node > .comment-item {
+  position: relative;
+  margin: 0;
+}
+
+.aio-thread-children {
+  margin-left: 18px;
+  padding-left: 16px;
+  border-left: 2px solid var(--aio-border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.aio-thread-children > .aio-thread-node {
+  padding-top: 12px;
+}
+
+.aio-thread-children > .aio-thread-node::before {
+  content: "";
+  position: absolute;
+  top: 28px;
+  left: -16px;
+  width: 14px;
+  border-top: 2px solid var(--aio-border);
+}
+
+.aio-thread-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.aio-thread-reply-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: var(--aio-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.aio-thread-reply-button:hover {
+  color: var(--aio-primary);
+}
+
+.aio-thread-deleted {
+  color: var(--aio-text-muted);
+  font-style: italic;
+}
+
+.aio-thread-reply-composer {
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid var(--aio-border);
+  border-radius: 12px;
+}
+
+.aio-thread-reply-composer textarea {
+  width: 100%;
+  min-height: 72px;
+  resize: vertical;
+  padding: 10px;
+  border: 1px solid var(--aio-border);
+  border-radius: 10px;
+  background: var(--aio-surface-elevated);
+  color: var(--aio-text);
+  font: inherit;
+}
+
+@media (max-width: 600px) {
+  .aio-thread-children {
+    margin-left: 10px;
+    padding-left: 10px;
+  }
+
+  .aio-thread-children > .aio-thread-node::before {
+    left: -10px;
+    width: 8px;
+  }
+}
+
+/* AIO X-inspired conversation thread */
+.aio-thread {
+  width: 100%;
+  min-width: 0;
+}
+
+.aio-thread .aio-thread-node {
+  position: relative;
+  min-width: 0;
+}
+
+.aio-thread .comment-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.aio-thread .comment-avatar {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.aio-thread .comment-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.aio-thread .comment-body {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.aio-thread .comment-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0;
+}
+
+.aio-thread .comment-author {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.aio-thread .comment-author strong {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.aio-thread .comment-header time,
+.aio-thread .comment-username {
+  font-size: 12px;
+  opacity: 0.65;
+}
+
+.aio-thread .comment-body > p {
+  margin: 6px 0 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.aio-thread .aio-thread-actions {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  margin-top: 8px;
+}
+
+.aio-thread .aio-thread-reply-button,
+.aio-thread .comment-delete {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.aio-thread .aio-thread-reply-button:hover {
+  opacity: 1;
+  color: #1d9bf0;
+}
+
+.aio-thread .comment-delete:hover {
+  opacity: 1;
+  color: #f4212e;
+}
+
+.aio-thread .aio-thread-children {
+  position: relative;
+  margin: 0 0 0 19px;
+  padding: 0 0 0 32px;
+  border-left: 2px solid rgba(130, 130, 130, 0.24);
+  background: transparent;
+  border-radius: 0;
+}
+
+.aio-thread .aio-thread-children > .aio-thread-node::before {
+  content: "";
+  position: absolute;
+  left: -32px;
+  top: 31px;
+  width: 20px;
+  height: 2px;
+  background: rgba(130, 130, 130, 0.24);
+}
+
+.aio-thread .aio-thread-deleted {
+  font-size: 13px;
+  font-style: italic;
+  opacity: 0.55;
+}
+
+.aio-thread .aio-thread-reply-composer {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid rgba(130, 130, 130, 0.2);
+  border-radius: 14px;
+  background: transparent;
+}
+
+.aio-thread .aio-thread-reply-composer textarea {
+  width: 100%;
+  min-height: 65px;
+  padding: 10px 0;
+  border: 0;
+  outline: none;
+  resize: vertical;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.aio-thread .comment-composer-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .aio-thread .comment-item {
+    gap: 9px;
+    padding: 10px 0;
+  }
+
+  .aio-thread .comment-avatar {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+  }
+
+  .aio-thread .aio-thread-children {
+    margin-left: 16px;
+    padding-left: 16px;
+  }
+
+  .aio-thread .aio-thread-children > .aio-thread-node::before {
+    left: -16px;
+    width: 10px;
+  }
+}
+
+/* Compact deleted-comment placeholder */
+.aio-thread .aio-thread-deleted-row {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  margin: 4px 0;
+  padding: 6px 0;
+  color: #8b8b98;
+  font-size: 13px;
+  font-style: italic;
+  line-height: 1.4;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+.aio-thread .aio-thread-deleted-row::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  margin-right: 10px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.45;
+}
+
+.aio-thread .aio-thread-children > .aio-thread-node:has(> .aio-thread-deleted-row)::before {
+  top: 21px;
+}
+
+/* AIO compact conversation spacing */
+.aio-thread .aio-thread-children {
+  margin-left: 14px;
+  padding-left: 20px;
+  border-left: 1px solid rgba(130, 130, 130, 0.28);
+}
+
+.aio-thread .aio-thread-children > .aio-thread-node::before {
+  left: -20px;
+  width: 12px;
+  height: 1px;
+  background: rgba(130, 130, 130, 0.28);
+}
+
+.aio-thread .comment-item {
+  padding: 9px 0;
+  gap: 10px;
+}
+
+.aio-thread .comment-avatar {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+}
+
+.aio-thread .comment-body > p {
+  margin: 4px 0 6px;
+}
+
+.aio-thread .aio-thread-actions {
+  margin-top: 4px;
+}
+
+@media (max-width: 640px) {
+  .aio-thread .aio-thread-children {
+    margin-left: 10px;
+    padding-left: 12px;
+  }
+
+  .aio-thread .aio-thread-children > .aio-thread-node::before {
+    left: -12px;
+    width: 8px;
+  }
+}

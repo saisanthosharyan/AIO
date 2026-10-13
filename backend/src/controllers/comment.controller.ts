@@ -1,3 +1,4 @@
+
 import mongoose from "mongoose";
 import type { Response } from "express";
 
@@ -30,9 +31,9 @@ export async function createComment(
   try {
     const userId = request.userId;
     const { id } = request.params;
-    const { content } = request.body;
+    const { content, parentCommentId } = request.body ?? {};
 
-    if (!userId) {
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
       response.status(401).json({
         success: false,
         message: "Authentication required",
@@ -51,10 +52,7 @@ export async function createComment(
       return;
     }
 
-    if (
-      typeof content !== "string" ||
-      !content.trim()
-    ) {
+    if (typeof content !== "string" || !content.trim()) {
       response.status(400).json({
         success: false,
         message: "Comment content is required",
@@ -65,16 +63,20 @@ export async function createComment(
     if (content.trim().length > 1000) {
       response.status(400).json({
         success: false,
-        message:
-          "Comment must be 1000 characters or less",
+        message: "Comment must be 1000 characters or less",
       });
       return;
     }
 
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      response.status(401).json({
+    if (
+      parentCommentId !== undefined &&
+      parentCommentId !== null &&
+      (typeof parentCommentId !== "string" ||
+        !mongoose.Types.ObjectId.isValid(parentCommentId))
+    ) {
+      response.status(400).json({
         success: false,
-        message: "Invalid authenticated user ID",
+        message: "Invalid parent comment ID",
       });
       return;
     }
@@ -92,10 +94,30 @@ export async function createComment(
       return;
     }
 
+    let parentId: mongoose.Types.ObjectId | null = null;
+
+    if (parentCommentId) {
+      parentId = new mongoose.Types.ObjectId(parentCommentId);
+
+
+    const parent = await CommentModel.findOne({
+      _id: parentId,
+      postId,
+      isDeleted: { $ne: true },
+    });
+
+
+      if (!parent) {
+        response.status(404).json({
+          success: false,
+          message: "Parent comment not found on this post",
+        });
+        return;
+      }
+    }
+
     const user = await UserModel.findById(userObjectId)
-      .select(
-        "_id username displayName avatarUrl verified",
-      )
+      .select("_id username displayName avatarUrl verified")
       .lean();
 
     if (!user) {
@@ -109,27 +131,33 @@ export async function createComment(
     const comment = await CommentModel.create({
       userId: userObjectId,
       postId,
+      parentCommentId: parentId,
       content: content.trim(),
     });
 
-    post.commentsCount += 1;
-
-    await post.save();
+    const updatedPost = await PostModel.findByIdAndUpdate(
+      postId,
+      { $inc: { commentsCount: 1 } },
+      { new: true },
+    );
 
     response.status(201).json({
       success: true,
-      message: "Comment created successfully",
+      message: parentId
+        ? "Reply created successfully"
+        : "Comment created successfully",
       comment: {
         _id: comment._id.toString(),
         id: comment._id.toString(),
         userId: comment.userId.toString(),
         postId: comment.postId.toString(),
+        parentCommentId: parentId?.toString() ?? null,
         content: comment.content,
         createdAt: comment.createdAt,
         updatedAt: comment.updatedAt,
         author: normalizeUser(user),
       },
-      commentsCount: post.commentsCount,
+      commentsCount: updatedPost?.commentsCount ?? 0,
     });
   } catch (error) {
     console.error("Create comment error:", error);
@@ -176,10 +204,8 @@ export async function getComments(
       return;
     }
 
-    const comments = await CommentModel.find({
-      postId,
-    })
-      .sort({ createdAt: -1 })
+    const comments = await CommentModel.find({ postId })
+      .sort({ createdAt: 1, _id: 1 })
       .lean();
 
     if (comments.length === 0) {
@@ -193,25 +219,16 @@ export async function getComments(
 
     const userIds = [
       ...new Set(
-        comments.map((comment) =>
-          comment.userId.toString(),
-        ),
+        comments.map((comment) => comment.userId.toString()),
       ),
     ]
-      .filter((value) =>
-        mongoose.Types.ObjectId.isValid(value),
-      )
-      .map(
-        (value) =>
-          new mongoose.Types.ObjectId(value),
-      );
+      .filter((value) => mongoose.Types.ObjectId.isValid(value))
+      .map((value) => new mongoose.Types.ObjectId(value));
 
     const users = await UserModel.find({
       _id: { $in: userIds },
     })
-      .select(
-        "_id username displayName avatarUrl verified",
-      )
+      .select("_id username displayName avatarUrl verified")
       .lean();
 
     const userMap = new Map(
@@ -221,20 +238,28 @@ export async function getComments(
       ]),
     );
 
-    const normalizedComments = comments.map(
-      (comment) => ({
-        _id: comment._id.toString(),
-        id: comment._id.toString(),
-        userId: comment.userId.toString(),
-        postId: comment.postId.toString(),
-        content: comment.content,
-        createdAt: comment.createdAt,
-        updatedAt: comment.updatedAt,
-        author:
-          userMap.get(comment.userId.toString()) ??
-          null,
-      }),
-    );
+
+const normalizedComments = comments.map((comment) => {
+  const isDeleted = comment.isDeleted === true;
+
+  return {
+    _id: comment._id.toString(),
+    id: comment._id.toString(),
+    userId: isDeleted ? null : comment.userId.toString(),
+    postId: comment.postId.toString(),
+    parentCommentId:
+      comment.parentCommentId?.toString() ?? null,
+    content: isDeleted ? "[deleted]" : comment.content,
+    isDeleted,
+    deletedAt: isDeleted ? comment.deletedAt ?? null : null,
+    createdAt: comment.createdAt,
+    updatedAt: comment.updatedAt,
+    author: isDeleted
+      ? null
+      : userMap.get(comment.userId.toString()) ?? null,
+  };
+});
+
 
     response.status(200).json({
       success: true,
@@ -254,6 +279,7 @@ export async function getComments(
   }
 }
 
+
 export async function deleteComment(
   request: AuthenticatedRequest,
   response: Response,
@@ -262,7 +288,7 @@ export async function deleteComment(
     const userId = request.userId;
     const { id, commentId } = request.params;
 
-    if (!userId) {
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
       response.status(401).json({
         success: false,
         message: "Authentication required",
@@ -283,48 +309,40 @@ export async function deleteComment(
       return;
     }
 
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      response.status(401).json({
-        success: false,
-        message: "Invalid authenticated user ID",
-      });
-      return;
-    }
-
     const postId = new mongoose.Types.ObjectId(id);
+    const commentObjectId = new mongoose.Types.ObjectId(commentId);
+    const userObjectId = new mongoose.Types.ObjectId(userId);
 
-    const commentObjectId =
-      new mongoose.Types.ObjectId(commentId);
-
-    const userObjectId =
-      new mongoose.Types.ObjectId(userId);
-
-    const comment =
-      await CommentModel.findOneAndDelete({
+    const comment = await CommentModel.findOneAndUpdate(
+      {
         _id: commentObjectId,
         postId,
         userId: userObjectId,
-      });
+        isDeleted: { $ne: true },
+      },
+      {
+        $set: {
+          isDeleted: true,
+          deletedAt: new Date(),
+          content: "[deleted]",
+        },
+      },
+      { new: true },
+    );
 
     if (!comment) {
       response.status(404).json({
         success: false,
-        message:
-          "Comment not found or you are not the owner",
+        message: "Comment not found or already deleted",
       });
       return;
     }
 
-    const post = await PostModel.findById(postId);
-
-    if (post) {
-      post.commentsCount = Math.max(
-        0,
-        post.commentsCount - 1,
-      );
-
-      await post.save();
-    }
+    const updatedPost = await PostModel.findByIdAndUpdate(
+      postId,
+      { $inc: { commentsCount: -1 } },
+      { new: true },
+    );
 
     response.status(200).json({
       success: true,
@@ -332,13 +350,14 @@ export async function deleteComment(
       comment: {
         _id: comment._id.toString(),
         id: comment._id.toString(),
-        userId: comment.userId.toString(),
-        postId: comment.postId.toString(),
-        content: comment.content,
-        createdAt: comment.createdAt,
-        updatedAt: comment.updatedAt,
+        parentCommentId:
+          comment.parentCommentId?.toString() ?? null,
+        content: "[deleted]",
+        isDeleted: true,
+        deletedAt: comment.deletedAt,
+        author: null,
       },
-      commentsCount: post?.commentsCount ?? 0,
+      commentsCount: updatedPost?.commentsCount ?? 0,
     });
   } catch (error) {
     console.error("Delete comment error:", error);

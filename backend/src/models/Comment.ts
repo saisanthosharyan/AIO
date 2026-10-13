@@ -1,3 +1,4 @@
+
 import mongoose, {
   type Document,
   type Model,
@@ -6,7 +7,10 @@ import mongoose, {
 export interface CommentDocument extends Document {
   userId: mongoose.Types.ObjectId;
   postId: mongoose.Types.ObjectId;
+  parentCommentId: mongoose.Types.ObjectId | null;
   content: string;
+  isDeleted: boolean;
+  deletedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -25,11 +29,27 @@ const commentSchema = new mongoose.Schema<CommentDocument>(
       required: true,
     },
 
+    parentCommentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Comment",
+      default: null,
+    },
+
     content: {
       type: String,
       required: true,
       trim: true,
       maxlength: 1000,
+    },
+
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+
+    deletedAt: {
+      type: Date,
+      default: null,
     },
   },
   {
@@ -40,6 +60,11 @@ const commentSchema = new mongoose.Schema<CommentDocument>(
 commentSchema.index({
   postId: 1,
   createdAt: -1,
+});
+
+commentSchema.index({
+  parentCommentId: 1,
+  createdAt: 1,
 });
 
 export const CommentModel: Model<CommentDocument> =

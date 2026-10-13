@@ -1,4 +1,4 @@
-export type PostType =
+﻿export type PostType =
   | "thought"
   | "image"
   | "space";
@@ -30,6 +30,7 @@ export interface Post {
 
 export interface CommentAuthor {
   id: string;
+  _id?: string;
   username: string;
   displayName: string;
   avatarUrl?: string;
@@ -38,9 +39,13 @@ export interface CommentAuthor {
 
 export interface Comment {
   id: string;
-  userId: string;
+  _id?: string;
+  userId: string | null;
   postId: string;
+  parentCommentId: string | null;
   content: string;
+  isDeleted: boolean;
+  deletedAt: string | null;
   createdAt: string;
   updatedAt?: string;
   author?: CommentAuthor | null;

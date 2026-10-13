@@ -1,5 +1,6 @@
 
 "use client";
+import CommentThread from "./CommentThread";
 
 import Image from "next/image";
 import {
@@ -93,6 +94,37 @@ function getInitials(
   return value.slice(0, 2).toUpperCase();
 }
 
+interface CommentThreadNode {
+  comment: Comment;
+  children: CommentThreadNode[];
+}
+
+function buildCommentTree(comments: Comment[]): CommentThreadNode[] {
+  const nodes = new Map<string, CommentThreadNode>();
+  const roots: CommentThreadNode[] = [];
+
+  for (const comment of comments) {
+    nodes.set(comment.id, {
+      comment,
+      children: [],
+    });
+  }
+
+  for (const comment of comments) {
+    const node = nodes.get(comment.id)!;
+    const parent = comment.parentCommentId
+      ? nodes.get(comment.parentCommentId)
+      : undefined;
+
+    if (parent && parent !== node) {
+      parent.children.push(node);
+    } else {
+      roots.push(node);
+    }
+  }
+
+  return roots;
+}
 export default function PostCard({
   postId,
   authorId,
@@ -367,7 +399,7 @@ export default function PostCard({
       const loadedComments = await getComments(postId);
 
       setCommentList(loadedComments);
-      setComments(loadedComments.length);
+      setComments(loadedComments.filter((comment) => !comment.isDeleted).length);
     } catch (err) {
       setCommentError(
         err instanceof Error
@@ -431,6 +463,29 @@ export default function PostCard({
     }
   }
 
+  async function handleCreateReply(
+    parentCommentId: string,
+    content: string,
+  ): Promise<void> {
+    const trimmed = content.trim();
+
+    if (!trimmed || trimmed.length > 1000) {
+      throw new Error("Reply must contain 1 to 1000 characters.");
+    }
+
+    const response = await createComment(
+      postId,
+      trimmed,
+      parentCommentId,
+    );
+
+    setCommentList((current) => [
+      ...current,
+      response.comment,
+    ]);
+
+    setComments(response.commentsCount);
+  }
   async function handleDeleteComment(
     commentId: string,
   ): Promise<void> {
@@ -446,7 +501,18 @@ export default function PostCard({
       const response = await deleteComment(postId, commentId);
 
       setCommentList((current) =>
-        current.filter((comment) => comment.id !== commentId),
+        current.map((comment) =>
+          comment.id === commentId
+            ? {
+                ...comment,
+                isDeleted: true,
+                deletedAt: new Date().toISOString(),
+                content: "[deleted]",
+                userId: null,
+                author: null,
+              }
+            : comment,
+        ),
       );
 
       setComments(response.commentsCount);
@@ -512,7 +578,7 @@ export default function PostCard({
                 className="post-meta-dot"
                 aria-hidden="true"
               >
-                ·
+                Â·
               </span>
               <time>{time}</time>
             </div>
@@ -834,101 +900,14 @@ export default function PostCard({
             </div>
           ) : (
             <div className="comment-list">
-              {commentList.map((comment) => {
-                const author = comment.author;
-
-                const displayName =
-                  author?.displayName?.trim() ||
-                  "AIO User";
-
-                const commentUsername =
-                  author?.username?.trim() ||
-                  "aio-user";
-
-                const commentInitials = getInitials(
-                  author?.displayName,
-                  author?.username,
-                );
-
-                const canDelete = Boolean(
-                  currentUserId &&
-                  comment.userId === currentUserId,
-                );
-
-                return (
-                  <article
-                    key={comment.id}
-                    className="comment-item"
-                  >
-                    <div
-                      className={`comment-avatar ${avatarClass}`}
-                    >
-                      {author?.avatarUrl ? (
-                        <Image
-                          src={author.avatarUrl}
-                          alt={`${displayName}'s avatar`}
-                          width={36}
-                          height={36}
-                          unoptimized
-                        />
-                      ) : (
-                        commentInitials
-                      )}
-                    </div>
-
-                    <div className="comment-body">
-                      <div className="comment-header">
-                        <div className="comment-author">
-                          <strong>{displayName}</strong>
-                          {author?.verified && (
-                            <BadgeCheck
-                              size={14}
-                              strokeWidth={2.4}
-                              aria-label="Verified account"
-                            />
-                          )}
-                        </div>
-
-                        <time>
-                          {getCommentTime(comment.createdAt)}
-                        </time>
-                      </div>
-
-                      <div className="comment-username">
-                        @{commentUsername}
-                      </div>
-
-                      <p>{comment.content}</p>
-
-                      {canDelete && (
-                        <button
-                          type="button"
-                          className="comment-delete"
-                          onClick={() =>
-                            void handleDeleteComment(
-                              comment.id,
-                            )
-                          }
-                          disabled={
-                            deletingCommentId === comment.id
-                          }
-                          aria-label="Delete comment"
-                        >
-                          {deletingCommentId === comment.id ? (
-                            <Loader2
-                              size={14}
-                              className="aio-spin"
-                            />
-                          ) : (
-                            <Trash2 size={14} />
-                          )}
-                          <span>Delete</span>
-                        </button>
-                      )}
-                    </div>
-                  </article>
-                );
-              })}
+              <CommentThread
+  nodes={buildCommentTree(commentList)}
+  currentUserId={currentUserId}
+  avatarClass={avatarClass}
+  deletingCommentId={deletingCommentId}
+  onReply={handleCreateReply}
+  onDelete={handleDeleteComment}
+/>
             </div>
           )}
         </section>

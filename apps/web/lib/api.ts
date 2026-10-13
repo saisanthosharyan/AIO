@@ -76,7 +76,7 @@ async function request<T>(
 }
 
 /* -------------------------------------------------------------------------- */
-/* Backend → Frontend normalization                                           */
+/* Backend â†’ Frontend normalization                                           */
 /* -------------------------------------------------------------------------- */
 
 interface BackendPost {
@@ -563,6 +563,9 @@ interface BackendComment {
     avatarUrl?: string;
     verified?: boolean;
   } | null;
+  parentCommentId?: string | null;
+  isDeleted?: boolean;
+  deletedAt?: string | null;
 }
 
 function normalizeComment(
@@ -584,12 +587,24 @@ function normalizeComment(
         : "";
 
   return {
+    parentCommentId:
+      typeof comment.parentCommentId === "string"
+        ? comment.parentCommentId
+        : null,
+
+    isDeleted: comment.isDeleted === true,
+
+    deletedAt:
+      typeof comment.deletedAt === "string"
+        ? comment.deletedAt
+        : null,
+
     id,
 
     userId:
       typeof comment.userId === "string"
         ? comment.userId
-        : "",
+        : null,
 
     postId:
       typeof comment.postId === "string"
@@ -673,6 +688,7 @@ export async function getComments(
 export async function createComment(
   postId: string,
   content: string,
+  parentCommentId?: string,
 ): Promise<CreateCommentResponse> {
   const response =
     await request<{
@@ -684,9 +700,7 @@ export async function createComment(
       `/api/posts/${postId}/comments`,
       {
         method: "POST",
-        body: JSON.stringify({
-          content,
-        }),
+        body: JSON.stringify({ content, ...(parentCommentId ? { parentCommentId } : {}) }),
       },
     );
 
