@@ -1,4 +1,4 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
 @import "../../../packages/ui/src/tokens.css";
 /* =========================================================
    AIO DESIGN SYSTEM
@@ -2814,7 +2814,7 @@ p {
   }
 }
 /* =========================================================
-   CREATE PANEL — POLISHED
+   CREATE PANEL â€” POLISHED
    ========================================================= */
 .create-panel {
   padding: 14px;
@@ -2920,7 +2920,7 @@ p {
   flex: 0 0 auto;
 }
 /* =========================================================
-   AIO V2 — STREAM COMPOSER
+   AIO V2 â€” STREAM COMPOSER
    ========================================================= */
 .aio-v2-composer {
   width: 100%;
@@ -3063,7 +3063,7 @@ p {
   }
 }
 /* =========================================================
-   AIO V2 — POST CARDS
+   AIO V2 â€” POST CARDS
    ========================================================= */
 .aio-feed {
   display: flex;
@@ -3409,7 +3409,7 @@ p {
   }
 }
 /* =========================================================
-   AIO V2 — RIGHT PANEL + DESKTOP WORKSPACE
+   AIO V2 â€” RIGHT PANEL + DESKTOP WORKSPACE
    ========================================================= */
 @media (min-width: 1101px) {
   .aio-workspace-inner {
@@ -3829,7 +3829,7 @@ html[data-theme="dark"] .aio-v2-intelligence-card {
     width: 100%;
   }
 }
-/* AIO V2 — RIGHT PANEL DARK THEME TEXT FIX */
+/* AIO V2 â€” RIGHT PANEL DARK THEME TEXT FIX */
 html[data-theme="dark"] .aio-v2-side-card-heading h3,
 html[data-theme="dark"] .aio-v2-event-copy strong,
 html[data-theme="dark"] .aio-v2-trend-copy strong,
@@ -3860,7 +3860,7 @@ html[data-theme="dark"] .aio-v2-event-date span {
   color: #2dd4bf;
 }
 /* =========================================================
-   AIO TEMPLATE UI — FINAL SHELL OVERRIDES
+   AIO TEMPLATE UI â€” FINAL SHELL OVERRIDES
    Reference: supplied AIO HTML template
    Keep this section LAST in globals.css.
    ========================================================= */
@@ -4771,7 +4771,7 @@ body {
   display: none;
 }
 /* =========================================================
-   TABLET — TEMPLATE BREAKPOINT
+   TABLET â€” TEMPLATE BREAKPOINT
    ========================================================= */
 @media (max-width: 1100px) {
   .aio-app {
@@ -4864,7 +4864,7 @@ body {
   }
 }
 /* =========================================================
-   MOBILE — TEMPLATE BREAKPOINT
+   MOBILE â€” TEMPLATE BREAKPOINT
    ========================================================= */
 @media (max-width: 700px) {
   html,
@@ -5213,7 +5213,7 @@ html[data-theme="dark"]
   }
 }
 /* =========================================================
-   AIO TEMPLATE — STREAM WIDTH + SPACING FINAL OVERRIDE
+   AIO TEMPLATE â€” STREAM WIDTH + SPACING FINAL OVERRIDE
    Keep this section at the very bottom of globals.css.
    ========================================================= */
 /* ---------------------------------------------------------
@@ -5511,7 +5511,7 @@ html[data-theme="dark"]
   }
 }
 /* =========================================================
-   AIO TEMPLATE — DISCOVER PAGE FINAL OVERRIDE
+   AIO TEMPLATE â€” DISCOVER PAGE FINAL OVERRIDE
    ========================================================= */
 .aio-discover-page {
   width: 100%;
@@ -6206,7 +6206,7 @@ html[data-theme="dark"]
   font-weight: 800;
 }
 /* =========================================================
-   AIO TEMPLATE — MESSAGES PAGE FINAL OVERRIDE
+   AIO TEMPLATE â€” MESSAGES PAGE FINAL OVERRIDE
    ========================================================= */
 .aio-messages-page {
   width: 100%;
@@ -7212,7 +7212,7 @@ html[data-theme="dark"]
 }
 
 /* =========================================================
-   AIO MESSAGES — POLISHED WORKSPACE PATCH
+   AIO MESSAGES â€” POLISHED WORKSPACE PATCH
    Keeps the existing Messages page logic and class names.
    ========================================================= */
 .aio-messages-page {
@@ -7434,7 +7434,7 @@ html[data-theme="dark"] .aio-messages-composer,
 
 html[data-theme="dark"] .aio-messages-thread,
 .dark .aio-messages-thread {
-  background: var(--soft);
+  background: var(--aio-bg);
 }
 
 html[data-theme="dark"] .aio-messages-message-row.is-theirs .aio-messages-bubble,
@@ -7446,9 +7446,9 @@ html[data-theme="dark"] .aio-messages-message-row.is-theirs .aio-messages-bubble
 
 html[data-theme="dark"] .aio-messages-message-row.is-mine .aio-messages-bubble,
 .dark .aio-messages-message-row.is-mine .aio-messages-bubble {
-  border-color: #18a783;
-  background: #0c8a6a;
-  color: #ffffff;
+  border-color: var(--aio-primary);
+  background: var(--aio-primary);
+  color: var(--aio-primary-foreground);
 }
 
 @media (max-width: 1100px) {
@@ -7489,7 +7489,7 @@ html[data-theme="dark"] .aio-messages-message-row.is-mine .aio-messages-bubble,
   }
 }
 /* =========================================================
-   MESSAGES — FULL WIDTH WORKSPACE
+   MESSAGES â€” FULL WIDTH WORKSPACE
    ========================================================= */
 
 @media (min-width: 1101px) {
@@ -8570,7 +8570,7 @@ html[data-theme="dark"] .aio-accent-picker {
   }
 }
 /* =========================================================
-   AIO LIVING INTERFACE — GLOBAL THEME BRIDGE
+   AIO LIVING INTERFACE â€” GLOBAL THEME BRIDGE
    ========================================================= */
 
 html[data-aio-theme] {
@@ -8654,7 +8654,7 @@ html[data-aio-theme] .aio-workspace {
 }
 
 /* =========================================================
-   AIO — LIVING INTERFACE / NAVIGATION SPINE
+   AIO â€” LIVING INTERFACE / NAVIGATION SPINE
    ========================================================= */
 
 .aio-spine {
@@ -8841,7 +8841,7 @@ html[data-aio-theme] .aio-workspace {
 }
 
 /* =========================================================
-   AIO CANVAS — APPLICATION LAYOUT
+   AIO CANVAS â€” APPLICATION LAYOUT
    ========================================================= */
 
 .aio-canvas-app {
@@ -9183,7 +9183,7 @@ html[data-aio-theme] .aio-workspace {
   }
 }
 
-/* AIO Canvas — Compact discovery panel */
+/* AIO Canvas â€” Compact discovery panel */
 
 .aio-canvas-discovery {
   width: 100%;
@@ -9296,7 +9296,7 @@ html[data-aio-theme] .aio-workspace {
 }
 
 /* =====================================================
-   AIO CANVAS — STREAM AND POST PRESENTATION
+   AIO CANVAS â€” STREAM AND POST PRESENTATION
    ===================================================== */
 
 .aio-canvas-page-content .aio-v2-stream-header {
@@ -9571,7 +9571,7 @@ html[data-aio-theme] .aio-workspace {
 }
 
 /* =========================================================
-   AIO CANVAS — STREAM REFINEMENT V2
+   AIO CANVAS â€” STREAM REFINEMENT V2
    ========================================================= */
 
 /* Desktop feed layout */
@@ -9811,7 +9811,7 @@ html[data-aio-theme] .aio-workspace {
 
 
 /* =========================================================
-   AIO CANVAS — MOBILE NAVIGATION
+   AIO CANVAS â€” MOBILE NAVIGATION
    ========================================================= */
 
 .aio-mobile-navigation {
@@ -10009,7 +10009,7 @@ html[data-aio-theme] .aio-workspace {
 }
 
 /* =========================================================
-   AIO CANVAS — RESPONSIVE NAVIGATION V2
+   AIO CANVAS â€” RESPONSIVE NAVIGATION V2
    ========================================================= */
 
 /* Desktop collapsible sidebar */
@@ -10256,7 +10256,7 @@ html.aio-sidebar-collapsed .aio-canvas-shell {
     animation: none;
   }
 }
-/* AIO — Balanced desktop stream */
+/* AIO â€” Balanced desktop stream */
 
 @media (min-width: 1181px) {
   .aio-canvas-page-content {
@@ -10266,7 +10266,7 @@ html.aio-sidebar-collapsed .aio-canvas-shell {
   }
 }
 /* =========================================================
-   AIO — X-INSPIRED STREAM REDESIGN
+   AIO â€” X-INSPIRED STREAM REDESIGN
    ========================================================= */
 
 .aio-canvas-page-content .aio-feed {
@@ -10437,7 +10437,7 @@ html.aio-sidebar-collapsed .aio-canvas-shell {
     margin-top: 8px;
   }
 }
-/* AIO — Compact X-style timeline refinements */
+/* AIO â€” Compact X-style timeline refinements */
 
 .aio-canvas-page-content .post-card {
   padding-top: 12px;
@@ -10493,7 +10493,7 @@ html.aio-sidebar-collapsed .aio-canvas-shell {
     height: 36px;
   }
 }
-/* AIO — Post menu layering fix */
+/* AIO â€” Post menu layering fix */
 
 .aio-canvas-page-content .post-card {
   isolation: isolate;
@@ -10516,7 +10516,7 @@ html.aio-sidebar-collapsed .aio-canvas-shell {
 }
 
 /* ==========================================================
-   AIO CANVAS — CONSOLIDATED THEME INTERACTIONS
+   AIO CANVAS â€” CONSOLIDATED THEME INTERACTIONS
    Single source of truth for action and hover contrast.
    ========================================================== */
 
@@ -11037,4 +11037,133 @@ html.aio-sidebar-collapsed .aio-canvas-shell {
     left: -12px;
     width: 8px;
   }
+}
+
+/* ==========================================================
+   AIO MESSAGES â€” RESPONSIVE WIDTH AND LAYOUT
+   ========================================================== */
+
+.aio-canvas-content-grid--messages {
+  width: 100%;
+  min-width: 0;
+}
+
+.aio-canvas-content-grid--messages > .aio-canvas-page-content,
+.aio-canvas-content-grid--messages .aio-messages-page {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  margin-inline: 0;
+}
+
+.aio-canvas-content-grid--messages .aio-messages-hero h1 {
+  font-size: clamp(28px, 3vw, 36px);
+  line-height: 1.12;
+}
+
+@media (min-width: 761px) {
+  .aio-canvas-content-grid--messages {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    max-width: none;
+  }
+
+  .aio-canvas-content-grid--messages .aio-messages-workspace {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    grid-template-columns: minmax(260px, 28%) minmax(0, 1fr);
+  }
+}
+
+.aio-canvas-content-grid--messages .aio-messages-thread {
+  background: var(--aio-bg);
+  padding-top: 24px;
+  scroll-padding-top: 24px;
+}
+
+.aio-canvas-content-grid--messages .aio-messages-day {
+  flex-shrink: 0;
+  margin-top: 10px;
+}
+
+.aio-canvas-content-grid--messages .aio-messages-send {
+  background: var(--aio-primary);
+  color: var(--aio-primary-foreground);
+}
+
+.aio-canvas-content-grid--messages .aio-messages-send svg {
+  color: inherit;
+  stroke: currentColor;
+}
+
+@media (min-width: 761px) and (max-width: 1050px) {
+  .aio-canvas-content-grid--messages .aio-messages-workspace {
+    grid-template-columns: minmax(220px, 34%) minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+  .aio-canvas-content-grid--messages,
+  .aio-canvas-content-grid--messages > .aio-canvas-page-content,
+  .aio-canvas-content-grid--messages .aio-messages-page {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .aio-canvas-content-grid--messages .aio-messages-workspace {
+    display: block;
+  }
+}
+
+/* ==========================================================
+   AIO MESSAGES â€” THEME-AWARE BUBBLE CONTRAST
+   ========================================================== */
+
+/* Incoming messages */
+
+.aio-canvas-content-grid--messages
+.aio-messages-message-row.is-theirs
+.aio-messages-bubble {
+  background: var(--aio-surface);
+  color: var(--aio-text, var(--text));
+  border-color: var(--line);
+}
+
+/* Outgoing messages */
+
+.aio-canvas-content-grid--messages
+.aio-messages-message-row.is-mine
+.aio-messages-bubble {
+  background: var(--aio-primary);
+  color: var(--aio-primary-foreground);
+  border-color: var(--aio-primary);
+}
+
+/* Keep message text readable */
+
+.aio-canvas-content-grid--messages
+.aio-messages-bubble p {
+  color: inherit;
+  -webkit-text-fill-color: currentColor;
+}
+
+/* Keep timestamps and delivery icons readable */
+
+.aio-canvas-content-grid--messages
+.aio-messages-message-meta,
+.aio-canvas-content-grid--messages
+.aio-messages-message-meta time,
+.aio-canvas-content-grid--messages
+.aio-messages-message-meta svg {
+  color: inherit;
+}
+
+/* Preserve readable text inside outgoing bubbles */
+
+.aio-canvas-content-grid--messages
+.aio-messages-message-row.is-mine
+.aio-messages-bubble :is(p, span, time, svg) {
+  color: inherit;
 }

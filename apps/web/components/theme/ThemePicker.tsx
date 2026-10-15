@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   Check,
@@ -15,11 +15,45 @@ import {
   THEME_PRESETS,
   getThemeColors,
   type AppearanceMode,
+  type DesignStyle,
   type ThemeId,
 } from "@/lib/themes";
 
 import { useTheme } from "./ThemeProvider";
 
+const DESIGN_OPTIONS: {
+  id: DesignStyle;
+  name: string;
+  description: string;
+  background: string;
+  surface: string;
+  accent: string;
+}[] = [
+  {
+    id: "v2",
+    name: "Filament v2",
+    description: "Modern, clean, blue social experience.",
+    background: "#F4F5F8",
+    surface: "#FFFFFF",
+    accent: "#2F62F0",
+  },
+  {
+    id: "paperwave",
+    name: "Paperwave",
+    description: "Warm, editorial, and expressive.",
+    background: "#EFE7D6",
+    surface: "#FBF7EC",
+    accent: "#FF5A36",
+  },
+  {
+    id: "original",
+    name: "Original AIO",
+    description: "The classic AIO experience.",
+    background: "#F7F8FC",
+    surface: "#FFFFFF",
+    accent: "#6258ED",
+  },
+];
 const ACCENT_COLORS = [
   "#6258ED",
   "#356DF3",
@@ -183,6 +217,7 @@ export default function ThemePicker() {
     preferences,
     resolvedAppearance,
     setTheme,
+    setDesignStyle,
     setAppearance,
     setCustomAccent,
     resetTheme,
@@ -219,6 +254,128 @@ export default function ThemePicker() {
         </div>
       </div>
 
+      <section className="aio-appearance-section">
+        <div className="aio-appearance-section-heading">
+          <div>
+            <span className="aio-appearance-eyebrow">
+              DESIGN STYLE
+            </span>
+            <h3>Choose your AIO experience</h3>
+            <p>
+              Switch between Filament, Paperwave, and
+              the original AIO design.
+            </p>
+          </div>
+        </div>
+
+        <div
+          className="aio-design-style-grid"
+          style={{
+            display: "grid",
+            gridTemplateColumns:
+              "repeat(auto-fit, minmax(min(100%, 190px), 1fr))",
+            gap: 14,
+          }}
+        >
+          {DESIGN_OPTIONS.map((option) => {
+            const selected =
+              preferences.designStyle === option.id;
+
+            return (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => setDesignStyle(option.id)}
+                aria-pressed={selected}
+                style={{
+                  textAlign: "left",
+                  padding: 12,
+                  borderRadius: 16,
+                  border: selected
+                    ? "2px solid var(--aio-primary)"
+                    : "2px solid var(--aio-border, #d2d7e3)",
+                  background:
+                    "var(--aio-surface, #ffffff)",
+                  color: "var(--aio-text, inherit)",
+                  cursor: "pointer",
+                }}
+              >
+                <div
+                  aria-hidden="true"
+                  style={{
+                    display: "flex",
+                    height: 100,
+                    borderRadius: 10,
+                    overflow: "hidden",
+                    background: option.background,
+                    border: "1px solid #d2d7e3",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "24%",
+                      background: option.accent,
+                      opacity: 0.85,
+                    }}
+                  />
+                  <div
+                    style={{
+                      flex: 1,
+                      padding: 12,
+                    }}
+                  >
+                    <div
+                      style={{
+                        height: 12,
+                        width: "65%",
+                        borderRadius: 6,
+                        background: option.accent,
+                        marginBottom: 12,
+                      }}
+                    />
+                    <div
+                      style={{
+                        height: 42,
+                        borderRadius: 8,
+                        background: option.surface,
+                        border: "1px solid #d2d7e3",
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 8,
+                    marginTop: 12,
+                  }}
+                >
+                  <strong>{option.name}</strong>
+                  {selected && (
+                    <Check
+                      size={18}
+                      aria-label="Selected"
+                    />
+                  )}
+                </div>
+
+                <p
+                  style={{
+                    fontSize: 13,
+                    marginTop: 5,
+                    opacity: 0.8,
+                  }}
+                >
+                  {option.description}
+                </p>
+              </button>
+            );
+          })}
+        </div>
+      </section>
       <section className="aio-appearance-section">
         <div className="aio-appearance-section-heading">
           <div>
@@ -479,7 +636,7 @@ export default function ThemePicker() {
                     : "#FFFFFF",
                 }}
               >
-                Pretty good! Loving this AIO theme ✨
+                Pretty good! Loving this AIO theme âœ¨
               </div>
             </div>
 
@@ -496,7 +653,7 @@ export default function ThemePicker() {
                   background: colors.primary,
                 }}
               >
-                ↑
+                â†‘
               </div>
             </div>
           </div>

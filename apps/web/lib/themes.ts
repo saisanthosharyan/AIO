@@ -80,7 +80,14 @@ export type ResolvedAppearance =
   | "light"
   | "dark";
 
+export type DesignStyle = "v2" | "paperwave" | "original";
+
+export function isDesignStyle(value: unknown): value is DesignStyle {
+  return value === "v2" || value === "paperwave" || value === "original";
+}
+
 export interface ThemePreferences {
+  designStyle: DesignStyle;
   theme: ThemeId;
   appearance: AppearanceMode;
   customAccent: string | null;
@@ -96,6 +103,7 @@ export interface ThemeColors {
 }
 
 export const DEFAULT_THEME_PREFERENCES: ThemePreferences = {
+  designStyle: "v2",
   theme: "standard",
   appearance: "system",
   customAccent: null,
@@ -270,11 +278,29 @@ export function getThemeColors(
       getReadableTextColor(primary),
     primaryHoverForeground:
       getReadableTextColor(primaryHover),
-    background: isDark
-      ? preset.darkBackground
-      : preset.lightBackground,
-    surface: isDark
-      ? preset.darkSurface
-      : preset.lightSurface,
+    background:
+      preferences.designStyle === "paperwave"
+        ? isDark
+          ? "#211E1B"
+          : "#EFE7D6"
+        : preferences.designStyle === "v2"
+          ? isDark
+            ? "#101827"
+            : "#F5F7FB"
+          : isDark
+            ? preset.darkBackground
+            : preset.lightBackground,
+    surface:
+      preferences.designStyle === "paperwave"
+        ? isDark
+          ? "#302A25"
+          : "#FBF7EC"
+        : preferences.designStyle === "v2"
+          ? isDark
+            ? "#192438"
+            : "#FFFFFF"
+          : isDark
+            ? preset.darkSurface
+            : preset.lightSurface,
   };
 }

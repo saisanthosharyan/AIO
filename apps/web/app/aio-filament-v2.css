@@ -1,0 +1,185 @@
+﻿/* =========================================================
+   AIO V2 — FILAMENT
+   Stream and threaded conversation styles
+   ========================================================= */
+
+html[data-aio-style="v2"] {
+  --aio-font-display: var(--font-display), sans-serif;
+  --aio-font-ui: var(--font-body), sans-serif;
+}
+
+html[data-aio-style="v2"] .post-card {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--aio-border);
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+html[data-aio-style="v2"] .post-card:hover {
+  background: color-mix(
+    in srgb,
+    var(--aio-text) 2%,
+    transparent
+  );
+}
+
+html[data-aio-style="v2"] .post-header {
+  align-items: flex-start;
+}
+
+html[data-aio-style="v2"] .post-avatar {
+  width: 42px;
+  height: 42px;
+  flex-basis: 42px;
+  box-shadow: none;
+}
+
+html[data-aio-style="v2"] .post-content {
+  padding: 10px 0;
+}
+
+html[data-aio-style="v2"] .post-text {
+  font-family: var(--aio-font-ui);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+html[data-aio-style="v2"] .post-media {
+  border-radius: 14px;
+  box-shadow: none;
+}
+
+html[data-aio-style="v2"] .post-footer {
+  justify-content: space-between;
+  padding-top: 8px;
+}
+
+html[data-aio-style="v2"] .post-footer button {
+  min-width: 36px;
+  min-height: 36px;
+  border-radius: 999px;
+}
+
+/* Thread structure */
+
+html[data-aio-style="v2"] .aio-thread {
+  --filament-thread-line: color-mix(
+    in srgb,
+    var(--aio-text-muted) 30%,
+    transparent
+  );
+  --filament-thread-indent: 24px;
+  min-width: 0;
+}
+
+html[data-aio-style="v2"] .aio-thread .aio-thread-node {
+  position: relative;
+  min-width: 0;
+}
+
+html[data-aio-style="v2"] .aio-thread .comment-item {
+  gap: 10px;
+  padding: 10px 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+html[data-aio-style="v2"] .aio-thread .comment-avatar {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: 50%;
+}
+
+html[data-aio-style="v2"] .aio-thread .comment-body {
+  min-width: 0;
+}
+
+html[data-aio-style="v2"] .aio-thread .comment-body p {
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+html[data-aio-style="v2"] .aio-thread .aio-thread-children {
+  position: relative;
+  margin: 0 0 0 16px;
+  padding: 0 0 0 var(--filament-thread-indent);
+  border-left: 1px solid var(--filament-thread-line);
+  background: transparent;
+}
+
+html[data-aio-style="v2"] .aio-thread .aio-thread-children > .aio-thread-node::before {
+  content: "";
+  position: absolute;
+  top: 27px;
+  left: calc(-1 * var(--filament-thread-indent));
+  width: 14px;
+  height: 1px;
+  border: 0;
+  border-radius: 0;
+  background: var(--filament-thread-line);
+}
+
+/* Reply actions and composer */
+
+html[data-aio-style="v2"] .aio-thread .aio-thread-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+html[data-aio-style="v2"] .aio-thread .aio-thread-reply-button {
+  font-size: 12px;
+}
+
+html[data-aio-style="v2"] .aio-thread .aio-thread-reply-composer {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--aio-border);
+  border-radius: 12px;
+  background: var(--aio-surface);
+}
+
+html[data-aio-style="v2"] .aio-thread .aio-thread-reply-composer textarea {
+  width: 100%;
+  min-height: 68px;
+  padding: 8px 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--aio-text);
+}
+
+/* Deleted comments */
+
+html[data-aio-style="v2"] .aio-thread .aio-thread-deleted-row {
+  padding: 10px 0;
+  color: var(--aio-text-muted);
+  font-size: 12px;
+  font-style: italic;
+}
+
+/* Responsive */
+
+@media (max-width: 640px) {
+  html[data-aio-style="v2"] .post-card {
+    padding: 15px 12px;
+  }
+
+  html[data-aio-style="v2"] .aio-thread {
+    --filament-thread-indent: 12px;
+  }
+
+  html[data-aio-style="v2"] .aio-thread .aio-thread-children {
+    margin-left: 10px;
+  }
+
+  html[data-aio-style="v2"] .aio-thread .aio-thread-children > .aio-thread-node::before {
+    width: 8px;
+  }
+}

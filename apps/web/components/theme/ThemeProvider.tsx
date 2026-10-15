@@ -16,10 +16,12 @@ import {
   THEME_STORAGE_KEY,
   getThemeColors,
   isAppearanceMode,
+  isDesignStyle,
   isThemeId,
   isValidHexColor,
   resolveAppearance,
   type AppearanceMode,
+  type DesignStyle,
   type ResolvedAppearance,
   type ThemeId,
   type ThemePreferences,
@@ -30,6 +32,7 @@ interface ThemeContextValue {
   resolvedAppearance: ResolvedAppearance;
   isDark: boolean;
   setTheme: (theme: ThemeId) => void;
+  setDesignStyle: (style: DesignStyle) => void;
   setAppearance: (appearance: AppearanceMode) => void;
   setCustomAccent: (color: string | null) => void;
   resetTheme: () => void;
@@ -89,6 +92,9 @@ function loadThemePreferences(): ThemePreferences {
         const data = parsed as Record<string, unknown>;
 
         return {
+          designStyle: isDesignStyle(data.designStyle)
+            ? data.designStyle
+            : DEFAULT_THEME_PREFERENCES.designStyle,
           theme: isThemeId(data.theme)
             ? data.theme
             : DEFAULT_THEME_PREFERENCES.theme,
@@ -147,6 +153,7 @@ function applyThemeToDocument(
   );
 
   root.dataset.theme = resolvedAppearance;
+  root.dataset.aioStyle = preferences.designStyle;
   root.dataset.aioTheme = preferences.theme;
 
   root.style.colorScheme = resolvedAppearance;
@@ -285,6 +292,16 @@ export function ThemeProvider({
     }));
   }, []);
 
+  const setDesignStyle = useCallback(
+    (style: DesignStyle) => {
+      setPreferences((previous) => ({
+        ...previous,
+        designStyle: style,
+      }));
+    },
+    [],
+  );
+
   const setAppearance = useCallback(
     (appearance: AppearanceMode) => {
       setPreferences((previous) => ({
@@ -325,6 +342,7 @@ export function ThemeProvider({
         resolvedAppearance,
         isDark,
         setTheme,
+        setDesignStyle,
         setAppearance,
         setCustomAccent,
         resetTheme,
