@@ -1,4 +1,4 @@
-﻿/* ==========================================================
+/* ==========================================================
    AIO PAPERWAVE — Design Style
    Scoped to html[data-aio-style="paperwave"]
    ========================================================== */
@@ -6,7 +6,7 @@
 html[data-aio-style="paperwave"] {
   --paper-bg: #efe7d6;
   --paper-surface: #fbf7ec;
-  --paper-accent: #ff5a36;
+  --paper-accent: var(--aio-primary, #ff5a36);
   --paper-ink: #29251f;
   --paper-muted: #756d63;
   --paper-border: #d9cdbc;

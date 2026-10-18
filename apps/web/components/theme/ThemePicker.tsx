@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import {
   Check,
@@ -29,6 +29,14 @@ const DESIGN_OPTIONS: {
   surface: string;
   accent: string;
 }[] = [
+  {
+    id: "terra",
+    name: "AIO Terra",
+    description: "Clean, warm, natural, and thoughtfully minimal.",
+    background: "#F7F4EE",
+    surface: "#FFFFFF",
+    accent: "#25351F",
+  },
   {
     id: "v2",
     name: "Filament v2",
@@ -232,9 +240,7 @@ export default function ThemePicker() {
     resolvedAppearance,
   );
 
-  const currentAccent =
-    preferences.customAccent ??
-    selectedPreset.primary;
+  const currentAccent = colors.primary;
 
   const isDark = resolvedAppearance === "dark";
 
@@ -262,7 +268,7 @@ export default function ThemePicker() {
             </span>
             <h3>Choose your AIO experience</h3>
             <p>
-              Switch between Filament, Paperwave, and
+              Switch between Terra, Filament, Paperwave, and
               the original AIO design.
             </p>
           </div>
@@ -629,14 +635,10 @@ export default function ThemePicker() {
                 className="aio-live-preview-message outgoing"
                 style={{
                   background: colors.primary,
-                  color: isDark &&
-                    preferences.theme === "pulse" &&
-                    !preferences.customAccent
-                    ? "#14181A"
-                    : "#FFFFFF",
+                  color: colors.primaryForeground,
                 }}
               >
-                Pretty good! Loving this AIO theme âœ¨
+                Pretty good! Loving this AIO theme!
               </div>
             </div>
 

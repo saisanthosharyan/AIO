@@ -7362,11 +7362,11 @@ html[data-theme="dark"]
 }
 
 .aio-messages-message-row.is-mine .aio-messages-bubble {
-  border-color: #0c8a6a;
+  border-color: var(--aio-primary);
   border-radius: 18px 18px 6px 18px;
-  background: #0c8a6a;
-  color: #ffffff;
-  box-shadow: 0 8px 22px rgba(12, 138, 106, 0.2);
+  background: var(--aio-primary);
+  color: var(--aio-primary-foreground);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--aio-primary) 20%, transparent);
 }
 
 .aio-messages-bubble p {
@@ -7383,7 +7383,7 @@ html[data-theme="dark"]
 .aio-messages-message-row.is-mine .aio-messages-message-meta,
 .aio-messages-message-row.is-mine .aio-messages-message-meta time,
 .aio-messages-message-row.is-mine .aio-messages-message-meta svg {
-  color: #ffffff;
+  color: var(--aio-primary-foreground);
 }
 
 .aio-messages-composer {

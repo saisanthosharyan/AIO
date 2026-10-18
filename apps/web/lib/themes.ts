@@ -80,10 +80,10 @@ export type ResolvedAppearance =
   | "light"
   | "dark";
 
-export type DesignStyle = "v2" | "paperwave" | "original";
+export type DesignStyle = "terra" | "v2" | "paperwave" | "original";
 
 export function isDesignStyle(value: unknown): value is DesignStyle {
-  return value === "v2" || value === "paperwave" || value === "original";
+  return value === "terra" || value === "v2" || value === "paperwave" || value === "original";
 }
 
 export interface ThemePreferences {
@@ -103,7 +103,7 @@ export interface ThemeColors {
 }
 
 export const DEFAULT_THEME_PREFERENCES: ThemePreferences = {
-  designStyle: "v2",
+  designStyle: "terra",
   theme: "standard",
   appearance: "system",
   customAccent: null,
@@ -261,15 +261,25 @@ export function getThemeColors(
     ? preferences.customAccent
     : null;
 
+  const isTerra = preferences.designStyle === "terra";
+
+  const terraPrimary = isDark ? "#D3DFC2" : "#25351F";
+  const terraPrimaryHover = isDark ? "#E1E9D5" : "#34492B";
+
   const primary =
-    customAccent ?? preset.primary;
+    customAccent ??
+    (isTerra && preferences.theme === "standard"
+      ? terraPrimary
+      : preset.primary);
 
   const primaryHover = customAccent
     ? getCustomHoverColor(
         customAccent,
         resolvedAppearance,
       )
-    : preset.primaryHover;
+    : isTerra && preferences.theme === "standard"
+      ? terraPrimaryHover
+      : preset.primaryHover;
 
   return {
     primary,
@@ -279,7 +289,11 @@ export function getThemeColors(
     primaryHoverForeground:
       getReadableTextColor(primaryHover),
     background:
-      preferences.designStyle === "paperwave"
+      preferences.designStyle === "terra"
+        ? isDark
+          ? "#191D18"
+          : "#F7F4EE"
+        : preferences.designStyle === "paperwave"
         ? isDark
           ? "#211E1B"
           : "#EFE7D6"
@@ -291,7 +305,11 @@ export function getThemeColors(
             ? preset.darkBackground
             : preset.lightBackground,
     surface:
-      preferences.designStyle === "paperwave"
+      preferences.designStyle === "terra"
+        ? isDark
+          ? "#252B23"
+          : "#FFFFFF"
+        : preferences.designStyle === "paperwave"
         ? isDark
           ? "#302A25"
           : "#FBF7EC"

@@ -1,0 +1,269 @@
+/*
+ * AIO Terra
+ * Responsive visual system
+ *
+ * Default palette:
+ * Ivory      #F7F4EE
+ * Olive      #25351F
+ * Terracotta #C87549
+ * Sand       #E9DFD0
+ * Charcoal   #242621
+ *
+ * Terra styles will be scoped to:
+ * html[data-aio-style="terra"]
+ */
+
+html[data-aio-style="terra"] {
+  --terra-bg: #f7f4ee;
+  --terra-surface: #ffffff;
+  --terra-primary: var(--aio-primary, #25351f);
+  --terra-accent: #c87549;
+  --terra-border: #e9dfd0;
+  --terra-text: #242621;
+  --terra-muted: #73766e;
+  --terra-radius: 16px;
+}
+
+html[data-aio-style="terra"][data-theme="dark"] {
+  --terra-bg: #191d18;
+  --terra-surface: #252b23;
+  --terra-primary: var(--aio-primary, #d3dfc2);
+  --terra-accent: #df956e;
+  --terra-border: #3a4337;
+  --terra-text: #f2f0e9;
+  --terra-muted: #aab3a4;
+}
+
+/* =========================================================
+   AIO TERRA — RESPONSIVE APPLICATION SHELL
+   ========================================================= */
+
+html[data-aio-style="terra"] body {
+  background: var(--terra-bg);
+  color: var(--terra-text);
+}
+
+html[data-aio-style="terra"] .aio-canvas-app {
+  min-height: 100dvh;
+  background: var(--terra-bg);
+  color: var(--terra-text);
+}
+
+html[data-aio-style="terra"] .aio-canvas-shell {
+  display: flex;
+  width: 100%;
+  min-height: 100dvh;
+  max-width: none;
+  margin: 0;
+  background: var(--terra-bg);
+}
+
+html[data-aio-style="terra"] .aio-canvas-sidebar {
+  position: sticky;
+  top: 0;
+  flex: 0 0 248px;
+  width: 248px;
+  height: 100dvh;
+  background: var(--terra-surface);
+  border-right: 1px solid var(--terra-border);
+}
+
+html[data-aio-style="terra"] .aio-canvas-workspace {
+  flex: 1 1 0;
+  min-width: 0;
+  background: var(--terra-bg);
+}
+
+html[data-aio-style="terra"] .aio-canvas-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 76px;
+  padding: 12px 32px;
+  background: var(--terra-surface);
+  border-bottom: 1px solid var(--terra-border);
+}
+
+html[data-aio-style="terra"] .aio-canvas-main {
+  width: 100%;
+  min-width: 0;
+  padding: 28px 32px 48px;
+}
+
+html[data-aio-style="terra"] .aio-canvas-content-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 290px;
+  gap: 28px;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  align-items: start;
+}
+
+html[data-aio-style="terra"] .aio-canvas-content-grid--messages {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 1440px;
+}
+
+html[data-aio-style="terra"] .aio-canvas-page-content {
+  min-width: 0;
+}
+
+html[data-aio-style="terra"] .aio-canvas-right {
+  min-width: 0;
+}
+
+html[data-aio-style="terra"] .aio-canvas-nav-link {
+  color: var(--terra-text);
+  border-radius: 12px;
+}
+
+html[data-aio-style="terra"] .aio-canvas-nav-link.is-active {
+  background: color-mix(
+    in srgb,
+    var(--terra-primary) 10%,
+    var(--terra-surface)
+  );
+  color: var(--terra-primary);
+}
+
+html[data-aio-style="terra"] .aio-canvas-create {
+  background: var(--aio-primary);
+  color: var(--aio-primary-foreground);
+  border-radius: 12px;
+}
+
+html[data-aio-style="terra"] .aio-canvas-discovery-section {
+  background: var(--terra-surface);
+  border: 1px solid var(--terra-border);
+  border-radius: var(--terra-radius);
+}
+
+/* Laptop and compact desktop */
+
+@media (max-width: 1199px) {
+  html[data-aio-style="terra"] .aio-canvas-content-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  html[data-aio-style="terra"] .aio-canvas-right {
+    display: none;
+  }
+
+  html[data-aio-style="terra"] .aio-canvas-main {
+    padding: 24px;
+  }
+}
+
+/* Tablet */
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  html[data-aio-style="terra"] .aio-canvas-sidebar {
+    flex-basis: 208px;
+    width: 208px;
+  }
+
+  html[data-aio-style="terra"] .aio-canvas-header {
+    padding-inline: 24px;
+  }
+}
+
+/* Mobile */
+
+@media (max-width: 767px) {
+  html[data-aio-style="terra"] .aio-canvas-sidebar {
+    display: none;
+  }
+
+  html[data-aio-style="terra"] .aio-canvas-shell {
+    display: block;
+  }
+
+  html[data-aio-style="terra"] .aio-canvas-header {
+    min-height: 62px;
+    padding: 10px 16px;
+  }
+
+  html[data-aio-style="terra"] .aio-canvas-main {
+    padding: 16px 12px calc(90px + env(safe-area-inset-bottom));
+  }
+
+  html[data-aio-style="terra"] .aio-canvas-content-grid {
+    display: block;
+  }
+
+  html[data-aio-style="terra"] .aio-canvas-bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background: var(--terra-surface);
+    border-top: 1px solid var(--terra-border);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+
+/* =========================================================
+   AIO TERRA — SHELL LAYOUT CORRECTIONS
+   Keep sidebar collapse and mobile breakpoints consistent.
+   ========================================================= */
+
+@media (min-width: 768px) {
+  html[data-aio-style="terra"] .aio-canvas-shell {
+    display: grid;
+    grid-template-columns: 248px minmax(0, 1fr);
+    transition: grid-template-columns 0.22s ease;
+  }
+
+  html[data-aio-style="terra"] .aio-canvas-sidebar {
+    width: auto;
+    min-width: 0;
+    flex: initial;
+  }
+
+  html[data-aio-style="terra"].aio-sidebar-collapsed .aio-canvas-shell {
+    grid-template-columns: 74px minmax(0, 1fr);
+  }
+
+  html[data-aio-style="terra"] .aio-canvas-workspace {
+    min-width: 0;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  html[data-aio-style="terra"]:not(.aio-sidebar-collapsed) .aio-canvas-shell {
+    grid-template-columns: 208px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  html[data-aio-style="terra"] .aio-canvas-shell,
+  html[data-aio-style="terra"].aio-sidebar-collapsed .aio-canvas-shell {
+    display: block;
+    width: 100%;
+    grid-template-columns: none;
+  }
+
+  html[data-aio-style="terra"] .aio-canvas-sidebar {
+    display: none;
+  }
+
+  html[data-aio-style="terra"] .aio-mobile-menu-trigger {
+    display: grid;
+  }
+
+  html[data-aio-style="terra"] .aio-canvas-workspace,
+  html[data-aio-style="terra"] .aio-canvas-page-content {
+    width: 100%;
+    min-width: 0;
+  }
+
+  html[data-aio-style="terra"] .aio-canvas-right {
+    display: none;
+  }
+}
