@@ -318,3 +318,273 @@ html[data-aio-style="volt"]
     animation-duration: 0.01ms !important;
   }
 }
+
+/* ==========================================================
+   AIO VOLT — STREAM
+   ========================================================== */
+
+html[data-aio-style="volt"] .aio-v2-stream-header,
+html[data-aio-style="volt"] .aio-feed {
+  width: 100%;
+  max-width: 780px;
+  margin-inline: auto;
+}
+
+html[data-aio-style="volt"] .aio-v2-stream-header {
+  margin-bottom: 0;
+}
+
+html[data-aio-style="volt"] .aio-v2-stream-eyebrow {
+  display: none;
+}
+
+html[data-aio-style="volt"] .aio-v2-stream-heading h1 {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: clamp(24px, 2vw, 29px);
+  font-weight: 750;
+  line-height: 1.2;
+  letter-spacing: -0.045em;
+  color: var(--aio-text);
+}
+
+html[data-aio-style="volt"] .aio-v2-stream-heading p {
+  color: var(--aio-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+html[data-aio-style="volt"] .aio-v2-stream-tabs {
+  border-bottom: 1px solid var(--aio-border);
+}
+
+html[data-aio-style="volt"] .aio-v2-stream-tab {
+  color: var(--aio-muted);
+  font-weight: 600;
+}
+
+html[data-aio-style="volt"] .aio-v2-stream-tab.is-active {
+  color: var(--aio-text);
+  border-bottom-color: var(--aio-primary);
+}
+
+html[data-aio-style="volt"] .aio-canvas-composer {
+  background: var(--aio-surface);
+  border-color: var(--aio-border);
+}
+
+html[data-aio-style="volt"] .aio-canvas-composer-prompt {
+  color: var(--aio-muted);
+}
+
+html[data-aio-style="volt"] .aio-canvas-composer-avatar {
+  background: var(--aio-surface-secondary);
+  color: var(--aio-text);
+}
+
+html[data-aio-style="volt"] .post-card {
+  color: var(--aio-text);
+  border-color: var(--aio-border);
+}
+
+html[data-aio-style="volt"] .post-text {
+  color: var(--aio-text);
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+html[data-aio-style="volt"] .aio-feed button:focus-visible {
+  outline: 2px solid var(--aio-primary);
+  outline-offset: 3px;
+}
+
+@media (max-width: 760px) {
+  html[data-aio-style="volt"] .aio-v2-stream-header {
+    padding-inline: 16px;
+  }
+
+  html[data-aio-style="volt"] .aio-feed {
+    max-width: none;
+  }
+}
+
+/* ==========================================================
+   AIO VOLT — POST CARD REFINEMENTS
+   ========================================================== */
+
+html[data-aio-style="volt"] .aio-feed .post-card {
+  width: 100%;
+  margin: 0;
+  padding: 18px 20px;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--aio-border);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+html[data-aio-style="volt"] .post-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+html[data-aio-style="volt"] .post-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+html[data-aio-style="volt"] .post-avatar {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--aio-primary-soft);
+  color: var(--aio-text);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+html[data-aio-style="volt"] .post-avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+html[data-aio-style="volt"] .post-author-details {
+  min-width: 0;
+}
+
+html[data-aio-style="volt"] .post-author-line {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+html[data-aio-style="volt"] .post-author-line strong {
+  color: var(--aio-text);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+html[data-aio-style="volt"] .post-meta-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--aio-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+html[data-aio-style="volt"] .post-content {
+  margin-top: 10px;
+  padding-left: 56px;
+}
+
+html[data-aio-style="volt"] .post-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+html[data-aio-style="volt"] .post-media {
+  margin-top: 12px;
+  overflow: hidden;
+  border: 1px solid var(--aio-border);
+  border-radius: 12px;
+}
+
+html[data-aio-style="volt"] .post-media-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 520px;
+  object-fit: contain;
+}
+
+html[data-aio-style="volt"] .post-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 14px;
+  margin-left: 56px;
+  padding: 0;
+}
+
+html[data-aio-style="volt"] .post-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 40px;
+  min-height: 36px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--aio-muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 150ms ease,
+              color 150ms ease;
+}
+
+html[data-aio-style="volt"] .post-action:hover {
+  background: var(--aio-primary-soft);
+  color: var(--aio-text);
+}
+
+html[data-aio-style="volt"] .post-action.liked {
+  color: #e25565;
+}
+
+html[data-aio-style="volt"] .post-action.saved,
+html[data-aio-style="volt"] .post-action.comments-open {
+  color: var(--aio-primary);
+}
+
+html[data-aio-style="volt"] .post-action:focus-visible,
+html[data-aio-style="volt"] .more-button:focus-visible {
+  outline: 2px solid var(--aio-primary);
+  outline-offset: 2px;
+}
+
+html[data-aio-style="volt"] .post-action:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+@media (max-width: 600px) {
+  html[data-aio-style="volt"] .aio-feed .post-card {
+    padding: 15px 12px;
+  }
+
+  html[data-aio-style="volt"] .post-avatar {
+    width: 38px;
+    height: 38px;
+    flex-basis: 38px;
+  }
+
+  html[data-aio-style="volt"] .post-content {
+    padding-left: 0;
+  }
+
+  html[data-aio-style="volt"] .post-footer {
+    margin-left: 0;
+  }
+
+  html[data-aio-style="volt"] .post-action {
+    padding-inline: 7px;
+  }
+}

@@ -3,7 +3,6 @@
 
 import {
   Image as ImageIcon,
-  PenLine,
   Plus,
   UserRound,
 } from "lucide-react";
