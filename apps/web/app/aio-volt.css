@@ -1,0 +1,320 @@
+
+/* ==========================================================
+   AIO VOLT — APPLICATION SHELL
+   One signature color. Two appearances.
+   ========================================================== */
+
+html[data-aio-style="volt"] {
+  --canvas-bg: var(--aio-bg);
+  --canvas-surface: var(--aio-surface);
+  --canvas-border: var(--aio-border);
+  --canvas-text: var(--aio-text);
+  --canvas-muted: var(--aio-muted);
+
+  --line: var(--aio-border);
+  --text: var(--aio-text);
+  --muted: var(--aio-muted);
+
+  background: var(--aio-bg);
+  color: var(--aio-text);
+}
+
+html[data-aio-style="volt"] body {
+  background: var(--aio-bg);
+  color: var(--aio-text);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Application layout */
+
+html[data-aio-style="volt"] .aio-canvas-app {
+  min-height: 100dvh;
+  background: var(--aio-bg);
+  color: var(--aio-text);
+}
+
+html[data-aio-style="volt"] .aio-canvas-shell {
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr);
+  max-width: 1600px;
+  min-height: 100dvh;
+  margin-inline: auto;
+  background: var(--aio-bg);
+}
+
+html[data-aio-style="volt"].aio-sidebar-collapsed
+.aio-canvas-shell {
+  grid-template-columns: 74px minmax(0, 1fr);
+}
+
+html[data-aio-style="volt"] .aio-canvas-workspace {
+  min-width: 0;
+  background: var(--aio-bg);
+}
+
+/* Sidebar */
+
+html[data-aio-style="volt"] .aio-canvas-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  border-right: 1px solid var(--aio-border);
+  background: var(--aio-bg);
+}
+
+html[data-aio-style="volt"] .aio-canvas-sidebar-inner {
+  height: 100%;
+}
+
+html[data-aio-style="volt"] .aio-canvas-brand {
+  color: var(--aio-text);
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.06em;
+}
+
+html[data-aio-style="volt"] .aio-canvas-brand-dot {
+  background: var(--aio-primary);
+}
+
+html[data-aio-style="volt"] .aio-canvas-nav-link {
+  color: var(--aio-muted);
+  border-radius: 9px;
+  font-weight: 500;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+html[data-aio-style="volt"] .aio-canvas-nav-link:hover {
+  color: var(--aio-text);
+  background: var(--aio-surface-secondary);
+}
+
+html[data-aio-style="volt"] .aio-canvas-nav-link.is-active {
+  color: var(--aio-text);
+  background: var(--aio-surface-secondary);
+  font-weight: 700;
+}
+
+html[data-aio-style="volt"]
+.aio-canvas-nav-link.is-active svg {
+  color: var(--aio-text);
+}
+
+html[data-aio-style="volt"] .aio-canvas-create {
+  background: var(--aio-primary);
+  color: #171a17;
+  border: 1px solid var(--aio-primary);
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+html[data-aio-style="volt"] .aio-canvas-create:hover {
+  background: var(--aio-primary-hover);
+  color: #171a17;
+}
+
+/* Header */
+
+html[data-aio-style="volt"] .aio-canvas-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  min-height: 72px;
+  background: var(--aio-bg);
+  border-bottom: 1px solid var(--aio-border);
+}
+
+html[data-aio-style="volt"] .aio-canvas-search {
+  color: var(--aio-muted);
+  background: var(--aio-surface-secondary);
+  border: 1px solid var(--aio-border);
+  border-radius: 10px;
+}
+
+html[data-aio-style="volt"] .aio-canvas-search:hover {
+  border-color: var(--aio-muted);
+}
+
+html[data-aio-style="volt"] .aio-canvas-icon-button,
+html[data-aio-style="volt"] .aio-canvas-header-profile {
+  color: var(--aio-text);
+  background: var(--aio-surface-secondary);
+  border: 1px solid var(--aio-border);
+  border-radius: 10px;
+}
+
+html[data-aio-style="volt"] .aio-canvas-icon-button:hover,
+html[data-aio-style="volt"] .aio-canvas-header-profile:hover {
+  background: var(--aio-surface-raised);
+}
+
+/* Main content */
+
+html[data-aio-style="volt"] .aio-canvas-main {
+  min-width: 0;
+  padding: 24px 28px 64px;
+}
+
+html[data-aio-style="volt"] .aio-canvas-content-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  align-items: start;
+  gap: 28px;
+  max-width: 1180px;
+  margin-inline: auto;
+}
+
+html[data-aio-style="volt"] .aio-canvas-page-content {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  margin: 0;
+}
+
+html[data-aio-style="volt"] .aio-canvas-right {
+  display: block;
+  min-width: 0;
+}
+
+html[data-aio-style="volt"]
+.aio-canvas-content-grid--messages {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+html[data-aio-style="volt"]
+.aio-canvas-content-grid--messages
+.aio-canvas-page-content {
+  max-width: none;
+}
+
+/* Right discovery panel */
+
+html[data-aio-style="volt"] .aio-canvas-discovery-section {
+  background: var(--aio-surface);
+  color: var(--aio-text);
+  border: 1px solid var(--aio-border);
+  border-radius: 12px;
+}
+
+html[data-aio-style="volt"] .aio-canvas-discovery-heading h2,
+html[data-aio-style="volt"] .aio-canvas-event-info strong,
+html[data-aio-style="volt"] .aio-canvas-trend-info strong {
+  color: var(--aio-text);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+html[data-aio-style="volt"] .aio-canvas-discovery-heading a {
+  color: var(--aio-text);
+}
+
+html[data-aio-style="volt"] .aio-canvas-event-info small,
+html[data-aio-style="volt"] .aio-canvas-trend-info small {
+  color: var(--aio-muted);
+}
+
+html[data-aio-style="volt"] .aio-canvas-event-icon {
+  color: #171a17;
+  background: var(--aio-primary);
+}
+
+/* Keyboard accessibility */
+
+html[data-aio-style="volt"]
+:is(a, button):focus-visible {
+  outline: 2px solid var(--aio-primary);
+  outline-offset: 3px;
+}
+
+/* Medium desktop */
+
+@media (max-width: 1200px) {
+  html[data-aio-style="volt"] .aio-canvas-content-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  html[data-aio-style="volt"] .aio-canvas-right {
+    display: none;
+  }
+
+  html[data-aio-style="volt"] .aio-canvas-page-content {
+    max-width: 850px;
+    margin-inline: auto;
+  }
+}
+
+/* Tablet */
+
+@media (min-width: 761px) and (max-width: 1000px) {
+  html[data-aio-style="volt"] .aio-canvas-shell {
+    grid-template-columns: 74px minmax(0, 1fr);
+  }
+
+  html[data-aio-style="volt"] .aio-canvas-main {
+    padding: 20px 20px 56px;
+  }
+}
+
+/* Mobile */
+
+@media (max-width: 760px) {
+  html[data-aio-style="volt"] .aio-canvas-shell,
+  html[data-aio-style="volt"].aio-sidebar-collapsed
+  .aio-canvas-shell {
+    display: block;
+  }
+
+  html[data-aio-style="volt"] .aio-canvas-sidebar {
+    display: none;
+  }
+
+  html[data-aio-style="volt"] .aio-canvas-header {
+    min-height: 58px;
+    padding: 8px 12px;
+  }
+
+  html[data-aio-style="volt"] .aio-canvas-main {
+    padding: 12px 0 90px;
+  }
+
+  html[data-aio-style="volt"] .aio-canvas-content-grid {
+    display: block;
+    width: 100%;
+  }
+
+  html[data-aio-style="volt"] .aio-canvas-page-content {
+    width: 100%;
+    max-width: none;
+  }
+
+  html[data-aio-style="volt"] .aio-canvas-right {
+    display: none;
+  }
+
+  html[data-aio-style="volt"] .aio-canvas-bottom-nav {
+    background: var(--aio-bg);
+    border-top: 1px solid var(--aio-border);
+  }
+
+  html[data-aio-style="volt"] .aio-mobile-nav-item {
+    color: var(--aio-muted);
+  }
+
+  html[data-aio-style="volt"] .aio-mobile-nav-item.is-active {
+    color: var(--aio-text);
+  }
+
+  html[data-aio-style="volt"] .aio-mobile-create {
+    color: #171a17;
+    background: var(--aio-primary);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-aio-style="volt"] *,
+  html[data-aio-style="volt"] *::before,
+  html[data-aio-style="volt"] *::after {
+    scroll-behavior: auto;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

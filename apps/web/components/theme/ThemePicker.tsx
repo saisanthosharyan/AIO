@@ -1,686 +1,230 @@
+
 "use client";
 
-import {
-  Check,
-  CircleHelp,
-  Monitor,
-  Moon,
-  Palette,
-  RotateCcw,
-  SlidersHorizontal,
-  Sun,
-} from "lucide-react";
-
-import {
-  THEME_PRESETS,
-  getThemeColors,
-  type AppearanceMode,
-  type DesignStyle,
-  type ThemeId,
-} from "@/lib/themes";
-
+import { Check, Moon, Sun } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 
-const DESIGN_OPTIONS: {
-  id: DesignStyle;
-  name: string;
-  description: string;
-  background: string;
-  surface: string;
-  accent: string;
-}[] = [
-  {
-    id: "terra",
-    name: "AIO Terra",
-    description: "Clean, warm, natural, and thoughtfully minimal.",
-    background: "#F7F4EE",
-    surface: "#FFFFFF",
-    accent: "#25351F",
-  },
-  {
-    id: "v2",
-    name: "Filament v2",
-    description: "Modern, clean, blue social experience.",
-    background: "#F4F5F8",
-    surface: "#FFFFFF",
-    accent: "#2F62F0",
-  },
-  {
-    id: "paperwave",
-    name: "Paperwave",
-    description: "Warm, editorial, and expressive.",
-    background: "#EFE7D6",
-    surface: "#FBF7EC",
-    accent: "#FF5A36",
-  },
-  {
-    id: "original",
-    name: "Original AIO",
-    description: "The classic AIO experience.",
-    background: "#F7F8FC",
-    surface: "#FFFFFF",
-    accent: "#6258ED",
-  },
-];
-const ACCENT_COLORS = [
-  "#6258ED",
-  "#356DF3",
-  "#00A88F",
-  "#EC6957",
-  "#E85BA5",
-  "#E7A12C",
-  "#9878E9",
-  "#B8E94F",
-];
-
-const APPEARANCE_OPTIONS: {
-  id: AppearanceMode;
-  label: string;
-  description: string;
-  icon: typeof Sun;
-}[] = [
+const appearances = [
   {
     id: "light",
-    label: "Light",
-    description: "Bright and clean",
-    icon: Sun,
+    name: "Light",
+    description: "A bright, clean interface.",
+    Icon: Sun,
   },
   {
     id: "dark",
-    label: "Dark",
-    description: "Comfortable in low light",
-    icon: Moon,
+    name: "Dark",
+    description: "A calm, focused interface.",
+    Icon: Moon,
   },
-  {
-    id: "system",
-    label: "System",
-    description: "Match your device",
-    icon: Monitor,
-  },
-];
-
-function ThemePreview({
-  themeId,
-  selected,
-  onClick,
-}: {
-  themeId: ThemeId;
-  selected: boolean;
-  onClick: () => void;
-}) {
-  const preset = THEME_PRESETS.find(
-    (item) => item.id === themeId,
-  )!;
-
-  return (
-    <button
-      type="button"
-      className={`aio-theme-card ${
-        selected ? "is-selected" : ""
-      }`}
-      onClick={onClick}
-      aria-pressed={selected}
-    >
-      <div
-        className="aio-theme-card-preview"
-        style={{
-          background: preset.lightBackground,
-        }}
-      >
-        <div
-          className="aio-theme-preview-sidebar"
-          style={{
-            background: preset.darkBackground,
-          }}
-        >
-          <div
-            className="aio-theme-preview-logo"
-            style={{
-              background: preset.primary,
-            }}
-          />
-
-          <div className="aio-theme-preview-nav" />
-          <div className="aio-theme-preview-nav" />
-          <div className="aio-theme-preview-nav" />
-        </div>
-
-        <div className="aio-theme-preview-content">
-          <div
-            className="aio-theme-preview-header"
-            style={{
-              background: preset.lightSurface,
-            }}
-          >
-            <div
-              className="aio-theme-preview-header-line"
-              style={{
-                background: preset.primary,
-              }}
-            />
-          </div>
-
-          <div
-            className="aio-theme-preview-post"
-            style={{
-              background: preset.lightSurface,
-            }}
-          >
-            <div className="aio-theme-preview-post-top">
-              <div
-                className="aio-theme-preview-avatar"
-                style={{
-                  background: preset.primary,
-                }}
-              />
-
-              <div className="aio-theme-preview-lines">
-                <div />
-                <div />
-              </div>
-            </div>
-
-            <div
-              className="aio-theme-preview-image"
-              style={{
-                background: `linear-gradient(135deg, ${preset.primary}, ${preset.primaryHover})`,
-              }}
-            />
-
-            <div className="aio-theme-preview-post-bottom">
-              <span />
-              <span />
-              <span />
-            </div>
-          </div>
-        </div>
-
-        {selected && (
-          <span className="aio-theme-selected-indicator">
-            <Check size={15} strokeWidth={3} />
-          </span>
-        )}
-      </div>
-
-      <div className="aio-theme-card-info">
-        <div>
-          <strong>{preset.name}</strong>
-          <span>{preset.description}</span>
-        </div>
-
-        <span
-          className={`aio-theme-radio ${
-            selected ? "is-selected" : ""
-          }`}
-        >
-          {selected && <Check size={13} />}
-        </span>
-      </div>
-    </button>
-  );
-}
+] as const;
 
 export default function ThemePicker() {
-  const {
-    preferences,
-    resolvedAppearance,
-    setTheme,
-    setDesignStyle,
-    setAppearance,
-    setCustomAccent,
-    resetTheme,
-  } = useTheme();
-
-  const selectedPreset = THEME_PRESETS.find(
-    (item) => item.id === preferences.theme,
-  )!;
-
-  const colors = getThemeColors(
-    preferences,
-    resolvedAppearance,
-  );
-
-  const currentAccent = colors.primary;
-
-  const isDark = resolvedAppearance === "dark";
+  const { resolvedAppearance, setAppearance } = useTheme();
 
   return (
-    <div className="aio-appearance">
-      <div className="aio-appearance-heading">
-        <div className="aio-appearance-heading-icon">
-          <Palette size={23} />
-        </div>
-
-        <div>
-          <h2>Personalize your AIO</h2>
-          <p>
-            Make AIO feel like yours. Choose your
-            favorite theme, appearance, and colors.
-          </p>
-        </div>
-      </div>
-
-      <section className="aio-appearance-section">
-        <div className="aio-appearance-section-heading">
-          <div>
-            <span className="aio-appearance-eyebrow">
-              DESIGN STYLE
-            </span>
-            <h3>Choose your AIO experience</h3>
-            <p>
-              Switch between Terra, Filament, Paperwave, and
-              the original AIO design.
-            </p>
-          </div>
-        </div>
-
-        <div
-          className="aio-design-style-grid"
+    <div
+      className="aio-volt-appearance"
+      style={{
+        display: "grid",
+        gap: 24,
+        color: "var(--aio-text, #171A17)",
+      }}
+    >
+      <div style={{ display: "grid", gap: 6 }}>
+        <h3
           style={{
-            display: "grid",
-            gridTemplateColumns:
-              "repeat(auto-fit, minmax(min(100%, 190px), 1fr))",
-            gap: 14,
+            fontSize: 20,
+            fontWeight: 700,
+            letterSpacing: "-0.035em",
           }}
         >
-          {DESIGN_OPTIONS.map((option) => {
-            const selected =
-              preferences.designStyle === option.id;
+          Appearance
+        </h3>
 
-            return (
-              <button
-                key={option.id}
-                type="button"
-                onClick={() => setDesignStyle(option.id)}
-                aria-pressed={selected}
+        <p
+          style={{
+            fontSize: 14,
+            lineHeight: 1.6,
+            color: "var(--aio-muted, #6A7068)",
+          }}
+        >
+          Choose how AIO looks. Your signature Volt color
+          stays consistent in both modes.
+        </p>
+      </div>
+
+      <div
+        role="group"
+        aria-label="Choose appearance"
+        style={{
+          display: "grid",
+          gridTemplateColumns:
+            "repeat(auto-fit, minmax(min(100%, 220px), 1fr))",
+          gap: 14,
+        }}
+      >
+        {appearances.map(({ id, name, description, Icon }) => {
+          const selected = resolvedAppearance === id;
+
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setAppearance(id)}
+              aria-pressed={selected}
+              style={{
+                display: "grid",
+                gap: 14,
+                padding: 18,
+                textAlign: "left",
+                borderRadius: 14,
+                border: selected
+                  ? "2px solid var(--aio-primary)"
+                  : "2px solid var(--aio-border)",
+                background: "var(--aio-surface)",
+                color: "var(--aio-text)",
+                cursor: "pointer",
+                transition:
+                  "border-color 150ms ease, background 150ms ease",
+              }}
+            >
+              <div
+                aria-hidden="true"
                 style={{
-                  textAlign: "left",
-                  padding: 12,
-                  borderRadius: 16,
-                  border: selected
-                    ? "2px solid var(--aio-primary)"
-                    : "2px solid var(--aio-border, #d2d7e3)",
+                  height: 120,
+                  overflow: "hidden",
+                  borderRadius: 9,
+                  border: `1px solid ${
+                    id === "light" ? "#E7EAE3" : "#343934"
+                  }`,
                   background:
-                    "var(--aio-surface, #ffffff)",
-                  color: "var(--aio-text, inherit)",
-                  cursor: "pointer",
+                    id === "light" ? "#FFFFFF" : "#121412",
+                  display: "grid",
+                  gridTemplateColumns: "30% 1fr",
                 }}
               >
                 <div
-                  aria-hidden="true"
                   style={{
-                    display: "flex",
-                    height: 100,
-                    borderRadius: 10,
-                    overflow: "hidden",
-                    background: option.background,
-                    border: "1px solid #d2d7e3",
+                    padding: 10,
+                    borderRight: `1px solid ${
+                      id === "light" ? "#E7EAE3" : "#343934"
+                    }`,
+                    display: "grid",
+                    alignContent: "start",
+                    gap: 9,
                   }}
                 >
                   <div
                     style={{
-                      width: "24%",
-                      background: option.accent,
-                      opacity: 0.85,
+                      width: 25,
+                      height: 25,
+                      background: "#B8F04A",
+                      borderRadius: 7,
                     }}
                   />
-                  <div
-                    style={{
-                      flex: 1,
-                      padding: 12,
-                    }}
-                  >
+
+                  {[0, 1, 2].map((item) => (
                     <div
+                      key={item}
                       style={{
-                        height: 12,
-                        width: "65%",
-                        borderRadius: 6,
-                        background: option.accent,
-                        marginBottom: 12,
+                        height: 7,
+                        borderRadius: 3,
+                        background:
+                          id === "light" ? "#E7EAE3" : "#343934",
                       }}
                     />
-                    <div
-                      style={{
-                        height: 42,
-                        borderRadius: 8,
-                        background: option.surface,
-                        border: "1px solid #d2d7e3",
-                      }}
-                    />
-                  </div>
+                  ))}
                 </div>
 
                 <div
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: 8,
-                    marginTop: 12,
+                    padding: 12,
+                    display: "grid",
+                    alignContent: "start",
+                    gap: 11,
                   }}
                 >
-                  <strong>{option.name}</strong>
-                  {selected && (
-                    <Check
-                      size={18}
-                      aria-label="Selected"
-                    />
-                  )}
+                  <div
+                    style={{
+                      width: "75%",
+                      height: 10,
+                      borderRadius: 4,
+                      background:
+                        id === "light" ? "#171A17" : "#F5F6F2",
+                    }}
+                  />
+
+                  <div
+                    style={{
+                      height: 47,
+                      borderRadius: 7,
+                      background:
+                        id === "light" ? "#F7F8F5" : "#1C1F1B",
+                      border: `1px solid ${
+                        id === "light" ? "#E7EAE3" : "#343934"
+                      }`,
+                    }}
+                  />
+
+                  <div
+                    style={{
+                      width: "45%",
+                      height: 7,
+                      borderRadius: 3,
+                      background: "#B8F04A",
+                    }}
+                  />
                 </div>
+              </div>
 
-                <p
-                  style={{
-                    fontSize: 13,
-                    marginTop: 5,
-                    opacity: 0.8,
-                  }}
-                >
-                  {option.description}
-                </p>
-              </button>
-            );
-          })}
-        </div>
-      </section>
-      <section className="aio-appearance-section">
-        <div className="aio-appearance-section-heading">
-          <div>
-            <span className="aio-appearance-eyebrow">
-              YOUR STYLE
-            </span>
-
-            <h3>Choose your theme</h3>
-
-            <p>
-              Pick a visual style that matches your
-              personality.
-            </p>
-          </div>
-
-          <span className="aio-appearance-count">
-            {THEME_PRESETS.length} themes
-          </span>
-        </div>
-
-        <div className="aio-theme-grid">
-          {THEME_PRESETS.map((preset) => (
-            <ThemePreview
-              key={preset.id}
-              themeId={preset.id}
-              selected={
-                preferences.theme === preset.id
-              }
-              onClick={() => setTheme(preset.id)}
-            />
-          ))}
-        </div>
-      </section>
-
-      <section className="aio-appearance-section">
-        <div className="aio-appearance-section-heading">
-          <div>
-            <span className="aio-appearance-eyebrow">
-              DISPLAY
-            </span>
-
-            <h3>Appearance mode</h3>
-
-            <p>
-              Choose how bright or dark AIO should
-              look.
-            </p>
-          </div>
-        </div>
-
-        <div className="aio-appearance-mode-grid">
-          {APPEARANCE_OPTIONS.map((option) => {
-            const Icon = option.icon;
-
-            const selected =
-              preferences.appearance === option.id;
-
-            return (
-              <button
-                key={option.id}
-                type="button"
-                className={`aio-appearance-mode ${
-                  selected ? "is-selected" : ""
-                }`}
-                onClick={() =>
-                  setAppearance(option.id)
-                }
-                aria-pressed={selected}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                }}
               >
-                <div className="aio-appearance-mode-icon">
-                  <Icon size={22} />
+                <Icon size={19} aria-hidden="true" />
+
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 15, fontWeight: 650 }}>
+                    {name}
+                  </div>
+
+                  <div
+                    style={{
+                      marginTop: 3,
+                      fontSize: 12,
+                      color: "var(--aio-muted)",
+                    }}
+                  >
+                    {description}
+                  </div>
                 </div>
-
-                <strong>{option.label}</strong>
-
-                <span>{option.description}</span>
 
                 {selected && (
-                  <div className="aio-appearance-mode-check">
-                    <Check size={14} />
-                  </div>
+                  <Check
+                    size={19}
+                    color="var(--aio-primary)"
+                    aria-hidden="true"
+                  />
                 )}
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
-      <section className="aio-appearance-section">
-        <div className="aio-appearance-section-heading">
-          <div>
-            <span className="aio-appearance-eyebrow">
-              MAKE IT YOURS
-            </span>
-
-            <h3>Accent color</h3>
-
-            <p>
-              Customize buttons, highlights, links,
-              and active navigation.
-            </p>
-          </div>
-
-          <SlidersHorizontal
-            size={19}
-            className="aio-appearance-heading-decoration"
-          />
-        </div>
-
-        <div className="aio-accent-picker">
-          <div className="aio-accent-colors">
-            {ACCENT_COLORS.map((color) => {
-              const selected =
-                currentAccent.toLowerCase() ===
-                color.toLowerCase();
-
-              return (
-                <button
-                  key={color}
-                  type="button"
-                  className={`aio-accent-swatch ${
-                    selected ? "is-selected" : ""
-                  }`}
-                  style={{
-                    backgroundColor: color,
-                  }}
-                  onClick={() =>
-                    setCustomAccent(color)
-                  }
-                  aria-label={`Choose accent color ${color}`}
-                  aria-pressed={selected}
-                  title={color}
-                >
-                  {selected && (
-                    <Check
-                      size={18}
-                      strokeWidth={3}
-                    />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="aio-custom-accent">
-            <label htmlFor="aio-custom-color">
-              Custom color
-            </label>
-
-            <div className="aio-custom-accent-controls">
-              <input
-                id="aio-custom-color"
-                type="color"
-                value={currentAccent}
-                onChange={(event) =>
-                  setCustomAccent(
-                    event.target.value,
-                  )
-                }
-                aria-label="Choose a custom accent color"
-              />
-
-              <span>
-                {currentAccent.toUpperCase()}
-              </span>
-
-              {preferences.customAccent && (
-                <button
-                  type="button"
-                  className="aio-accent-reset"
-                  onClick={() =>
-                    setCustomAccent(null)
-                  }
-                >
-                  Use theme default
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="aio-appearance-section">
-        <div className="aio-appearance-section-heading">
-          <div>
-            <span className="aio-appearance-eyebrow">
-              LIVE PREVIEW
-            </span>
-
-            <h3>See your AIO</h3>
-
-            <p>
-              Your changes are applied automatically
-              across the application.
-            </p>
-          </div>
-        </div>
-
-        <div
-          className="aio-live-preview"
-          style={{
-            background: colors.background,
-            color: isDark
-              ? "#F2F3F5"
-              : "#14171C",
-          }}
-        >
-          <div className="aio-live-preview-topbar">
-            <div
-              className="aio-live-preview-brand"
-              style={{
-                background: colors.primary,
-              }}
-            >
-              A
-            </div>
-
-            <div>
-              <strong>AIO Messages</strong>
-              <span>Theme preview</span>
-            </div>
-
-            <div className="aio-live-preview-status">
-              <span />
-              Online
-            </div>
-          </div>
-
-          <div
-            className="aio-live-preview-chat"
-            style={{
-              background: colors.surface,
-            }}
-          >
-            <div className="aio-live-preview-message-row">
-              <div
-                className="aio-live-preview-message incoming"
-                style={{
-                  background: colors.background,
-                  color: isDark
-                    ? "#F2F3F5"
-                    : "#14171C",
-                }}
-              >
-                Hey! How&apos;s your day going?
               </div>
-            </div>
-
-            <div className="aio-live-preview-message-row outgoing">
-              <div
-                className="aio-live-preview-message outgoing"
-                style={{
-                  background: colors.primary,
-                  color: colors.primaryForeground,
-                }}
-              >
-                Pretty good! Loving this AIO theme!
-              </div>
-            </div>
-
-            <div
-              className="aio-live-preview-composer"
-              style={{
-                background: colors.background,
-              }}
-            >
-              <span>Write a message...</span>
-
-              <div
-                style={{
-                  background: colors.primary,
-                }}
-              >
-                â†‘
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <div className="aio-appearance-footer">
-        <div className="aio-appearance-save-note">
-          <CircleHelp size={17} />
-
-          <span>
-            Your theme preferences are saved
-            automatically on this device.
-          </span>
-        </div>
-
-        <button
-          type="button"
-          className="aio-appearance-reset"
-          onClick={resetTheme}
-        >
-          <RotateCcw size={17} />
-          Reset to default
-        </button>
+            </button>
+          );
+        })}
       </div>
+
+      <p
+        style={{
+          fontSize: 12,
+          color: "var(--aio-muted)",
+        }}
+      >
+        AIO Volt uses one signature color and two appearances.
+        Your selection is saved automatically.
+      </p>
     </div>
   );
 }

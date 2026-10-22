@@ -1,10 +1,11 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { Bricolage_Grotesque, Instrument_Sans } from "next/font/google";
 
 import "./globals.css";
 import "./aio-filament-v2.css";
 import "./aio-paperwave.css";
 import "./aio-terra.css";
+import "./aio-volt.css";
 
 import AppShell from "@/components/layout/AppShell";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";

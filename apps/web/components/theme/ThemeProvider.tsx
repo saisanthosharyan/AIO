@@ -11,14 +11,12 @@ import {
 } from "react";
 
 import {
+  AIO_VOLT,
   DEFAULT_THEME_PREFERENCES,
   LEGACY_THEME_STORAGE_KEY,
   THEME_STORAGE_KEY,
   getThemeColors,
   isAppearanceMode,
-  isDesignStyle,
-  isThemeId,
-  isValidHexColor,
   resolveAppearance,
   type AppearanceMode,
   type DesignStyle,
@@ -38,153 +36,93 @@ interface ThemeContextValue {
   resetTheme: () => void;
 }
 
-const ThemeContext =
-  createContext<ThemeContextValue | null>(null);
+const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 function getSystemPrefersDark(): boolean {
-  if (typeof window === "undefined") {
-    return false;
-  }
+  if (typeof window === "undefined") return false;
 
-  return window.matchMedia(
-    "(prefers-color-scheme: dark)",
-  ).matches;
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
 }
 
-function getContrastColor(hex: string): string {
-  const normalized = hex.replace("#", "");
+function loadPreferences(): ThemePreferences {
+  const defaults = { ...DEFAULT_THEME_PREFERENCES };
 
-  const channels = [0, 2, 4].map((start) => {
-    const channel =
-      parseInt(normalized.slice(start, start + 2), 16) /
-      255;
-
-    return channel <= 0.04045
-      ? channel / 12.92
-      : ((channel + 0.055) / 1.055) ** 2.4;
-  });
-
-  const luminance =
-    0.2126 * channels[0] +
-    0.7152 * channels[1] +
-    0.0722 * channels[2];
-
-  return luminance > 0.179 ? "#111827" : "#FFFFFF";
-}
-
-function loadThemePreferences(): ThemePreferences {
-  if (typeof window === "undefined") {
-    return { ...DEFAULT_THEME_PREFERENCES };
-  }
+  if (typeof window === "undefined") return defaults;
 
   try {
-    const stored = window.localStorage.getItem(
-      THEME_STORAGE_KEY,
-    );
+    const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
 
     if (stored) {
       const parsed: unknown = JSON.parse(stored);
 
-      if (
-        typeof parsed === "object" &&
-        parsed !== null
-      ) {
+      if (parsed && typeof parsed === "object") {
         const data = parsed as Record<string, unknown>;
 
         return {
-          designStyle: isDesignStyle(data.designStyle)
-            ? data.designStyle
-            : DEFAULT_THEME_PREFERENCES.designStyle,
-          theme: isThemeId(data.theme)
-            ? data.theme
-            : DEFAULT_THEME_PREFERENCES.theme,
-
+          ...defaults,
           appearance: isAppearanceMode(data.appearance)
             ? data.appearance
-            : DEFAULT_THEME_PREFERENCES.appearance,
-
-          customAccent: isValidHexColor(
-            data.customAccent,
-          )
-            ? data.customAccent
-            : null,
+            : defaults.appearance,
         };
       }
     }
 
-    const legacyTheme =
-      window.localStorage.getItem(
-        LEGACY_THEME_STORAGE_KEY,
-      );
+    const legacy = window.localStorage.getItem(
+      LEGACY_THEME_STORAGE_KEY,
+    );
 
-    if (
-      legacyTheme === "light" ||
-      legacyTheme === "dark"
-    ) {
-      return {
-        ...DEFAULT_THEME_PREFERENCES,
-        appearance: legacyTheme,
-      };
+    if (legacy === "light" || legacy === "dark") {
+      return { ...defaults, appearance: legacy };
     }
   } catch {
-    // Use default preferences if storage is unavailable.
+    // Use default appearance if storage is unavailable.
   }
 
-  return { ...DEFAULT_THEME_PREFERENCES };
+  return defaults;
 }
 
-function applyThemeToDocument(
+function applyTheme(
   preferences: ThemePreferences,
-  resolvedAppearance: ResolvedAppearance,
+  appearance: ResolvedAppearance,
 ): void {
   const root = document.documentElement;
+  const colors = getThemeColors(preferences, appearance);
+  const palette =
+    appearance === "dark" ? AIO_VOLT.dark : AIO_VOLT.light;
 
-  const colors = getThemeColors(
-    preferences,
-    resolvedAppearance,
-  );
-
-  const primaryForeground = getContrastColor(
-    colors.primary,
-  );
-
-  const primaryHoverForeground = getContrastColor(
-    colors.primaryHover,
-  );
-
-  root.dataset.theme = resolvedAppearance;
-  root.dataset.aioStyle = preferences.designStyle;
-  root.dataset.aioTheme = preferences.theme;
-
-  root.style.colorScheme = resolvedAppearance;
+  root.dataset.theme = appearance;
+  root.dataset.aioStyle = "volt";
+  root.dataset.aioTheme = "standard";
+  root.style.colorScheme = appearance;
 
   const variables: Record<string, string> = {
     "--aio-primary": colors.primary,
     "--aio-primary-hover": colors.primaryHover,
+    "--aio-primary-foreground": AIO_VOLT.onPrimary,
+    "--aio-primary-hover-foreground": AIO_VOLT.onPrimary,
 
-    "--aio-primary-foreground": primaryForeground,
-    "--aio-primary-hover-foreground":
-      primaryHoverForeground,
+    "--aio-bg": palette.background,
+    "--aio-surface": palette.surface,
+    "--aio-surface-secondary": palette.secondarySurface,
+    "--aio-surface-raised": palette.raised,
+    "--aio-text": palette.text,
+    "--aio-muted": palette.muted,
+    "--aio-border": palette.border,
 
-    "--aio-bg": colors.background,
-    "--aio-surface": colors.surface,
+    "--aio-primary-soft": `color-mix(in srgb, ${AIO_VOLT.primary} 12%, ${palette.surface})`,
+    "--aio-accent": AIO_VOLT.primary,
 
-    "--aio-primary-soft": `color-mix(in srgb, ${colors.primary} 12%, ${colors.surface})`,
-
-    "--aio-accent": colors.primary,
-
-    "--brand": colors.primary,
+    "--brand": AIO_VOLT.primary,
     "--brand-hover": colors.primaryHover,
-    "--surface": colors.surface,
-    "--soft": colors.background,
-
-    "--canvas-accent": colors.primary,
-    "--canvas-accent-soft": `color-mix(in srgb, ${colors.primary} 12%, ${colors.surface})`,
+    "--surface": palette.surface,
+    "--soft": palette.secondarySurface,
+    "--canvas-accent": AIO_VOLT.primary,
+    "--canvas-accent-soft": `color-mix(in srgb, ${AIO_VOLT.primary} 12%, ${palette.surface})`,
   };
 
-  Object.entries(variables).forEach(([name, value]) => {
+  for (const [name, value] of Object.entries(variables)) {
     root.style.setProperty(name, value);
-  });
+  }
 }
 
 export function ThemeProvider({
@@ -192,18 +130,12 @@ export function ThemeProvider({
 }: {
   children: ReactNode;
 }) {
-  const [preferences, setPreferences] =
-    useState<ThemePreferences>({
-      ...DEFAULT_THEME_PREFERENCES,
-    });
+  const [preferences, setPreferences] = useState<ThemePreferences>({
+    ...DEFAULT_THEME_PREFERENCES,
+  });
 
-  const [
-    systemPrefersDark,
-    setSystemPrefersDark,
-  ] = useState(false);
-
-  const [initialized, setInitialized] =
-    useState(false);
+  const [systemPrefersDark, setSystemPrefersDark] = useState(false);
+  const [initialized, setInitialized] = useState(false);
 
   const resolvedAppearance = resolveAppearance(
     preferences.appearance,
@@ -213,44 +145,27 @@ export function ThemeProvider({
   const isDark = resolvedAppearance === "dark";
 
   useEffect(() => {
-    setPreferences(loadThemePreferences());
+    setPreferences(loadPreferences());
     setSystemPrefersDark(getSystemPrefersDark());
     setInitialized(true);
   }, []);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia(
-      "(prefers-color-scheme: dark)",
-    );
+    const query = window.matchMedia("(prefers-color-scheme: dark)");
 
-    function handleSystemChange(
-      event: MediaQueryListEvent,
-    ) {
+    const onChange = (event: MediaQueryListEvent) => {
       setSystemPrefersDark(event.matches);
-    }
-
-    mediaQuery.addEventListener(
-      "change",
-      handleSystemChange,
-    );
-
-    return () => {
-      mediaQuery.removeEventListener(
-        "change",
-        handleSystemChange,
-      );
     };
+
+    query.addEventListener("change", onChange);
+
+    return () => query.removeEventListener("change", onChange);
   }, []);
 
   useEffect(() => {
-    if (!initialized) {
-      return;
-    }
+    if (!initialized) return;
 
-    applyThemeToDocument(
-      preferences,
-      resolvedAppearance,
-    );
+    applyTheme(preferences, resolvedAppearance);
 
     try {
       window.localStorage.setItem(
@@ -258,81 +173,53 @@ export function ThemeProvider({
         JSON.stringify(preferences),
       );
     } catch {
-      // Theme changes still work without local storage.
+      // Theme remains usable without localStorage.
     }
   }, [preferences, resolvedAppearance, initialized]);
 
   useEffect(() => {
-    function handleStorage(event: StorageEvent) {
-      if (
-        event.key === THEME_STORAGE_KEY ||
-        event.key === null
-      ) {
-        setPreferences(loadThemePreferences());
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === THEME_STORAGE_KEY || event.key === null) {
+        setPreferences(loadPreferences());
       }
-    }
-
-    window.addEventListener(
-      "storage",
-      handleStorage,
-    );
-
-    return () => {
-      window.removeEventListener(
-        "storage",
-        handleStorage,
-      );
     };
+
+    window.addEventListener("storage", onStorage);
+
+    return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  const setTheme = useCallback((theme: ThemeId) => {
+  // Compatibility functions retained until legacy UI migration.
+  const setTheme = useCallback((_theme: ThemeId) => {
     setPreferences((previous) => ({
       ...previous,
-      theme,
+      theme: "standard",
     }));
   }, []);
 
-  const setDesignStyle = useCallback(
-    (style: DesignStyle) => {
-      setPreferences((previous) => ({
-        ...previous,
-        designStyle: style,
-      }));
-    },
-    [],
-  );
+  const setDesignStyle = useCallback((_style: DesignStyle) => {
+    setPreferences((previous) => ({
+      ...previous,
+      designStyle: "original",
+    }));
+  }, []);
 
-  const setAppearance = useCallback(
-    (appearance: AppearanceMode) => {
-      setPreferences((previous) => ({
-        ...previous,
-        appearance,
-      }));
-    },
-    [],
-  );
+  const setAppearance = useCallback((appearance: AppearanceMode) => {
+    setPreferences((previous) => ({
+      ...previous,
+      appearance,
+    }));
+  }, []);
 
-  const setCustomAccent = useCallback(
-    (color: string | null) => {
-      if (
-        color !== null &&
-        !isValidHexColor(color)
-      ) {
-        return;
-      }
-
-      setPreferences((previous) => ({
-        ...previous,
-        customAccent: color,
-      }));
-    },
-    [],
-  );
+  const setCustomAccent = useCallback((_color: string | null) => {
+    setPreferences((previous) => ({
+      ...previous,
+      customAccent: null,
+    }));
+  }, []);
 
   const resetTheme = useCallback(() => {
-    setPreferences({
-      ...DEFAULT_THEME_PREFERENCES,
-    });
+    setPreferences({ ...DEFAULT_THEME_PREFERENCES });
   }, []);
 
   return (
@@ -357,9 +244,7 @@ export function useTheme(): ThemeContextValue {
   const context = useContext(ThemeContext);
 
   if (!context) {
-    throw new Error(
-      "useTheme must be used inside ThemeProvider",
-    );
+    throw new Error("useTheme must be used inside ThemeProvider");
   }
 
   return context;
