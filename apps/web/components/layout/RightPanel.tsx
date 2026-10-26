@@ -1,97 +1,96 @@
 
 "use client";
 
+import Link from "next/link";
 import {
   ArrowUpRight,
-  CalendarDays,
-  TrendingUp,
+  Compass,
+  Layers3,
+  MessageCircle,
+  UsersRound,
 } from "lucide-react";
-import Link from "next/link";
 
-const upcomingEvents = [
+const destinations = [
   {
-    title: "Designers Hub Meetup",
-    time: "Today, 6:00 PM",
+    title: "Discover",
+    description: "Explore people and conversations",
+    href: "/discover",
+    icon: Compass,
   },
   {
-    title: "AI in Everyday Life",
-    time: "Tomorrow, 11:00 AM",
+    title: "Spaces",
+    description: "Find communities and discussions",
+    href: "/spaces",
+    icon: UsersRound,
   },
   {
-    title: "Photography Walk",
-    time: "Sunday, 7:00 AM",
+    title: "Flow",
+    description: "Explore another side of AIO",
+    href: "/flow",
+    icon: Layers3,
   },
-];
-
-const trends = [
-  { title: "#AIOCreator", posts: "12.5K posts" },
-  { title: "The Future of AI", posts: "8.7K posts" },
-  { title: "#SundayVibes", posts: "6.1K posts" },
+  {
+    title: "Messages",
+    description: "Continue your conversations",
+    href: "/messages",
+    icon: MessageCircle,
+  },
 ];
 
 export default function RightPanel() {
   return (
     <aside
-      className="aio-canvas-discovery"
-      aria-label="Discover on AIO"
+      className="aio-volt-discovery"
+      aria-label="Explore AIO"
     >
-      <section className="aio-canvas-discovery-section">
-        <div className="aio-canvas-discovery-heading">
-          <h2>Upcoming</h2>
-          <Link href="/spaces">Explore</Link>
-        </div>
+      <div className="aio-volt-discovery-header">
+        <span className="aio-volt-discovery-label">
+          EXPLORE AIO
+        </span>
+        <h2>Find your next connection.</h2>
+        <p>
+          Discover communities, people and conversations
+          across AIO.
+        </p>
+      </div>
 
-        <div className="aio-canvas-discovery-list">
-          {upcomingEvents.map((event) => (
+      <nav
+        className="aio-volt-discovery-links"
+        aria-label="Explore sections"
+      >
+        {destinations.map((item) => {
+          const Icon = item.icon;
+
+          return (
             <Link
-              href="/spaces"
-              key={event.title}
-              className="aio-canvas-event"
+              key={item.href}
+              href={item.href}
+              className="aio-volt-discovery-link"
             >
-              <span className="aio-canvas-event-icon">
-                <CalendarDays size={16} />
+              <span className="aio-volt-discovery-icon">
+                <Icon size={19} strokeWidth={1.8} />
               </span>
 
-              <span className="aio-canvas-event-info">
-                <strong>{event.title}</strong>
-                <small>{event.time}</small>
+              <span className="aio-volt-discovery-link-copy">
+                <strong>{item.title}</strong>
+                <small>{item.description}</small>
               </span>
+
+              <ArrowUpRight
+                size={16}
+                aria-hidden="true"
+              />
             </Link>
-          ))}
-        </div>
-      </section>
+          );
+        })}
+      </nav>
 
-      <section className="aio-canvas-discovery-section">
-        <div className="aio-canvas-discovery-heading">
-          <h2>
-            <TrendingUp size={16} />
-            Trending
-          </h2>
-
-          <Link href="/discover">See all</Link>
-        </div>
-
-        <div className="aio-canvas-discovery-list">
-          {trends.map((trend, index) => (
-            <Link
-              href="/discover"
-              key={trend.title}
-              className="aio-canvas-trend"
-            >
-              <span className="aio-canvas-trend-index">
-                {String(index + 1).padStart(2, "0")}
-              </span>
-
-              <span className="aio-canvas-trend-info">
-                <strong>{trend.title}</strong>
-                <small>{trend.posts}</small>
-              </span>
-
-              <ArrowUpRight size={15} />
-            </Link>
-          ))}
-        </div>
-      </section>
+      <div className="aio-volt-discovery-footer">
+        <span className="aio-volt-discovery-brand">
+          AIO<span>.</span>
+        </span>
+        <span>One place. More connections.</span>
+      </div>
     </aside>
   );
 }

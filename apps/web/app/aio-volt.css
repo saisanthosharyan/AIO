@@ -157,10 +157,12 @@ html[data-aio-style="volt"] .aio-canvas-main {
 
 html[data-aio-style="volt"] .aio-canvas-content-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
+  grid-template-columns: minmax(0, 700px) minmax(0, 270px);
   align-items: start;
-  gap: 28px;
-  max-width: 1180px;
+  justify-content: center;
+  gap: 36px;
+  width: 100%;
+  max-width: 1006px;
   margin-inline: auto;
 }
 
@@ -407,45 +409,103 @@ html[data-aio-style="volt"] .aio-feed button:focus-visible {
   }
 }
 
+
 /* ==========================================================
-   AIO VOLT — POST CARD REFINEMENTS
+   AIO VOLT — STREAM TIMELINE
+   Uses the existing two-column post structure.
+   No additional indentation inside column 2.
    ========================================================== */
 
-html[data-aio-style="volt"] .aio-feed .post-card {
+html[data-aio-style="volt"] .aio-v2-stream-header,
+html[data-aio-style="volt"] .aio-feed {
   width: 100%;
+  max-width: 700px;
+  margin-inline: auto;
+}
+
+html[data-aio-style="volt"] .aio-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: visible;
+}
+
+/* Typography */
+
+html[data-aio-style="volt"] .aio-v2-stream-heading h1,
+html[data-aio-style="volt"] .aio-volt-discovery-header h2 {
+  font-family: Arial, Helvetica, sans-serif;
+  font-style: normal;
+}
+
+html[data-aio-style="volt"] .aio-v2-stream-heading h1 {
+  font-size: 28px;
+  font-weight: 750;
+  line-height: 1.2;
+  letter-spacing: -0.045em;
+}
+
+html[data-aio-style="volt"] .aio-v2-stream-heading p {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Timeline post */
+
+html[data-aio-style="volt"]
+.aio-canvas-page-content .aio-feed .post-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  column-gap: 12px;
+  row-gap: 0;
+  width: 100%;
+  min-width: 0;
   margin: 0;
-  padding: 18px 20px;
-  background: transparent;
+  padding: 16px 12px;
   border: 0;
   border-bottom: 1px solid var(--aio-border);
   border-radius: 0;
+  background: transparent;
   box-shadow: none;
+  overflow: visible;
+  isolation: isolate;
+  z-index: 0;
 }
 
-html[data-aio-style="volt"] .post-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
+html[data-aio-style="volt"]
+.aio-canvas-page-content .aio-feed .post-card:hover {
+  background: var(--aio-surface-secondary);
 }
 
-html[data-aio-style="volt"] .post-user {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
+html[data-aio-style="volt"]
+.aio-canvas-page-content .aio-feed .post-card:has(.aio-post-menu) {
+  z-index: 20;
 }
 
-html[data-aio-style="volt"] .post-avatar {
-  width: 44px;
-  height: 44px;
-  flex: 0 0 44px;
+/* Header spans the two-column grid */
+
+html[data-aio-style="volt"]
+.aio-canvas-page-content .post-header,
+html[data-aio-style="volt"]
+.aio-canvas-page-content .post-user {
+  display: contents;
+}
+
+/* Avatar */
+
+html[data-aio-style="volt"]
+.aio-canvas-page-content .post-avatar {
+  grid-column: 1;
+  grid-row: 1 / span 3;
+  width: 42px;
+  height: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   border-radius: 50%;
-  background: var(--aio-primary-soft);
+  background: var(--aio-surface-raised);
   color: var(--aio-text);
   font-size: 12px;
   font-weight: 750;
@@ -457,12 +517,25 @@ html[data-aio-style="volt"] .post-avatar-image {
   object-fit: cover;
 }
 
-html[data-aio-style="volt"] .post-author-details {
+/* Author information */
+
+html[data-aio-style="volt"]
+.aio-canvas-page-content .post-author-details {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 7px;
   min-width: 0;
+  padding-right: 38px;
 }
 
-html[data-aio-style="volt"] .post-author-line {
-  display: flex;
+html[data-aio-style="volt"]
+.aio-canvas-page-content .post-author-line,
+html[data-aio-style="volt"]
+.aio-canvas-page-content .post-meta-line {
+  display: inline-flex;
   align-items: center;
   gap: 5px;
 }
@@ -475,26 +548,33 @@ html[data-aio-style="volt"] .post-author-line strong {
 }
 
 html[data-aio-style="volt"] .post-meta-line {
-  display: flex;
-  align-items: center;
-  gap: 6px;
   color: var(--aio-muted);
   font-size: 12px;
   line-height: 1.5;
 }
 
-html[data-aio-style="volt"] .post-content {
-  margin-top: 10px;
-  padding-left: 56px;
+/* Post content — already positioned in column 2 */
+
+html[data-aio-style="volt"]
+.aio-canvas-page-content .post-content {
+  grid-column: 2;
+  grid-row: 2;
+  min-width: 0;
+  margin: 7px 0 0;
+  padding: 0;
 }
 
-html[data-aio-style="volt"] .post-text {
+html[data-aio-style="volt"]
+.aio-canvas-page-content .post-text {
   margin: 0;
+  color: var(--aio-text);
   font-size: 14px;
-  line-height: 1.65;
+  line-height: 1.6;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+/* Images */
 
 html[data-aio-style="volt"] .post-media {
   margin-top: 12px;
@@ -511,24 +591,32 @@ html[data-aio-style="volt"] .post-media-image {
   object-fit: contain;
 }
 
-html[data-aio-style="volt"] .post-footer {
+/* Actions — no extra left margin */
+
+html[data-aio-style="volt"]
+.aio-canvas-page-content .post-footer {
+  grid-column: 2;
+  grid-row: 3;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin-top: 14px;
-  margin-left: 56px;
+  gap: 12px;
+  width: 100%;
+  max-width: 480px;
+  margin: 10px 0 0;
   padding: 0;
+  border-top: 0;
 }
 
-html[data-aio-style="volt"] .post-action {
+html[data-aio-style="volt"]
+.aio-canvas-page-content .post-action {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  min-width: 40px;
-  min-height: 36px;
-  padding: 6px 10px;
+  gap: 6px;
+  min-width: 36px;
+  min-height: 34px;
+  padding: 5px 8px;
   border: 0;
   border-radius: 8px;
   background: transparent;
@@ -540,8 +628,9 @@ html[data-aio-style="volt"] .post-action {
               color 150ms ease;
 }
 
-html[data-aio-style="volt"] .post-action:hover {
-  background: var(--aio-primary-soft);
+html[data-aio-style="volt"]
+.aio-canvas-page-content .post-action:hover {
+  background: var(--aio-surface-raised);
   color: var(--aio-text);
 }
 
@@ -549,15 +638,9 @@ html[data-aio-style="volt"] .post-action.liked {
   color: #e25565;
 }
 
-html[data-aio-style="volt"] .post-action.saved,
-html[data-aio-style="volt"] .post-action.comments-open {
+html[data-aio-style="volt"]
+.post-action:is(.saved, .comments-open) {
   color: var(--aio-primary);
-}
-
-html[data-aio-style="volt"] .post-action:focus-visible,
-html[data-aio-style="volt"] .more-button:focus-visible {
-  outline: 2px solid var(--aio-primary);
-  outline-offset: 2px;
 }
 
 html[data-aio-style="volt"] .post-action:disabled {
@@ -565,26 +648,189 @@ html[data-aio-style="volt"] .post-action:disabled {
   cursor: wait;
 }
 
-@media (max-width: 600px) {
-  html[data-aio-style="volt"] .aio-feed .post-card {
-    padding: 15px 12px;
+/* Comments remain in the same reading column */
+
+html[data-aio-style="volt"]
+.aio-canvas-page-content .post-comments {
+  grid-column: 2;
+  grid-row: 4;
+  min-width: 0;
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--aio-border);
+}
+
+/* Post menu */
+
+html[data-aio-style="volt"]
+.aio-canvas-page-content .aio-post-menu-wrap {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  align-self: start;
+  z-index: 10;
+}
+
+/* Composer */
+
+html[data-aio-style="volt"]
+.aio-canvas-page-content .aio-canvas-composer {
+  margin-bottom: 0;
+  border-radius: 10px;
+  border: 1px solid var(--aio-border);
+  background: var(--aio-surface);
+}
+
+/* Mobile */
+
+@media (max-width: 760px) {
+  html[data-aio-style="volt"]
+  .aio-v2-stream-header {
+    padding-inline: 16px;
   }
 
-  html[data-aio-style="volt"] .post-avatar {
+  html[data-aio-style="volt"]
+  .aio-canvas-page-content .aio-feed .post-card {
+    grid-template-columns: 38px minmax(0, 1fr);
+    column-gap: 10px;
+    padding: 14px 12px;
+  }
+
+  html[data-aio-style="volt"]
+  .aio-canvas-page-content .post-avatar {
     width: 38px;
     height: 38px;
-    flex-basis: 38px;
   }
 
-  html[data-aio-style="volt"] .post-content {
-    padding-left: 0;
+  html[data-aio-style="volt"]
+  .aio-canvas-page-content .post-footer {
+    gap: 6px;
   }
 
-  html[data-aio-style="volt"] .post-footer {
-    margin-left: 0;
+  html[data-aio-style="volt"]
+  .aio-canvas-page-content .post-action {
+    min-width: 32px;
+    padding-inline: 5px;
   }
+}
 
-  html[data-aio-style="volt"] .post-action {
-    padding-inline: 7px;
-  }
+/* ==========================================================
+   AIO VOLT — DISCOVERY PANEL
+   ========================================================== */
+
+html[data-aio-style="volt"] .aio-volt-discovery {
+  width: 100%;
+  padding: 24px 0;
+  color: var(--aio-text);
+}
+
+html[data-aio-style="volt"] .aio-volt-discovery-header {
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--aio-border);
+}
+
+html[data-aio-style="volt"] .aio-volt-discovery-label {
+  display: block;
+  margin-bottom: 14px;
+  color: var(--aio-muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+}
+
+html[data-aio-style="volt"] .aio-volt-discovery-header h2 {
+  max-width: 230px;
+  margin: 0;
+  color: var(--aio-text);
+  font-size: 22px;
+  font-weight: 750;
+  line-height: 1.25;
+  letter-spacing: -0.04em;
+}
+
+html[data-aio-style="volt"] .aio-volt-discovery-header p {
+  margin: 12px 0 0;
+  color: var(--aio-muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+html[data-aio-style="volt"] .aio-volt-discovery-links {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 0;
+}
+
+html[data-aio-style="volt"] .aio-volt-discovery-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  padding: 10px 6px;
+  border-radius: 10px;
+  color: var(--aio-text);
+  text-decoration: none;
+  transition: background-color 150ms ease;
+}
+
+html[data-aio-style="volt"] .aio-volt-discovery-link:hover {
+  background: var(--aio-surface-secondary);
+}
+
+html[data-aio-style="volt"] .aio-volt-discovery-icon {
+  display: flex;
+  flex: 0 0 40px;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--aio-border);
+  border-radius: 10px;
+  color: var(--aio-text);
+}
+
+html[data-aio-style="volt"] .aio-volt-discovery-link-copy {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+html[data-aio-style="volt"] .aio-volt-discovery-link-copy strong {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+html[data-aio-style="volt"] .aio-volt-discovery-link-copy small {
+  color: var(--aio-muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+html[data-aio-style="volt"] .aio-volt-discovery-link > svg {
+  flex-shrink: 0;
+  color: var(--aio-muted);
+}
+
+html[data-aio-style="volt"] .aio-volt-discovery-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 20px;
+  border-top: 1px solid var(--aio-border);
+  color: var(--aio-muted);
+  font-size: 11px;
+}
+
+html[data-aio-style="volt"] .aio-volt-discovery-brand {
+  color: var(--aio-text);
+  font-size: 20px;
+  font-weight: 850;
+  letter-spacing: -0.06em;
+}
+
+html[data-aio-style="volt"] .aio-volt-discovery-brand span {
+  color: var(--aio-primary);
 }
