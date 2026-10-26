@@ -1,4 +1,4 @@
-
+﻿
 "use client";
 import CommentThread from "./CommentThread";
 
@@ -578,7 +578,7 @@ export default function PostCard({
                 className="post-meta-dot"
                 aria-hidden="true"
               >
-                Â·
+                {"\u00B7"}
               </span>
               <time>{time}</time>
             </div>

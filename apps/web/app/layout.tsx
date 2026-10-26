@@ -1,9 +1,8 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { Bricolage_Grotesque, Instrument_Sans } from "next/font/google";
 
 import "./globals.css";
-import "./aio-filament-v2.css";
-import "./aio-paperwave.css";
+import "./aio-volt.css";
 
 import AppShell from "@/components/layout/AppShell";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
@@ -21,6 +20,7 @@ const body = Instrument_Sans({
   variable: "--font-body",
   display: "swap",
 });
+
 export const metadata: Metadata = {
   title: {
     default: "AIO",
@@ -37,15 +37,13 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      data-aio-style="v2"
+      data-aio-style="volt"
       className={`${display.variable} ${body.variable}`}
       suppressHydrationWarning
     >
       <body className="aio-root">
         <ThemeProvider>
-          <AppShell>
-            {children}
-          </AppShell>
+          <AppShell>{children}</AppShell>
         </ThemeProvider>
       </body>
     </html>
