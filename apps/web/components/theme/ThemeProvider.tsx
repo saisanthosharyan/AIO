@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -30,10 +31,8 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 function loadPreferences(): ThemePreferences {
-  const defaults = { ...DEFAULT_THEME_PREFERENCES };
-
   if (typeof window === "undefined") {
-    return defaults;
+    return { ...DEFAULT_THEME_PREFERENCES };
   }
 
   try {
@@ -42,11 +41,16 @@ function loadPreferences(): ThemePreferences {
     if (stored) {
       const parsed: unknown = JSON.parse(stored);
 
-      if (parsed && typeof parsed === "object") {
-        const data = parsed as Record<string, unknown>;
+      if (
+        parsed &&
+        typeof parsed === "object" &&
+        "appearance" in parsed
+      ) {
+        const appearance = (parsed as Record<string, unknown>)
+          .appearance;
 
-        if (isAppearanceMode(data.appearance)) {
-          return { appearance: data.appearance };
+        if (isAppearanceMode(appearance)) {
+          return { appearance };
         }
       }
     }
@@ -59,10 +63,10 @@ function loadPreferences(): ThemePreferences {
       return { appearance: legacy };
     }
   } catch {
-    // Fall back to the default appearance.
+    // Use the default appearance if storage is unavailable or invalid.
   }
 
-  return defaults;
+  return { ...DEFAULT_THEME_PREFERENCES };
 }
 
 function applyTheme(appearance: AppearanceMode): void {
@@ -91,8 +95,7 @@ function applyTheme(appearance: AppearanceMode): void {
     "--aio-muted": palette.muted,
     "--aio-border": palette.border,
 
-    "--aio-primary-soft":
-      `color-mix(in srgb, ${AIO_VOLT.primary} 12%, ${palette.surface})`,
+    "--aio-primary-soft": `color-mix(in srgb, ${AIO_VOLT.primary} 12%, ${palette.surface})`,
 
     "--aio-accent": AIO_VOLT.primary,
     "--brand": AIO_VOLT.primary,
@@ -100,13 +103,12 @@ function applyTheme(appearance: AppearanceMode): void {
     "--surface": palette.surface,
     "--soft": palette.secondarySurface,
     "--canvas-accent": AIO_VOLT.primary,
-    "--canvas-accent-soft":
-      `color-mix(in srgb, ${AIO_VOLT.primary} 12%, ${palette.surface})`,
+    "--canvas-accent-soft": `color-mix(in srgb, ${AIO_VOLT.primary} 12%, ${palette.surface})`,
   };
 
-  for (const [name, value] of Object.entries(variables)) {
+  Object.entries(variables).forEach(([name, value]) => {
     root.style.setProperty(name, value);
-  }
+  });
 }
 
 export function ThemeProvider({
@@ -114,17 +116,22 @@ export function ThemeProvider({
 }: {
   children: ReactNode;
 }) {
-  const [preferences, setPreferences] = useState<ThemePreferences>({
-    ...DEFAULT_THEME_PREFERENCES,
-  });
+  const [preferences, setPreferences] = useState<ThemePreferences>(
+    { ...DEFAULT_THEME_PREFERENCES },
+  );
 
   const [initialized, setInitialized] = useState(false);
 
+  // Load the saved appearance when the provider mounts.
   useEffect(() => {
-    setPreferences(loadPreferences());
+    const savedPreferences = loadPreferences();
+
+    setPreferences(savedPreferences);
+    applyTheme(savedPreferences.appearance);
     setInitialized(true);
   }, []);
 
+  // Apply and save the selected appearance.
   useEffect(() => {
     if (!initialized) return;
 
@@ -135,26 +142,44 @@ export function ThemeProvider({
         THEME_STORAGE_KEY,
         JSON.stringify(preferences),
       );
+
+      window.localStorage.setItem(
+        LEGACY_THEME_STORAGE_KEY,
+        preferences.appearance,
+      );
     } catch {
-      // Appearance remains usable without localStorage.
+      // The selected appearance remains active for this session.
     }
   }, [preferences, initialized]);
 
+  // Synchronize appearance changes across browser tabs.
   useEffect(() => {
-    const onStorage = (event: StorageEvent) => {
-      if (event.key === THEME_STORAGE_KEY || event.key === null) {
-        setPreferences(loadPreferences());
+    const handleStorage = (event: StorageEvent) => {
+      if (
+        event.key === THEME_STORAGE_KEY ||
+        event.key === LEGACY_THEME_STORAGE_KEY ||
+        event.key === null
+      ) {
+        const savedPreferences = loadPreferences();
+
+        setPreferences(savedPreferences);
+        applyTheme(savedPreferences.appearance);
       }
     };
 
-    window.addEventListener("storage", onStorage);
+    window.addEventListener("storage", handleStorage);
 
-    return () => window.removeEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+    };
   }, []);
 
-  const setAppearance = useCallback((appearance: AppearanceMode) => {
-    setPreferences({ appearance });
-  }, []);
+  const setAppearance = useCallback(
+    (appearance: AppearanceMode) => {
+      setPreferences({ appearance });
+    },
+    [],
+  );
 
   return (
     <ThemeContext.Provider
