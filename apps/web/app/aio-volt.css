@@ -22,7 +22,7 @@ html[data-aio-style="volt"] {
 html[data-aio-style="volt"] body {
   background: var(--aio-bg);
   color: var(--aio-text);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body), sans-serif;
 }
 
 /* Application layout */
@@ -68,7 +68,7 @@ html[data-aio-style="volt"] .aio-canvas-sidebar-inner {
 
 html[data-aio-style="volt"] .aio-canvas-brand {
   color: var(--aio-text);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-display), sans-serif;
   font-weight: 800;
   letter-spacing: -0.06em;
 }
@@ -102,7 +102,7 @@ html[data-aio-style="volt"]
 
 html[data-aio-style="volt"] .aio-canvas-create {
   background: var(--aio-primary);
-  color: #171a17;
+  color: var(--aio-primary-foreground, #25120F);
   border: 1px solid var(--aio-primary);
   border-radius: 10px;
   font-weight: 700;
@@ -110,7 +110,7 @@ html[data-aio-style="volt"] .aio-canvas-create {
 
 html[data-aio-style="volt"] .aio-canvas-create:hover {
   background: var(--aio-primary-hover);
-  color: #171a17;
+  color: var(--aio-primary-foreground, #25120F);
 }
 
 /* Header */
@@ -202,7 +202,7 @@ html[data-aio-style="volt"] .aio-canvas-discovery-heading h2,
 html[data-aio-style="volt"] .aio-canvas-event-info strong,
 html[data-aio-style="volt"] .aio-canvas-trend-info strong {
   color: var(--aio-text);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-display), sans-serif;
 }
 
 html[data-aio-style="volt"] .aio-canvas-discovery-heading a {
@@ -215,7 +215,7 @@ html[data-aio-style="volt"] .aio-canvas-trend-info small {
 }
 
 html[data-aio-style="volt"] .aio-canvas-event-icon {
-  color: #171a17;
+  color: var(--aio-primary-foreground, #25120F);
   background: var(--aio-primary);
 }
 
@@ -306,7 +306,7 @@ html[data-aio-style="volt"]
   }
 
   html[data-aio-style="volt"] .aio-mobile-create {
-    color: #171a17;
+    color: var(--aio-primary-foreground, #25120F);
     background: var(--aio-primary);
   }
 }
@@ -341,7 +341,7 @@ html[data-aio-style="volt"] .aio-v2-stream-eyebrow {
 }
 
 html[data-aio-style="volt"] .aio-v2-stream-heading h1 {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-display), sans-serif;
   font-size: clamp(24px, 2vw, 29px);
   font-weight: 750;
   line-height: 1.2;
@@ -434,7 +434,7 @@ html[data-aio-style="volt"] .aio-feed {
 
 html[data-aio-style="volt"] .aio-v2-stream-heading h1,
 html[data-aio-style="volt"] .aio-volt-discovery-header h2 {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-display), sans-serif;
   font-style: normal;
 }
 

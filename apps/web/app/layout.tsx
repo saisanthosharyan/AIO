@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { Bricolage_Grotesque, Instrument_Sans } from "next/font/google";
 
 import "./globals.css";
@@ -21,6 +21,37 @@ const body = Instrument_Sans({
   display: "swap",
 });
 
+const themeBootstrapScript = `
+(() => {
+  try {
+    let appearance = "light";
+
+    const stored = localStorage.getItem("aio-volt-preferences");
+
+    if (stored) {
+      const parsed = JSON.parse(stored);
+
+      if (parsed.appearance === "light" || parsed.appearance === "dark") {
+        appearance = parsed.appearance;
+      }
+    } else {
+      const legacy = localStorage.getItem("aio-theme");
+
+      if (legacy === "light" || legacy === "dark") {
+        appearance = legacy;
+      }
+    }
+
+    document.documentElement.dataset.theme = appearance;
+    document.documentElement.dataset.aioStyle = "volt";
+    document.documentElement.dataset.aioTheme = "standard";
+    document.documentElement.style.colorScheme = appearance;
+  } catch {
+    // Use the default light theme if storage is unavailable.
+  }
+})();
+`;
+
 export const metadata: Metadata = {
   title: {
     default: "AIO",
@@ -41,6 +72,14 @@ export default function RootLayout({
       className={`${display.variable} ${body.variable}`}
       suppressHydrationWarning
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: themeBootstrapScript,
+          }}
+        />
+      </head>
+
       <body className="aio-root">
         <ThemeProvider>
           <AppShell>{children}</AppShell>

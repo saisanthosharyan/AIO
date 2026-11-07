@@ -8,16 +8,34 @@ const appearances = [
   {
     id: "light",
     name: "Light",
-    description: "A bright, clean interface.",
+    description: "A warm, bright and comfortable interface.",
     Icon: Sun,
+    preview: {
+      background: "#FAF9F6",
+      surface: "#FFFFFF",
+      secondary: "#F3F1ED",
+      border: "#E8E4DE",
+      text: "#242321",
+      muted: "#77736E",
+    },
   },
   {
     id: "dark",
     name: "Dark",
-    description: "A calm, focused interface.",
+    description: "A refined, comfortable dark interface.",
     Icon: Moon,
+    preview: {
+      background: "#151515",
+      surface: "#1D1D1D",
+      secondary: "#242424",
+      border: "#363331",
+      text: "#F5F2EF",
+      muted: "#AAA39D",
+    },
   },
 ] as const;
+
+const ACCENT = "#F0644F";
 
 export default function ThemePicker() {
   const { resolvedAppearance, setAppearance } = useTheme();
@@ -28,7 +46,7 @@ export default function ThemePicker() {
       style={{
         display: "grid",
         gap: 24,
-        color: "var(--aio-text, #171A17)",
+        color: "var(--aio-text, #242321)",
       }}
     >
       <div style={{ display: "grid", gap: 6 }}>
@@ -46,11 +64,12 @@ export default function ThemePicker() {
           style={{
             fontSize: 14,
             lineHeight: 1.6,
-            color: "var(--aio-muted, #6A7068)",
+            color: "var(--aio-muted, #77736E)",
           }}
         >
-          Choose how AIO looks. Your signature Volt color
-          stays consistent in both modes.
+          Choose the appearance that feels right for you.
+          AIO's signature Persimmon accent stays consistent
+          across both modes.
         </p>
       </div>
 
@@ -64,7 +83,7 @@ export default function ThemePicker() {
           gap: 14,
         }}
       >
-        {appearances.map(({ id, name, description, Icon }) => {
+        {appearances.map(({ id, name, description, Icon, preview }) => {
           const selected = resolvedAppearance === id;
 
           return (
@@ -80,7 +99,7 @@ export default function ThemePicker() {
                 textAlign: "left",
                 borderRadius: 14,
                 border: selected
-                  ? "2px solid var(--aio-primary)"
+                  ? `2px solid ${ACCENT}`
                   : "2px solid var(--aio-border)",
                 background: "var(--aio-surface)",
                 color: "var(--aio-text)",
@@ -89,27 +108,24 @@ export default function ThemePicker() {
                   "border-color 150ms ease, background 150ms ease",
               }}
             >
+              {/* Appearance preview */}
               <div
                 aria-hidden="true"
                 style={{
                   height: 120,
                   overflow: "hidden",
                   borderRadius: 9,
-                  border: `1px solid ${
-                    id === "light" ? "#E7EAE3" : "#343934"
-                  }`,
-                  background:
-                    id === "light" ? "#FFFFFF" : "#121412",
+                  border: `1px solid ${preview.border}`,
+                  background: preview.background,
                   display: "grid",
                   gridTemplateColumns: "30% 1fr",
                 }}
               >
+                {/* Sidebar preview */}
                 <div
                   style={{
                     padding: 10,
-                    borderRight: `1px solid ${
-                      id === "light" ? "#E7EAE3" : "#343934"
-                    }`,
+                    borderRight: `1px solid ${preview.border}`,
                     display: "grid",
                     alignContent: "start",
                     gap: 9,
@@ -119,7 +135,7 @@ export default function ThemePicker() {
                     style={{
                       width: 25,
                       height: 25,
-                      background: "#B8F04A",
+                      background: ACCENT,
                       borderRadius: 7,
                     }}
                   />
@@ -130,13 +146,13 @@ export default function ThemePicker() {
                       style={{
                         height: 7,
                         borderRadius: 3,
-                        background:
-                          id === "light" ? "#E7EAE3" : "#343934",
+                        background: preview.border,
                       }}
                     />
                   ))}
                 </div>
 
+                {/* Content preview */}
                 <div
                   style={{
                     padding: 12,
@@ -150,8 +166,7 @@ export default function ThemePicker() {
                       width: "75%",
                       height: 10,
                       borderRadius: 4,
-                      background:
-                        id === "light" ? "#171A17" : "#F5F6F2",
+                      background: preview.text,
                     }}
                   />
 
@@ -159,11 +174,8 @@ export default function ThemePicker() {
                     style={{
                       height: 47,
                       borderRadius: 7,
-                      background:
-                        id === "light" ? "#F7F8F5" : "#1C1F1B",
-                      border: `1px solid ${
-                        id === "light" ? "#E7EAE3" : "#343934"
-                      }`,
+                      background: preview.surface,
+                      border: `1px solid ${preview.border}`,
                     }}
                   />
 
@@ -172,12 +184,13 @@ export default function ThemePicker() {
                       width: "45%",
                       height: 7,
                       borderRadius: 3,
-                      background: "#B8F04A",
+                      background: ACCENT,
                     }}
                   />
                 </div>
               </div>
 
+              {/* Appearance details */}
               <div
                 style={{
                   display: "flex",
@@ -206,7 +219,7 @@ export default function ThemePicker() {
                 {selected && (
                   <Check
                     size={19}
-                    color="var(--aio-primary)"
+                    color={ACCENT}
                     aria-hidden="true"
                   />
                 )}
@@ -220,10 +233,11 @@ export default function ThemePicker() {
         style={{
           fontSize: 12,
           color: "var(--aio-muted)",
+          lineHeight: 1.6,
         }}
       >
-        AIO Volt uses one signature color and two appearances.
-        Your selection is saved automatically.
+        AIO brings both appearances together with one
+        consistent identity. Your selection is saved automatically.
       </p>
     </div>
   );

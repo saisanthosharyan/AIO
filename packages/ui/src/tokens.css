@@ -1,25 +1,26 @@
 :root {
   /* =========================================
-     AIO COLOR SYSTEM
+     AIO COLOR SYSTEM — PERSIMMON
      ========================================= */
 
-  --aio-bg: #f5f6f8;
-  --aio-surface: #ffffff;
-  --aio-surface-soft: #f0f1f4;
-  --aio-surface-hover: #e9eaf0;
+  --aio-bg: #FAF9F6;
+  --aio-surface: #FFFFFF;
+  --aio-surface-soft: #F3F1ED;
+  --aio-surface-hover: #EEEAE4;
 
-  --aio-text: #111318;
-  --aio-text-secondary: #686d78;
-  --aio-text-muted: #9a9faa;
+  --aio-text: #242321;
+  --aio-text-secondary: #77736E;
+  --aio-text-muted: #99938D;
 
-  --aio-border: #e5e6eb;
+  --aio-border: #E8E4DE;
 
-  --aio-accent: #635bff;
-  --aio-accent-soft: #eeecff;
+  /* Follow the active AIO theme */
+  --aio-accent: var(--aio-primary, #F0644F);
+  --aio-accent-soft: var(--aio-primary-soft, #FCE8E3);
 
   --aio-success: #278866;
-  --aio-warning: #c98520;
-  --aio-error: #d94b55;
+  --aio-warning: #C98520;
+  --aio-error: #D94B55;
 
   /* =========================================
      AIO SPACING
