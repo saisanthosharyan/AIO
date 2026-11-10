@@ -35,3 +35,7 @@ backend/uploads/
 
 # Local test files
 test-image.png
+
+database-backups/
+
+backend/.env.demo
