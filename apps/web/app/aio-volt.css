@@ -449,7 +449,7 @@ html[data-aio-style="volt"] .aio-feed button:focus-visible {
   }
 }
 /* ==========================================================
-/* AIO VOLT - STREAM TIMELINE */
+   AIO VOLT - STREAM TIMELINE
    Uses the existing two-column post structure.
    No additional indentation inside column 2.
    ========================================================== */
@@ -589,7 +589,7 @@ html[data-aio-style="volt"] .post-meta-line {
   line-height: 1.5;
 }
 
-/* Post content Ã¢â‚¬â€ already positioned in column 2 */
+/* Post content is already positioned in column 2. */
 
 html[data-aio-style="volt"]
 .aio-canvas-page-content .post-content {
@@ -627,7 +627,7 @@ html[data-aio-style="volt"] .post-media-image {
   object-fit: contain;
 }
 
-/* Actions Ã¢â‚¬â€ no extra left margin */
+/* Actions have no extra left margin. */
 
 html[data-aio-style="volt"]
 .aio-canvas-page-content .post-footer {
@@ -872,7 +872,7 @@ html[data-aio-style="volt"] .aio-volt-discovery-brand span {
 }
 
 /* =========================================================
-   AIO EDITORIAL â€” POST COMPOSER
+   AIO EDITORIAL - POST COMPOSER
    Scoped visual refinements; behavior remains unchanged.
    ========================================================= */
 
@@ -955,7 +955,7 @@ html[data-aio-style="volt"] .create-post-modal .publish-button {
 }
 
 /* =========================================================
-   AIO EDITORIAL â€” CONVERSATION THREAD
+   AIO EDITORIAL - CONVERSATION THREAD
    ========================================================= */
 
 html[data-aio-style="volt"] .aio-thread .comment-item {
@@ -1125,7 +1125,7 @@ html[data-aio-style="volt"] .aio-canvas-composer-submit {
 }
 
 /* =========================================================
-   AIO VOLT � NOTIFICATIONS REFINEMENT
+   AIO VOLT - NOTIFICATIONS REFINEMENT
    Scoped visual overrides. Existing behavior is unchanged.
    ========================================================= */
 

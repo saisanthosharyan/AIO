@@ -3,6 +3,7 @@ import Link from "next/link";
 import {
   FormEvent,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -194,7 +195,10 @@ export default function MessagesPage() {
   const threadEndRef =
     useRef<HTMLDivElement | null>(null);
   const selectedConversationIdRef = useRef<string | null>(null);
-  selectedConversationIdRef.current = selectedConversation?.id ?? null;
+
+  useLayoutEffect(() => {
+    selectedConversationIdRef.current = selectedConversation?.id ?? null;
+  }, [selectedConversation?.id]);
   const socketRef = useRef<ReturnType<typeof connectSocket> | null>(null);
   const loadedConversationIdRef = useRef<string | null>(null);
   const selectedParticipant =
@@ -319,7 +323,6 @@ export default function MessagesPage() {
   useEffect(() => {
     if (!selectedConversation) {
       loadedConversationIdRef.current = null;
-      setMessages([]);
       return;
     }
     loadedConversationIdRef.current = selectedConversation.id;
@@ -390,42 +393,31 @@ export default function MessagesPage() {
     currentUser?.id,
   ]);
   useEffect(() => {
-    if (!newMessageOpen) {
-      setUserSearchResults([]);
-      setUserSearchError("");
-      setUserSearchLoading(false);
-      return;
-    }
-    const query =
-      userSearchQuery.trim();
-    if (!query) {
-      setUserSearchResults([]);
-      setUserSearchError("");
-      setUserSearchLoading(false);
-      return;
-    }
+    if (!newMessageOpen) return;
+
+    const query = userSearchQuery.trim();
+    if (!query) return;
+
     let cancelled = false;
+
     const timeoutId = window.setTimeout(
       async () => {
         try {
           setUserSearchLoading(true);
           setUserSearchError("");
-          const results =
-            await searchUsers(query);
-          if (cancelled) {
-            return;
-          }
+
+          const results = await searchUsers(query);
+
+          if (cancelled) return;
+
           setUserSearchResults(
             results.filter(
-              (user) =>
-                user.id !== currentUser?.id,
+              (user) => user.id !== currentUser?.id,
             ),
           );
         } catch (err) {
-          console.error(
-            "User search error:",
-            err,
-          );
+          console.error("User search error:", err);
+
           if (!cancelled) {
             setUserSearchResults([]);
             setUserSearchError(
@@ -442,6 +434,7 @@ export default function MessagesPage() {
       },
       300,
     );
+
     return () => {
       cancelled = true;
       window.clearTimeout(timeoutId);
@@ -705,10 +698,12 @@ export default function MessagesPage() {
           type="button"
           className="aio-messages-new-button"
           onClick={() => {
-            setNewMessageOpen(
-              (current) => !current,
-            );
-            setUserSearchError("");
+            if (newMessageOpen) {
+              closeNewMessage();
+            } else {
+              setNewMessageOpen(true);
+              setUserSearchError("");
+            }
           }}
         >
           {newMessageOpen ? (
@@ -755,11 +750,12 @@ export default function MessagesPage() {
             <input
               type="search"
               value={userSearchQuery}
-              onChange={(event) =>
-                setUserSearchQuery(
-                  event.target.value,
-                )
-              }
+              onChange={(event) => {
+                setUserSearchQuery(event.target.value);
+                setUserSearchResults([]);
+                setUserSearchError("");
+                setUserSearchLoading(false);
+              }}
               placeholder="Search by name or username..."
               autoFocus
               aria-label="Search AIO users"

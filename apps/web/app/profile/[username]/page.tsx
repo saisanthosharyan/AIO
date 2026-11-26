@@ -765,7 +765,7 @@ function PublicProfileContent() {
               </strong>
 
               <span>
-                This user hasn't posted
+                This user hasn&apos;t posted
                 anything yet.
               </span>
             </div>
@@ -797,7 +797,7 @@ function PublicProfileContent() {
             </strong>
 
             <span>
-              Images from this user's posts
+              Images from this user&apos;s posts
               will appear here.
             </span>
           </div>

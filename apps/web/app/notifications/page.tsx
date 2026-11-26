@@ -371,12 +371,12 @@ export default function NotificationsPage() {
           </div>
 
           <h2>
-            You're all caught up
+            You&apos;re all caught up
           </h2>
 
           <p>
             When people interact with you,
-            you'll see their activity here.
+            you&apos;ll see their activity here.
           </p>
 
           <Link href="/discover">

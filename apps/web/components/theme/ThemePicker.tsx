@@ -68,7 +68,7 @@ export default function ThemePicker() {
           }}
         >
           Choose the appearance that feels right for you.
-          AIO's signature Persimmon accent stays consistent
+          AIO&apos;s signature Persimmon accent stays consistent
           across both modes.
         </p>
       </div>

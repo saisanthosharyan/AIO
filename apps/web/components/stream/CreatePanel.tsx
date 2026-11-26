@@ -31,7 +31,7 @@ export default function CreatePanel({
         className="aio-canvas-composer-prompt"
         onClick={onOpenCreate}
       >
-        What's happening?
+        What&apos;s happening?
       </button>
 
       <button
