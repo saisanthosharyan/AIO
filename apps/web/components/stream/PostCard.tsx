@@ -1,4 +1,4 @@
-﻿
+
 "use client";
 import CommentThread from "./CommentThread";
 
@@ -29,7 +29,7 @@ import {
   unlikePost,
 } from "@/lib/api";
 
-import type { Comment } from "../../../../packages/types/src/post";
+import type { Comment, PostType } from "../../../../packages/types/src/post";
 
 interface PostCardProps {
   postId: string;
@@ -43,7 +43,7 @@ interface PostCardProps {
   imageUrl?: string;
   avatarUrl?: string;
   verified?: boolean;
-  type?: "thought" | "image" | "space";
+  type?: PostType;
   likesCount?: number;
   commentsCount?: number;
   bookmarksCount?: number;

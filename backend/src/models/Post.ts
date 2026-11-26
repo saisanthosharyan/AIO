@@ -9,7 +9,8 @@ export interface IPost extends Document {
   content: string;
   spaceId?: string;
   imageUrl?: string;
-  type: "thought" | "image" | "space";
+  videoUrl?: string;
+  type: "thought" | "image" | "space" | "clip";
   likesCount: number;
   commentsCount: number;
   bookmarksCount: number;
@@ -39,9 +40,13 @@ const postSchema = new Schema<IPost>(
       type: String,
     },
 
+    videoUrl: {
+      type: String,
+    },
+
     type: {
       type: String,
-      enum: ["thought", "image", "space"],
+      enum: ["thought", "image", "space", "clip"],
       default: "thought",
     },
 

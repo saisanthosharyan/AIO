@@ -41,10 +41,11 @@ export async function createPost(
     const body = request.body ?? {};
     const content = typeof body.content === "string" ? body.content.trim() : "";
     const imageUrl = typeof body.imageUrl === "string" ? body.imageUrl.trim() : "";
+    const videoUrl = typeof body.videoUrl === "string" ? body.videoUrl.trim() : "";
     const requestedType = body.type;
     const spaceId = typeof body.spaceId === "string" ? body.spaceId.trim() : "";
 
-    if (!content && !imageUrl) {
+    if (requestedType !== "clip" && !content && !imageUrl) {
       response.status(400).json({ success: false, message: "Post must contain text or an image" });
       return;
     }
@@ -54,8 +55,35 @@ export async function createPost(
       return;
     }
 
-    if (requestedType !== undefined && requestedType !== "thought" && requestedType !== "image" && requestedType !== "space") {
+    if (requestedType !== undefined && requestedType !== "thought" && requestedType !== "image" && requestedType !== "space" && requestedType !== "clip") {
       response.status(400).json({ success: false, message: "Invalid post type" });
+      return;
+    }
+
+    if (requestedType === "clip") {
+      const validClipUrl =
+        /^\/uploads\/clips\/[a-f0-9-]{36}\.(mp4|webm)$/i.test(videoUrl);
+
+      if (!validClipUrl) {
+        response.status(400).json({
+          success: false,
+          message: "A valid uploaded video is required for a Clip",
+        });
+        return;
+      }
+
+      if (spaceId || imageUrl) {
+        response.status(400).json({
+          success: false,
+          message: "Clips cannot be attached to a Space or an image",
+        });
+        return;
+      }
+    } else if (videoUrl) {
+      response.status(400).json({
+        success: false,
+        message: "Video URLs are only allowed for Clip posts",
+      });
       return;
     }
 
@@ -92,7 +120,7 @@ export async function createPost(
       validatedSpaceId = normalizedSpaceId;
     }
 
-    const postType: "thought" | "image" | "space" = validatedSpaceId
+    const postType: "thought" | "image" | "space" | "clip" = validatedSpaceId
       ? "space"
       : requestedType ?? (imageUrl ? "image" : "thought");
 
@@ -101,6 +129,7 @@ export async function createPost(
       ...(validatedSpaceId ? { spaceId: validatedSpaceId } : {}),
       content,
       imageUrl: imageUrl || undefined,
+      videoUrl: videoUrl || undefined,
       type: postType,
     });
 

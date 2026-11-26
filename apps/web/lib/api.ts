@@ -96,6 +96,7 @@ interface BackendPost {
 
   content?: string;
   imageUrl?: string;
+  videoUrl?: string;
   type?: PostType;
   likesCount?: number;
   commentsCount?: number;
@@ -202,10 +203,15 @@ function normalizePost(
       post.imageUrl,
     ),
 
+    videoUrl: normalizeImageUrl(
+      post.videoUrl,
+    ),
+
     type:
       post.type === "image" ||
       post.type === "space" ||
-      post.type === "thought"
+      post.type === "thought" ||
+      post.type === "clip"
         ? post.type
         : "thought",
 
@@ -358,6 +364,78 @@ export async function createPost(
   };
 }
 
+export async function createClip(
+  content: string,
+  videoUrl: string,
+): Promise<CreatePostResponse> {
+  const response =
+    await request<{
+      success: boolean;
+      message: string;
+      post: BackendPost;
+    }>("/api/posts", {
+      method: "POST",
+      body: JSON.stringify({
+        content,
+        videoUrl,
+        type: "clip",
+      }),
+    });
+
+  return {
+    success: response.success,
+    message: response.message,
+    post: normalizePost(response.post),
+  };
+}
+
+/* -------------------------------------------------------------------------- */
+/* Clip Uploads                                                               */
+/* -------------------------------------------------------------------------- */
+
+export interface UploadClipResponse {
+  success: boolean;
+  message: string;
+  clipUrl: string;
+  size?: number;
+  mimeType?: string;
+}
+
+export async function uploadClip(
+  file: File,
+): Promise<UploadClipResponse> {
+  const token = getToken();
+  const formData = new FormData();
+
+  formData.append("video", file);
+
+  const response = await fetch(
+    `${API_URL}/api/uploads/clips`,
+    {
+      method: "POST",
+      headers: token
+        ? {
+            Authorization: `Bearer ${token}`,
+          }
+        : {},
+      body: formData,
+    },
+  );
+
+  const data =
+    await response.json() as UploadClipResponse;
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || "Video upload failed",
+    );
+  }
+
+  return {
+    ...data,
+    clipUrl: normalizeImageUrl(data.clipUrl) ?? "",
+  };
+}
 /* -------------------------------------------------------------------------- */
 /* Image Uploads                                                              */
 /* -------------------------------------------------------------------------- */

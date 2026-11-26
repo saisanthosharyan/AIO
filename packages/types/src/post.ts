@@ -1,7 +1,8 @@
-﻿export type PostType =
+export type PostType =
   | "thought"
   | "image"
-  | "space";
+  | "space"
+  | "clip";
 
 export interface Post {
   id: string;
@@ -18,6 +19,7 @@ export interface Post {
 
   content: string;
   imageUrl?: string;
+  videoUrl?: string;
   type: PostType;
   likesCount: number;
   commentsCount: number;
